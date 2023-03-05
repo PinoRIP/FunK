@@ -10,6 +10,7 @@
 class UFunKSink;
 class UFunKTestRunner;
 class FFunKAutomationEntry;
+class AFunKWorldTestController;
 
 /**
  * 
@@ -23,7 +24,7 @@ public:
 	UFunKTestRunner* StartTestRunner();
 	UFunKTestRunner* ConnectTestRunner(bool isRemote);
 
-	UFunKTestRunner* GetTestRunner();
+	UFunKTestRunner* GetTestRunner() const;
 	
 	void EndTestRun();
 
@@ -32,6 +33,13 @@ public:
 	virtual void Deinitialize() override;
 
 	bool IsRunning() const;
+
+	void CheckForWorldController(UWorld* world);
+	void RegisterController(AFunKWorldTestController* controller) const;
+
+	static bool IsSeparateTestingProcess();
+
+	static void FunKDebug(FString msg);
 
 private:
 	UPROPERTY()

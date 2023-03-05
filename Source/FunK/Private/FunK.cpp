@@ -18,23 +18,25 @@ FString FFunKModule::FunkStandaloneParameter = FString("-standalone");
 FString FFunKModule::FunkListenParameter = FString("-listen");
 FString FFunKModule::FunkDedicatedParameter = FString("-dedicated");
 
+FString FFunKModule::FunkTestStartParameter = FString("-funk-test");
+
 void FFunKModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
-
+#if WITH_EDITOR
 	FWorldDelegates::GetAssetTags.AddRaw(this, &FFunKModule::OnWorldGetAssetTags);
-	FAutomationTestFramework::Get().PreTestingEvent.AddRaw(this, &FFunKModule::Pre);
-	FAutomationTestFramework::Get().PostTestingEvent.AddRaw(this, &FFunKModule::Post);
+#endif
 }
 
 void FFunKModule::ShutdownModule()
 {
 	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
 	// we call this function before unloading the module.
-	
+#if WITH_EDITOR
 	FWorldDelegates::GetAssetTags.RemoveAll(this);
 	FAutomationTestFramework::Get().PreTestingEvent.RemoveAll(this);
 	FAutomationTestFramework::Get().PostTestingEvent.RemoveAll(this);
+#endif
 }
 
 void FFunKModule::GetTests(bool bEditorOnlyTests, TArray<FString>& OutBeautifiedNames, TArray<FString>& OutTestCommands, TArray<FString>& OutTestMapAssets) const
@@ -152,6 +154,14 @@ bool FFunKModule::IsActive() const
 	return true;
 }
 
+void FFunKModule::EngineSubsystemIsReady()
+{
+#if WITH_EDITOR
+	FAutomationTestFramework::Get().PreTestingEvent.AddRaw(this, &FFunKModule::Pre);
+	FAutomationTestFramework::Get().PostTestingEvent.AddRaw(this, &FFunKModule::Post);
+#endif
+}
+
 void FFunKModule::OnWorldGetAssetTags(const UWorld* World, TArray<UObject::FAssetRegistryTag>& OutTags)
 {
 	if(IsActive())
@@ -185,8 +195,6 @@ void FFunKModule::OnWorldGetAssetTags(const UWorld* World, TArray<UObject::FAsse
 
 void FFunKModule::Pre()
 {
-	if(!Temp) return;
-	
 	if(UFunKEngineSubsystem* engineSubsystem = GEngine->GetEngineSubsystem<UFunKEngineSubsystem>())
 	{
 		engineSubsystem->StartTestRunner();
@@ -195,8 +203,6 @@ void FFunKModule::Pre()
 
 void FFunKModule::Post()
 {
-	if(!Temp) return;
-	
 	if(UFunKEngineSubsystem* engineSubsystem = GEngine->GetEngineSubsystem<UFunKEngineSubsystem>())
 	{
 		engineSubsystem->EndTestRun();

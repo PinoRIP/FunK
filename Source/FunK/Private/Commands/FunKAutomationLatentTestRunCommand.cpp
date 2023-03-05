@@ -4,7 +4,7 @@ bool FFunKAutomationLatentTestRunCommand::Update()
 {
 	if(TestRun.IsValid())
 	{
-		return TestRun->Next();
+		return TestRun->Test(TestInstructions);
 	}
 
 	return true;

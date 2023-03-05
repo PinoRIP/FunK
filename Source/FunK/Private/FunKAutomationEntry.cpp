@@ -25,27 +25,25 @@ void FFunKAutomationEntryRuntime::GetTests(TArray<FString>& OutBeautifiedNames, 
 {
 	TArray<FString> MapAssets;
 	IFunKModuleInterface::Get().GetTests(false, OutBeautifiedNames, OutTestCommands, MapAssets);
-
-	IFunKModuleInterface::GetPtr()->SetTemp();
 }
 
 bool FFunKAutomationEntryRuntime::RunTest(const FString& Parameters)
 {
 	if(GEditor)
 	{
+		UFunKEngineSubsystem* EngineSubsystem = GEditor->GetEngineSubsystem<UFunKEngineSubsystem>();
+		
 		FString MapObjectPath, MapPackageName, MapTestName, Params;
 		ParseTestMapInfo(Parameters, MapObjectPath, MapPackageName, MapTestName, Params);
 
-		UFunKEngineSubsystem* EngineSubsystem = GEditor->GetEngineSubsystem<UFunKEngineSubsystem>();
-		UFunKTestRunner* testRunner = EngineSubsystem->GetTestRunner();
+		UFunKTestRunner* testRunner = EngineSubsystem->IsRunning()
+			? EngineSubsystem->GetTestRunner()
+			: EngineSubsystem->StartTestRunner();
+		
 		if(testRunner)
 		{
-			bool bCanProceed = testRunner->Prepare(FFunKTestInstructions(MapObjectPath, MapPackageName, MapTestName, Params));
-			if(bCanProceed)
-			{
-				ADD_LATENT_AUTOMATION_COMMAND(FFunKAutomationLatentTestRunCommand(testRunner))
-				return true;
-			}
+			ADD_LATENT_AUTOMATION_COMMAND(FFunKAutomationLatentTestRunCommand(testRunner, FFunKTestInstructions(MapObjectPath, MapPackageName, MapTestName, Params)))
+			return true;
 		}
 		else
 		{
