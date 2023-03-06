@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "FunKTestInstructions.h"
 #include "FunKTestRunnerType.h"
+#include "Sinks/FunKSink.h"
 #include "UObject/Object.h"
 #include "FunKTestRunner.generated.h"
 
@@ -33,7 +34,7 @@ enum class EFunKTestRunnerState : uint8
  * 
  */
 UCLASS()
-class FUNK_API UFunKTestRunner : public UObject
+class FUNK_API UFunKTestRunner : public UObject, public IFunKSink
 {
 	GENERATED_BODY()
 
@@ -47,8 +48,7 @@ public:
 	virtual void RaiseInfoEvent(const FString& Message, const FString& Context = "") const;
 	virtual void RaiseWarningEvent(const FString& Message, const FString& Context = "") const;
 	virtual void RaiseErrorEvent(const FString& Message, const FString& Context = "") const;
-	
-	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const;
+	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const override;
 
 	bool IsRunning() const;
 	bool IsWaitingForMap() const;
@@ -57,15 +57,12 @@ public:
 	const FString& GetParameter();
 
 	bool SetWorld(UWorld* world);
-	bool RegisterWorldController(AFunKWorldTestController* localTestController);
 
 	AFunKWorldTestController* GetCurrentWorldController() const;
 	
 protected:
 	virtual void RaiseStartEvent();
-	virtual void GetSinks(TArray<TSubclassOf<UFunKSink>>& outSinks);
-
-	virtual UFunKSink* NewSink(TSubclassOf<UFunKSink> sinkType);
+	virtual void GetSinks(TArray<TScriptInterface<IFunKSink>>& outSinks);
 
 	virtual void UpdateState(EFunKTestRunnerState newState);
 
@@ -91,10 +88,7 @@ private:
 	UWorld* CurrentTestWorld = nullptr;
 
 	UPROPERTY()
-	AFunKWorldTestController* CurrentWorldController = nullptr;
-
-	UPROPERTY()
-	TArray<UFunKSink*> Sinks;
+	TArray<TScriptInterface<IFunKSink>> Sinks;
 
 	TWeakObjectPtr<UFunKEngineSubsystem> FunKEngineSubsystem;
 	

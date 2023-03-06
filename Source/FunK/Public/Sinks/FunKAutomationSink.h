@@ -5,26 +5,24 @@
 #include "CoreMinimal.h"
 #include "FunKSink.h"
 #include "UObject/Object.h"
-#include "FunKInProcAutomationSink.generated.h"
+#include "FunKEvent.h"
+#include "FunKAutomationSink.generated.h"
 
-class FFunKAutomationEntryRuntime;
+class FFunKAutomationEntry;
 
 /**
  * 
  */
 UCLASS()
-class FUNK_API UFunKInProcAutomationSink : public UFunKSink
+class FUNK_API UFunKAutomationSink : public UObject, public IFunKSink
 {
 	GENERATED_BODY()
 
 public:
-	virtual void Init(UFunKTestRunner* run) override;
-	virtual void RaiseEvent(const FFunKEvent& raisedEvent, const UFunKTestRunner* run) override;
+	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const override;
+
 	static bool IsAvailable();
-
 private:
-	FFunKAutomationEntry* AutomationEntryRuntime;
-
 	static EAutomationEventType GetAutomationEventType(EFunKEventType eventType);
 	static FFunKAutomationEntry* GetCurrentAutomationEntry();
 };

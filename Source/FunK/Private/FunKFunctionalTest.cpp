@@ -5,6 +5,7 @@
 
 #include "FunK.h"
 #include "FunKEngineSubsystem.h"
+#include "FunKWorldSubsystem.h"
 #include "FunKWorldTestController.h"
 
 
@@ -105,9 +106,9 @@ void AFunKFunctionalTest::BeginPlay()
 
 	if(GEngine)
 	{
-		if(UFunKEngineSubsystem* funk = GEngine->GetEngineSubsystem<UFunKEngineSubsystem>())
+		if(UFunKWorldSubsystem* funk = GetWorld()->GetSubsystem<UFunKWorldSubsystem>())
 		{
-			funk->CheckForWorldController(GetWorld());
+			funk->CheckLocalTestController();
 		}
 	}
 

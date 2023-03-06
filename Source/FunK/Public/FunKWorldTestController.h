@@ -4,13 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Sinks/FunKSink.h"
 #include "FunKWorldTestController.generated.h"
 
 class AFunKFunctionalTest;
 class UFunKTestRunner;
 
 UCLASS()
-class FUNK_API AFunKWorldTestController : public AActor
+class FUNK_API AFunKWorldTestController : public AActor, public IFunKSink
 {
 	GENERATED_BODY()
 
@@ -28,29 +29,21 @@ protected:
 
 	virtual void OnRep_Owner() override;
 	
-	void ExecuteTest(AFunKFunctionalTest* TestToExecute);
+	void ExecuteTest(AFunKFunctionalTest* TestToExecute, TScriptInterface<IFunKSink> ReportSink);
 
 	void FinishedCurrentTest();
 	
 private:
 	UPROPERTY()
-	UFunKTestRunner* TestRunner = nullptr;
+	TScriptInterface<IFunKSink> ReportSink;
 
 	UPROPERTY()
 	TArray<AFunKWorldTestController*> SpawnedController;
-
-	UPROPERTY()
-	AFunKWorldTestController* Creator = nullptr;
-
-	UPROPERTY()
-	AFunKWorldTestController* TestOrigin = nullptr;
 	
 	UPROPERTY()
 	AFunKFunctionalTest* CurrentTest = nullptr;
 
 	void OnConnection(AGameModeBase* GameMode, APlayerController* NewPlayer);
-
-	bool IsRunning = false;
 
 	UFUNCTION(Server, Reliable)
 	void ServerExecuteTest(AFunKFunctionalTest* TestToExecute);
@@ -58,7 +51,9 @@ private:
 	UFUNCTION(Client, Reliable)
 	void ClientExecuteTest(AFunKFunctionalTest* TestToExecute);
 	
-	virtual void SendEvent(EFunKEventType eventType, const FString& Message, const FString& Context) const;
+	void ExecuteTestRun(AFunKFunctionalTest* TestToExecute, TScriptInterface<IFunKSink> ReportSink);
+	
+	virtual void SendEvent(const FFunKEvent& raisedEvent) const;
 	virtual void ApplySendEvent(EFunKEventType eventType, const FString& Message, const FString& Context) const;
 
 	UFUNCTION(Server, Reliable)
@@ -71,16 +66,13 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void SetTestRunner(UFunKTestRunner* testRunner);
+	virtual void ExecuteTestByName(FString TestName, TScriptInterface<IFunKSink> ReportSink);
+	virtual void ExecuteAllTests(TScriptInterface<IFunKSink> ReportSink);
 
-	virtual void ExecuteTestByName(FString TestName);
-	virtual void ExecuteAllTests();
-
-	virtual bool IsFinished();
+	virtual bool IsFinished() const;
 
 	virtual void RaiseInfoEvent(const FString& Message, const FString& Context = "") const;
 	virtual void RaiseWarningEvent(const FString& Message, const FString& Context = "") const;
 	virtual void RaiseErrorEvent(const FString& Message, const FString& Context = "") const;
-
-	friend UFunKExtAutomationSink;
+	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const override;
 };

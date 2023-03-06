@@ -34,8 +34,7 @@ public:
 
 	bool IsRunning() const;
 
-	void CheckForWorldController(UWorld* world);
-	void RegisterController(AFunKWorldTestController* controller) const;
+	void CallbackTestWorldBeganPlay(UWorld* world) const;
 
 	static bool IsSeparateTestingProcess();
 

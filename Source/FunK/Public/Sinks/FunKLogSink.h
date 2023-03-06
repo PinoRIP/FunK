@@ -11,9 +11,12 @@
  * 
  */
 UCLASS()
-class FUNK_API UFunKLogSink : public UFunKSink
+class FUNK_API UFunKLogSink : public UObject, public IFunKSink
 {
 	GENERATED_BODY()
 
-	virtual void RaiseEvent(const FFunKEvent& raisedEvent, const UFunKTestRunner* run) override;
+public:
+	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const override;
+
+	static void LogEvent(const FFunKEvent& raisedEvent);
 };
