@@ -100,7 +100,13 @@ bool UFunKTestRunner::Test(const FFunKTestInstructions& Instructions)
 	}
 	else
 	{
-		if(GetCurrentWorldController()->IsFinished())
+		const AFunKWorldTestController* worldController = GetCurrentWorldController();
+		if(!worldController)
+		{
+			RaiseWarningEvent("Canceled test run: world is tearing down!");
+			UpdateState(EFunKTestRunnerState::EvaluatingTest);
+		}
+		else if(worldController->IsFinished())
 		{
 			UpdateState(EFunKTestRunnerState::EvaluatingTest);
 		}
@@ -185,6 +191,12 @@ bool UFunKTestRunner::SetWorld(UWorld* world)
 
 AFunKWorldTestController* UFunKTestRunner::GetCurrentWorldController() const
 {
+	if(!CurrentTestWorld)
+		return nullptr;
+	
+	if(CurrentTestWorld->bIsTearingDown)
+		return nullptr;
+		
 	return CurrentTestWorld->GetSubsystem<UFunKWorldSubsystem>()->GetLocalTestController();
 }
 
