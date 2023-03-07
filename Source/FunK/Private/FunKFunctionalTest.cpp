@@ -39,6 +39,7 @@ void AFunKFunctionalTest::RunTest(AFunKWorldTestController* controller)
 
 	TestResult = EFunKFunctionalTestResult::None;
 	BpStartSetup();
+	SetActorTickEnabled(true);
 }
 
 void AFunKFunctionalTest::FinishTest(EFunKFunctionalTestResult testResult, const FString& Message)
@@ -77,7 +78,7 @@ void AFunKFunctionalTest::RaiseWarningEvent(const FString& Message, const FStrin
 {
 	if(Controller)
 	{
-		Controller->RaiseInfoEvent(Message, Context);
+		Controller->RaiseWarningEvent(Message, Context);
 	}
 }
 
@@ -85,13 +86,18 @@ void AFunKFunctionalTest::RaiseErrorEvent(const FString& Message, const FString&
 {
 	if(Controller)
 	{
-		Controller->RaiseInfoEvent(Message, Context);
+		Controller->RaiseErrorEvent(Message, Context);
 	}
 }
 
 bool AFunKFunctionalTest::IsStarted() const
 {
 	return StartFrame > 0;
+}
+
+bool AFunKFunctionalTest::IsFinished() const
+{
+	return TestResult != EFunKFunctionalTestResult::None;
 }
 
 EFunKFunctionalTestResult AFunKFunctionalTest::GetTestResult() const
@@ -174,7 +180,7 @@ void AFunKFunctionalTest::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 bool AFunKFunctionalTest::IsTimeout(const FFunKTimeLimit& limit, float time)
 {
-	return limit.Time <= time;
+	return limit.Time == 0 ? false : limit.Time <= time;
 }
 
 void AFunKFunctionalTest::OnTimeout(const FFunKTimeLimit& limit)
@@ -191,6 +197,7 @@ void AFunKFunctionalTest::Tick(float DeltaTime)
 	GEngine->DelayGarbageCollection();
 	
 	TotalTime += DeltaTime;
+	RaiseInfoEvent("TEST");
 
 	if(!IsSetupReady)
 	{
@@ -198,9 +205,9 @@ void AFunKFunctionalTest::Tick(float DeltaTime)
 
 		if(IsSetupReady)
 		{
-			StartTest();
 			StartFrame = GFrameNumber;
 			StartTime = GetWorld()->GetTimeSeconds();
+			BpStartTest();
 		}
 		else
 		{
