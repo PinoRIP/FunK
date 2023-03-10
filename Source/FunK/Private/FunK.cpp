@@ -195,18 +195,18 @@ void FFunKModule::OnWorldGetAssetTags(const UWorld* World, TArray<UObject::FAsse
 
 void FFunKModule::Pre()
 {
-	if(UFunKEngineSubsystem* engineSubsystem = GEngine->GetEngineSubsystem<UFunKEngineSubsystem>())
-	{
-		engineSubsystem->StartTestRunner();
-	}
+	// if(UFunKEngineSubsystem* engineSubsystem = GEngine->GetEngineSubsystem<UFunKEngineSubsystem>())
+	// {
+	// 	engineSubsystem->StartTestRunner();
+	// }
 }
 
 void FFunKModule::Post()
 {
-	if(UFunKEngineSubsystem* engineSubsystem = GEngine->GetEngineSubsystem<UFunKEngineSubsystem>())
-	{
-		engineSubsystem->EndTestRun();
-	}
+	// if(UFunKEngineSubsystem* engineSubsystem = GEngine->GetEngineSubsystem<UFunKEngineSubsystem>())
+	// {
+	// 	engineSubsystem->EndTestRun();
+	// }
 }
 
 #undef LOCTEXT_NAMESPACE
