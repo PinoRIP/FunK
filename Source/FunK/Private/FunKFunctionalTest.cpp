@@ -222,9 +222,9 @@ void AFunKFunctionalTest::Tick(float DeltaTime)
 	else
 	{
 		ExecutionTime += DeltaTime;
-		if(IsTimeout(PreparationTimeLimit, ExecutionTime))
+		if(IsTimeout(TimeLimit, ExecutionTime))
 		{
-			OnTimeout(PreparationTimeLimit);
+			OnTimeout(TimeLimit);
 			return;
 		}
 	}
