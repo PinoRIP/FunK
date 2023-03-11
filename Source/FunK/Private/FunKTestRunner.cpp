@@ -292,6 +292,7 @@ bool UFunKTestRunner::IsEnvironmentRunning(const FFunKTestInstructions& Instruct
 	}
 	else
 	{
+		check(false);//TODO: Fix this!
 		const bool isEnvironmentRunning = CurrentTestWorld.IsValid() && !CurrentTestWorld->bIsTearingDown;
 		if(isEnvironmentRunning)
 			isWrongEnvironmentRunning = CurrentTestWorld->GetMapName() != Instructions.MapPackageName;
