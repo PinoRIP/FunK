@@ -197,7 +197,6 @@ void AFunKFunctionalTest::Tick(float DeltaTime)
 	GEngine->DelayGarbageCollection();
 	
 	TotalTime += DeltaTime;
-	RaiseInfoEvent("TEST");
 
 	if(!IsSetupReady)
 	{

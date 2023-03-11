@@ -66,7 +66,7 @@ protected:
 
 	virtual void UpdateState(EFunKTestRunnerState newState);
 
-	bool IsRunningTestUnderOneProcess = false;
+	bool IsRunningTestUnderOneProcess = true; //TODO: For now the system only works when everything runs under one process... The way to detect that everything runs in sever scenarios fails due to race conditions
 
 	bool IsStandaloneTest() const;
 	static bool IsStandaloneTest(const FFunKTestInstructions& Instructions);
@@ -76,6 +76,7 @@ protected:
 	static bool IsListenServerTest(const FFunKTestInstructions& Instructions);
 	
 	bool IsDifferentEnvironment(const FFunKTestInstructions& Instructions) const;
+	bool IsEnvironmentRunning(const FFunKTestInstructions& Instructions, bool& isWrongEnvironmentRunning);
 
 	virtual TSubclassOf<AFunKWorldTestController> GetWorldControllerClass() const;
 	
@@ -84,8 +85,7 @@ private:
 	FFunKTestInstructions ActiveTestInstructions;
 	EFunKTestRunnerState State = EFunKTestRunnerState::None;
 
-	UPROPERTY()
-	UWorld* CurrentTestWorld = nullptr;
+	TWeakObjectPtr<UWorld> CurrentTestWorld = nullptr;
 
 	UPROPERTY()
 	TArray<TScriptInterface<IFunKSink>> Sinks;
