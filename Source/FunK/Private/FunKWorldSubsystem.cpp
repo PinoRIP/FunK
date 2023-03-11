@@ -23,6 +23,7 @@ AFunKWorldTestController* UFunKWorldSubsystem::GetLocalTestController()
 	if(!LocalTestController && GetWorld()->GetNetMode() != NM_Client)
 	{
 		LocalTestController = NewTestController();
+		LocalTestController->SetupLocalTestController();
 	}
 	
 	return LocalTestController;
@@ -33,7 +34,13 @@ void UFunKWorldSubsystem::SetLocalTestController(AFunKWorldTestController* local
 	if(!LocalTestController && GetWorld()->GetNetMode() == NM_Client)
 	{
 		LocalTestController = localTestController;
+		LocalTestController->SetupLocalTestController();
 	}
+}
+
+bool UFunKWorldSubsystem::HasLocalTestController() const
+{
+	return !!LocalTestController;
 }
 
 AFunKWorldTestController* UFunKWorldSubsystem::NewTestController() const

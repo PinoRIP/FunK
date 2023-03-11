@@ -19,6 +19,8 @@ public:
 	void CheckLocalTestController();
 	AFunKWorldTestController* GetLocalTestController();
 	void SetLocalTestController(AFunKWorldTestController* localTestController);
+
+	bool HasLocalTestController() const;
 	
 private:
 	UPROPERTY()

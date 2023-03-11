@@ -1,8 +1,5 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
-
-
 #include "FunKTestRunner.h"
-
 #include "FileHelpers.h"
 #include "FunK.h"
 #include "FunKAutomationEntry.h"
@@ -95,10 +92,9 @@ bool UFunKTestRunner::Test(const FFunKTestInstructions& Instructions)
 
 		if (State == EFunKTestRunnerState::WaitingForConnections)
 		{
-			if(GetCurrentWorldController())
+			if(AFunKWorldTestController* worldController = GetCurrentWorldController())
 			{
-				int32 players = IsDedicatedServerTest() ? 2 : 3;
-				if(CurrentTestWorld->GetGameState()->PlayerArray.Num() >= players)
+				if(worldController->GetActiveControllerCount() >= 3)
 				{
 					UpdateState(EFunKTestRunnerState::Ready);
 				}

@@ -2,12 +2,15 @@
 
 
 #include "FunKFunctionalTest.h"
-
 #include "FunK.h"
-#include "FunKEngineSubsystem.h"
 #include "FunKWorldSubsystem.h"
 #include "FunKWorldTestController.h"
 
+
+bool FFunKTimeLimit::IsTimeout(float time) const
+{
+	return Time == 0 ? false : Time <= time;
+}
 
 // Sets default values
 AFunKFunctionalTest::AFunKFunctionalTest()
@@ -28,7 +31,7 @@ void AFunKFunctionalTest::RunTest(AFunKWorldTestController* controller)
 	ExecutionTime = 0;
 	StartFrame = 0;
 	StartTime = 0;
-
+	IsTestStarted = false;
 	IsSetupReady = false;
 
 	if(!BpAssume())
@@ -92,7 +95,7 @@ void AFunKFunctionalTest::RaiseErrorEvent(const FString& Message, const FString&
 
 bool AFunKFunctionalTest::IsStarted() const
 {
-	return StartFrame > 0;
+	return IsTestStarted;
 }
 
 bool AFunKFunctionalTest::IsFinished() const
@@ -109,7 +112,7 @@ EFunKFunctionalTestResult AFunKFunctionalTest::GetTestResult() const
 void AFunKFunctionalTest::BeginPlay()
 {
 	Super::BeginPlay();
-
+	
 	if(GEngine)
 	{
 		if(UFunKWorldSubsystem* funk = GetWorld()->GetSubsystem<UFunKWorldSubsystem>())
@@ -178,11 +181,6 @@ void AFunKFunctionalTest::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-bool AFunKFunctionalTest::IsTimeout(const FFunKTimeLimit& limit, float time)
-{
-	return limit.Time == 0 ? false : limit.Time <= time;
-}
-
 void AFunKFunctionalTest::OnTimeout(const FFunKTimeLimit& limit)
 {
 	FinishTest(limit.Result, limit.Message.ToString());
@@ -204,6 +202,7 @@ void AFunKFunctionalTest::Tick(float DeltaTime)
 
 		if(IsSetupReady)
 		{
+			IsTestStarted = true;
 			StartFrame = GFrameNumber;
 			StartTime = GetWorld()->GetTimeSeconds();
 			BpStartTest();
@@ -211,7 +210,7 @@ void AFunKFunctionalTest::Tick(float DeltaTime)
 		else
 		{
 			PreparationTime += DeltaTime;
-			if(IsTimeout(PreparationTimeLimit, PreparationTime))
+			if(PreparationTimeLimit.IsTimeout(PreparationTime))
 			{
 				OnTimeout(PreparationTimeLimit);
 				return;
@@ -221,7 +220,7 @@ void AFunKFunctionalTest::Tick(float DeltaTime)
 	else
 	{
 		ExecutionTime += DeltaTime;
-		if(IsTimeout(TimeLimit, ExecutionTime))
+		if(TimeLimit.IsTimeout(ExecutionTime))
 		{
 			OnTimeout(TimeLimit);
 			return;
