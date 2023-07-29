@@ -31,6 +31,9 @@ public:
 	
 	UPROPERTY(config, EditAnywhere, Category = Global)
 	TSubclassOf<UFunKTestRunner> TestRunnerClassOverride;
+	
+	UPROPERTY(config, EditAnywhere, Category = Global)
+	bool RunTestUnderOneProcess = true;
 
 	UPROPERTY(config, EditAnywhere, Category = FixedTick)
 	TArray<int32> FixedTickFrameRates;

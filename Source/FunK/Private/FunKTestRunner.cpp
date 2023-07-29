@@ -278,9 +278,10 @@ bool UFunKTestRunner::IsEnvironmentRunning(const FFunKTestInstructions& Instruct
 {
 	isWrongEnvironmentRunning = false;
 
+	const FFunKSettings& settings = GetDefault<UFunKSettingsObject>()->Settings;
 	const FString currentPieWorldPackageName = GetCurrentPieWorldPackageName();
 	const bool isNoLocalMapRunning = (currentPieWorldPackageName.IsEmpty() || currentPieWorldPackageName.Len() <= 0);
-	const bool isLocalProcessOnly = IsRunningTestUnderOneProcess || IsStandaloneTest(Instructions);
+	const bool isLocalProcessOnly = settings.RunTestUnderOneProcess || IsStandaloneTest(Instructions);
 	if(isNoLocalMapRunning)
 	{
 		isWrongEnvironmentRunning = !isLocalProcessOnly && IsHoldingSubprocesses();
@@ -373,7 +374,7 @@ bool UFunKTestRunner::StartEnvironment(const FFunKTestInstructions& Instructions
 		{
 			params.EditorPlaySettings->SetPlayNumberOfClients(3);
 			params.EditorPlaySettings->bLaunchSeparateServer = false;
-			params.EditorPlaySettings->SetRunUnderOneProcess(IsRunningTestUnderOneProcess);
+			params.EditorPlaySettings->SetRunUnderOneProcess(settings.RunTestUnderOneProcess);
 			params.EditorPlaySettings->SetPlayNetMode(EPlayNetMode::PIE_ListenServer);
 			SetFpsSettings(params.EditorPlaySettings, settings, false);
 			
@@ -383,7 +384,7 @@ bool UFunKTestRunner::StartEnvironment(const FFunKTestInstructions& Instructions
 		{
 			params.EditorPlaySettings->SetPlayNumberOfClients(2);
 			params.EditorPlaySettings->bLaunchSeparateServer = true;
-			params.EditorPlaySettings->SetRunUnderOneProcess(IsRunningTestUnderOneProcess);
+			params.EditorPlaySettings->SetRunUnderOneProcess(settings.RunTestUnderOneProcess);
 			params.EditorPlaySettings->SetPlayNetMode(EPlayNetMode::PIE_Client);
 			SetFpsSettings(params.EditorPlaySettings, settings, true);
 			
@@ -398,10 +399,10 @@ bool UFunKTestRunner::StartEnvironment(const FFunKTestInstructions& Instructions
 
 	// Immediately launch the session 
 	GEditor->StartQueuedPlaySessionRequest();
-	if(!isStandalone && !IsRunningTestUnderOneProcess)
+	if(!isStandalone && !settings.RunTestUnderOneProcess)
 		ProcessStartCapture.GetProcessIds(StartedProcesses);
 	
-	return FailHandler.CanProceed() && (IsRunningTestUnderOneProcess || isStandalone || (ProcessStartCapture.IsValid() && StartedProcesses.Num() == 2));
+	return FailHandler.CanProceed() && (settings.RunTestUnderOneProcess || isStandalone || (ProcessStartCapture.IsValid() && StartedProcesses.Num() == 2));
 }
 
 void UFunKTestRunner::SetFpsSettings(ULevelEditorPlaySettings* playSettings, const FFunKSettings& funkSettings, bool isDedicated)
