@@ -1,11 +1,11 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-#include "FunKAutomationEntry.h"
+#include "Automation/FunKAutomationEntry.h"
 #include "CoreMinimal.h"
 #include "Editor.h"
 #include "FunK.h"
 #include "FunKEngineSubsystem.h"
-#include "Commands/FunKAutomationLatentTestRunCommand.h"
+#include "Automation/FunKAutomationLatentTestRunCommand.h"
 
 void FFunKAutomationEntry::ParseTestMapInfo(const FString& Parameters, FString& MapObjectPath, FString& MapPackageName, FString& MapTestName, FString& Params)
 {
@@ -50,48 +50,6 @@ bool FFunKAutomationEntryRuntime::RunTest(const FString& Parameters)
 			AddError("No test runner found...");
 		}
 	}
-	
-	//FString MapObjectPath, MapPackageName, MapTestName;
-	//ParseTestMapInfo(Parameters, MapObjectPath, MapPackageName, MapTestName);
+
 	return false;
-	/*bool bCanProceed = false;
-
-	IFunctionalTestingModule::Get().MarkPendingActivation();
-
-	// Always reset these, even though tests should do the same
-	SetLogErrorAndWarningHandlingToDefault();
-
-	UWorld* TestWorld = GetAnyGameWorld();
-	if (TestWorld && TestWorld->GetMapName() == MapPackageName)
-	{
-		// Map is already loaded.
-		bCanProceed = true;
-	}
-	else
-	{
-		bCanProceed = AutomationOpenMap(MapPackageName);
-	}
-
-	if (bCanProceed)
-	{
-		if (MapTestName.IsEmpty())
-		{
-			ADD_LATENT_AUTOMATION_COMMAND(FStartFTestsOnMap());
-		}
-		else
-		{
-			ADD_LATENT_AUTOMATION_COMMAND(FStartFTestOnMap(MapTestName));
-		}
-
-		return true;
-	}
-
-	/// FAutomationTestFramework::GetInstance().UnregisterAutomationTest
-
-	//	ADD_LATENT_AUTOMATION_COMMAND(FWaitLatentCommand(1.f));
-	//  ADD_LATENT_AUTOMATION_COMMAND(FExitGameCommand);
-
-	UE_LOG(LogFunctionalTest, Error, TEXT("Failed to start the %s map (possibly due to BP compilation issues)"), *MapPackageName);
-	return false;
-	*/
 }

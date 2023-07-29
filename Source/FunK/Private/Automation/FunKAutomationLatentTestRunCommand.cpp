@@ -1,4 +1,4 @@
-﻿#include "Commands/FunKAutomationLatentTestRunCommand.h"
+﻿#include "Automation/FunKAutomationLatentTestRunCommand.h"
 
 bool FFunKAutomationLatentTestRunCommand::Update()
 {

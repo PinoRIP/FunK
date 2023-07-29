@@ -35,8 +35,6 @@ void UFunKEngineSubsystem::EndTestRun()
 void UFunKEngineSubsystem::Initialize(FSubsystemCollectionBase& Collection)
 {
 	Super::Initialize(Collection);
-
-	IFunKModuleInterface::Get().EngineSubsystemIsReady();
 }
 
 void UFunKEngineSubsystem::Deinitialize()

@@ -2,9 +2,7 @@
 
 
 #include "Sinks/FunKAutomationSink.h"
-
-#include "FunKAutomationEntry.h"
-#include "FunKTestRunner.h"
+#include "Automation/FunKAutomationEntry.h"
 
 void UFunKAutomationSink::RaiseEvent(const FFunKEvent& raisedEvent) const
 {

@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "FunKAssertions.h"
+#include "Util/FunKAssertions.h"
 #include "FunKLogging.h"
 #include "Misc/AutomationTest.h"
 #include "Sinks/FunKSink.h"

@@ -24,8 +24,6 @@ public:
 	{
 		return &Get();
 	}
-
-	virtual void EngineSubsystemIsReady() = 0;
 };
 
 
@@ -48,13 +46,9 @@ public:
 	static FString FunkStandaloneParameter;
 	static FString FunkListenParameter;
 	static FString FunkDedicatedParameter;
-
+	
 	static FString FunkTestStartParameter;
-
-	virtual void EngineSubsystemIsReady() override;
 
 private:
 	void OnWorldGetAssetTags(const UWorld* World, TArray<UObject::FAssetRegistryTag>& OutTags);
-	void Pre();
-	void Post();
 };

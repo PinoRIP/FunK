@@ -14,6 +14,8 @@
 
 class FAssetRegistryModule;
 class IAssetRegistry;
+
+
 FName FFunKModule::FunkTestWorldTag = FName("FunKTests");
 FName FFunKModule::FunkEditorOnlyTestWorldTag = FName("FunKEditorOnlyTests");
 
@@ -25,7 +27,6 @@ FString FFunKModule::FunkTestStartParameter = FString("-funk-test");
 
 void FFunKModule::StartupModule()
 {
-	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 #if WITH_EDITOR
 	// register settings
 	if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
@@ -52,8 +53,6 @@ void FFunKModule::ShutdownModule()
 	}
 	
 	FWorldDelegates::GetAssetTags.RemoveAll(this);
-	FAutomationTestFramework::Get().PreTestingEvent.RemoveAll(this);
-	FAutomationTestFramework::Get().PostTestingEvent.RemoveAll(this);
 #endif
 }
 
@@ -172,14 +171,6 @@ bool FFunKModule::IsActive() const
 	return true;
 }
 
-void FFunKModule::EngineSubsystemIsReady()
-{
-#if WITH_EDITOR
-	FAutomationTestFramework::Get().PreTestingEvent.AddRaw(this, &FFunKModule::Pre);
-	FAutomationTestFramework::Get().PostTestingEvent.AddRaw(this, &FFunKModule::Post);
-#endif
-}
-
 void FFunKModule::OnWorldGetAssetTags(const UWorld* World, TArray<UObject::FAssetRegistryTag>& OutTags)
 {
 	if(IsActive())
@@ -209,22 +200,6 @@ void FFunKModule::OnWorldGetAssetTags(const UWorld* World, TArray<UObject::FAsse
 			OutTags.Add(UObject::FAssetRegistryTag(FunkEditorOnlyTestWorldTag, TestNamesEditor, UObject::FAssetRegistryTag::TT_Hidden));
 		}
 	}
-}
-
-void FFunKModule::Pre()
-{
-	// if(UFunKEngineSubsystem* engineSubsystem = GEngine->GetEngineSubsystem<UFunKEngineSubsystem>())
-	// {
-	// 	engineSubsystem->StartTestRunner();
-	// }
-}
-
-void FFunKModule::Post()
-{
-	// if(UFunKEngineSubsystem* engineSubsystem = GEngine->GetEngineSubsystem<UFunKEngineSubsystem>())
-	// {
-	// 	engineSubsystem->EndTestRun();
-	// }
 }
 
 #undef LOCTEXT_NAMESPACE
