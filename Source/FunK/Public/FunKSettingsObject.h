@@ -12,13 +12,15 @@ class AFunKWorldTestController;
 UENUM(BlueprintType)
 enum class EFunKTestDiscoveryMethod : uint8
 {
+	/*Searches through every map*/
 	Search,
+	/*Searches through maps that start with a defined prefix*/
 	Prefix,
+	/*Searches through specifically configured worlds*/
 	Worlds,
+	/*Searches through all worlds that match the asset paths*/
 	Paths
 };
-
-
 
 USTRUCT(meta=(ShowOnlyInnerProperties))
 struct FFunKSettings
@@ -39,7 +41,7 @@ public:
 	FFunKTimeLimit SyncTimeLimit;
 	
 	UPROPERTY(config, EditAnywhere, Category = "Test discovery")
-	EFunKTestDiscoveryMethod DiscoveryMethod;
+	EFunKTestDiscoveryMethod DiscoveryMethod = EFunKTestDiscoveryMethod::Prefix;
 	
 	UPROPERTY(config, EditAnywhere, Category = "Test discovery", meta=(EditCondition = "DiscoveryMethod == EFunKTestDiscoveryMethod::Prefix", EditConditionHides))
 	FString Prefix = FString("FUNK_");
