@@ -19,7 +19,7 @@ void UFunKWorldTestExecution::Start(UWorld* world, const TArray<AFunKFunctionalT
 	check(netMode != ENetMode::NM_Client)
 	
 	MasterController = world->GetSubsystem<UFunKWorldSubsystem>()->GetLocalTestController();
-	check(MasterController->CurrentTestExecution == this)
+	check(!MasterController->CurrentTestExecution)
 	
 	TestsToExecute = testsToExecute;
 	ReportSink = reportSink;
@@ -269,6 +269,8 @@ FFunKWorldTestState* UFunKWorldTestExecution::GetStateFromEvent(const FFunKEvent
 
 void UFunKWorldTestExecution::RaiseEvent(const FFunKEvent& raisedEvent) const
 {
+	ReportSink->RaiseEvent(raisedEvent);
+	
 	if(raisedEvent.Context.Contains(FunKTestLifeTimePreparationCompleteEvent))
 	{
 		UFunKWorldTestExecution* mutableThis = const_cast<UFunKWorldTestExecution*>(this);
@@ -279,6 +281,4 @@ void UFunKWorldTestExecution::RaiseEvent(const FFunKEvent& raisedEvent) const
 		UFunKWorldTestExecution* mutableThis = const_cast<UFunKWorldTestExecution*>(this);
 		mutableThis->OnTestExecutionComplete(raisedEvent);
 	}
-	
-	ReportSink->RaiseEvent(raisedEvent);
 }

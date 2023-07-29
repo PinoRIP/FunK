@@ -136,8 +136,7 @@ void AFunKWorldTestController::ExecuteTests(const TArray<AFunKFunctionalTest*>& 
 {
 	if(!CurrentTestExecution)
 	{
-		CurrentTestExecution = NewObject<UFunKWorldTestExecution>();
-		CurrentTestExecution->Start(GetWorld(), TestToExecute, ReportSink, executionId);
+		NewObject<UFunKWorldTestExecution>()->Start(GetWorld(), TestToExecute, ReportSink, executionId);
 	}
 }
 
@@ -150,7 +149,7 @@ void AFunKWorldTestController::ExecuteTestByName(const FString& TestName, TScrip
 		{
 			TArray<AFunKFunctionalTest*> Test;
 			Test.Add(FunctionalTest);
-			ExecuteTests(Test, ReportSink, FGuid::NewGuid());
+			ExecuteTests(Test, ReportSink, ExecutionId);
 			break;
 		}
 	}
@@ -165,7 +164,7 @@ void AFunKWorldTestController::ExecuteAllTests(TScriptInterface<IFunKSink> Repor
 		Test.Add(FunctionalTest);
 	}
 
-	ExecuteTests(Test, ReportSink, FGuid::NewGuid());
+	ExecuteTests(Test, ReportSink, ExecutionId);
 }
 
 void AFunKWorldTestController::ClientBeginLocalTestSetup_Implementation(AFunKFunctionalTest* TestToExecute, FFunKTestId ExecutionId)

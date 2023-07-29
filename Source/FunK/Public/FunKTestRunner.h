@@ -66,7 +66,7 @@ protected:
 
 	virtual void UpdateState(EFunKTestRunnerState newState);
 
-	bool IsRunningTestUnderOneProcess = true;
+	bool IsRunningTestUnderOneProcess = false;
 
 	bool IsStandaloneTest() const;
 	static bool IsStandaloneTest(const FFunKTestInstructions& Instructions);
