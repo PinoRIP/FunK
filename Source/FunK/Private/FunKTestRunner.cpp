@@ -59,6 +59,11 @@ bool UFunKTestRunner::Test(const FFunKTestInstructions& Instructions)
 
 			ActiveTestInstructions = Instructions;
 		}
+		else
+		{
+			UpdateState(EFunKTestRunnerState::WaitingForWorld);
+			ActiveTestInstructions = Instructions;
+		}
 		
 		if(State == EFunKTestRunnerState::WaitingForWorld)
 		{
@@ -114,6 +119,7 @@ bool UFunKTestRunner::Test(const FFunKTestInstructions& Instructions)
 
 	if(State == EFunKTestRunnerState::EvaluatingTest)
 	{
+		UpdateState(EFunKTestRunnerState::Started);
 		return true;
 	}
 
