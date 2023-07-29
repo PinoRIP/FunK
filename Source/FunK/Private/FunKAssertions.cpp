@@ -113,7 +113,7 @@ bool UFunKAssertions::AssertFloatNotEqual(float Actual, float NotExpected, const
 
 bool UFunKAssertions::AssertFloatNotEqualInContext(float Actual, float NotExpected, const FString& What, UObject* Context, TScriptInterface<IFunKSink> Sink, float Tolerance)
 {
-	return Assert([Actual, NotExpected, Tolerance]() { return FMath::IsNearlyEqual(Actual, NotExpected, Tolerance); }, BuildMessage(What, FString::SanitizeFloat(NotExpected), FString::SanitizeFloat(Actual), EFunKComparisonMethod::NotEqualTo), Sink, Context);
+	return Assert([Actual, NotExpected, Tolerance]() { return !FMath::IsNearlyEqual(Actual, NotExpected, Tolerance); }, BuildMessage(What, FString::SanitizeFloat(NotExpected), FString::SanitizeFloat(Actual), EFunKComparisonMethod::NotEqualTo), Sink, Context);
 }
 
 bool UFunKAssertions::AssertDoubleEqual(double Actual, double Expected, const FString& What, TScriptInterface<IFunKSink> Sink, double Tolerance)
@@ -133,7 +133,7 @@ bool UFunKAssertions::AssertDoubleNotEqual(double Actual, double NotExpected, co
 
 bool UFunKAssertions::AssertDoubleNotEqualInContext(double Actual, double NotExpected, const FString& What, UObject* Context, TScriptInterface<IFunKSink> Sink, double Tolerance)
 {
-	return Assert([Actual, NotExpected, Tolerance]() { return FMath::IsNearlyEqual(Actual, NotExpected, Tolerance); }, BuildMessage(What, FString::SanitizeFloat(NotExpected), FString::SanitizeFloat(Actual), EFunKComparisonMethod::NotEqualTo), Sink, Context);
+	return Assert([Actual, NotExpected, Tolerance]() { return !FMath::IsNearlyEqual(Actual, NotExpected, Tolerance); }, BuildMessage(What, FString::SanitizeFloat(NotExpected), FString::SanitizeFloat(Actual), EFunKComparisonMethod::NotEqualTo), Sink, Context);
 }
 
 bool UFunKAssertions::AssertNameEqual(FName Actual, FName Expected, const FString& What, TScriptInterface<IFunKSink> Sink)
@@ -153,7 +153,7 @@ bool UFunKAssertions::AssertNameNotEqual(FName Actual, FName NotExpected, const 
 
 bool UFunKAssertions::AssertNameNotEqualInContext(FName Actual, FName NotExpected, const FString& What, UObject* Context, TScriptInterface<IFunKSink> Sink)
 {
-	return Assert([Actual, NotExpected]() { return Actual == NotExpected; }, BuildMessage(What, NotExpected.ToString(), Actual.ToString(), EFunKComparisonMethod::NotEqualTo), Sink, Context);
+	return Assert([Actual, NotExpected]() { return Actual != NotExpected; }, BuildMessage(What, NotExpected.ToString(), Actual.ToString(), EFunKComparisonMethod::NotEqualTo), Sink, Context);
 }
 
 bool UFunKAssertions::AssertStringEqual(FString Actual, FString Expected, const FString& What, TScriptInterface<IFunKSink> Sink)
@@ -173,7 +173,7 @@ bool UFunKAssertions::AssertStringNotEqual(FString Actual, FString NotExpected, 
 
 bool UFunKAssertions::AssertStringNotEqualInContext(FString Actual, FString NotExpected, const FString& What, UObject* Context, TScriptInterface<IFunKSink> Sink)
 {
-	return Assert([Actual, NotExpected]() { return Actual == NotExpected; }, BuildMessage(What, NotExpected, Actual, EFunKComparisonMethod::NotEqualTo), Sink, Context);
+	return Assert([Actual, NotExpected]() { return Actual != NotExpected; }, BuildMessage(What, NotExpected, Actual, EFunKComparisonMethod::NotEqualTo), Sink, Context);
 }
 
 bool UFunKAssertions::AssertObjectEqual(UObject* Actual, UObject* Expected, const FString& What, TScriptInterface<IFunKSink> Sink)

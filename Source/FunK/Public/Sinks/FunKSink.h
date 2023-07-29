@@ -12,7 +12,7 @@ class UFunKTestRunner;
 
 // This class does not need to be modified.
 UINTERFACE(BlueprintType)
-class UFunKSink : public UInterface
+class FUNK_API UFunKSink : public UInterface
 {
 	GENERATED_BODY()
 };

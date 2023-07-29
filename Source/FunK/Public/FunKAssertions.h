@@ -29,6 +29,7 @@ class FUNK_API UFunKAssertions : public UObject
 {
 	GENERATED_BODY()
 
+public:
 	UFUNCTION(BlueprintCallable, Category = "FunK|Assertions", meta = ( HidePin = "Sink", DefaultToSelf = "Sink"))
 	static bool AssertTrue(bool Condition, const FString& Message, TScriptInterface<IFunKSink> Sink);
 	
