@@ -2,7 +2,6 @@
 
 
 #include "EventBus/FunKEventBusSubsystem.h"
-
 #include "EventBus/FunKEventBusReplicationController.h"
 #include "GameFramework/GameModeBase.h"
 
@@ -53,17 +52,23 @@ bool FFunKEventBusMessage::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bO
 	}
 }
 
-void FEventBusRegistration::Unregister() const
+void FFunKEventBusRegistration::Unregister()
 {
-	if(Subsystem)
+	if(IsBasicValid())
 	{
 		Subsystem->Unregister(Key);
+		Key = INDEX_NONE;
 	}
 }
 
-bool FEventBusRegistration::IsValid() const
+bool FFunKEventBusRegistration::IsValid() const
 {
-	return Subsystem && Key > INDEX_NONE && Subsystem->HasHandler(Key);
+	return IsBasicValid() && Subsystem->HasHandler(Key);
+}
+
+bool FFunKEventBusRegistration::IsBasicValid() const
+{
+	return Subsystem && Key > INDEX_NONE;
 }
 
 void UFunKEventBusSubsystem::OnWorldBeginPlay(UWorld& InWorld)
@@ -142,14 +147,16 @@ void UFunKEventBusSubsystem::UpdateControllerStats()
 		if(Controller.IsReady)
 			controllerEvent.ControllersReady++;
 	}
-	
-	for (const FReplicationControllerState& Controller : ReplicationControllers)
+
+	for (int i = 0; i < controllerEvent.Controllers; ++i)
 	{
+		const FReplicationControllerState& Controller = ReplicationControllers[i];
+		
 		Controller.Reference->ActiveController = controllerEvent.ControllersReady;
 		Controller.Reference->IsServerDedicated = isDedicatedServer;
-		Controller.Reference->ControllerNumber = controllerEvent.Controllers;
+		Controller.Reference->ControllerNumber = i + 1;
 	}
-	
+
 	Raise(controllerEvent);
 }
 

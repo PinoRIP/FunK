@@ -9,10 +9,10 @@
 #include "FunKWorldSubsystem.h"
 #include "FunKWorldTestController.h"
 #include "Editor/EditorPerformanceSettings.h"
+#include "Environment/FunKEditorEnvironmentHandler.h"
+#include "Events/FunKEvent.h"
 #include "GameFramework/GameStateBase.h"
-#include "Sinks/FunKAutomationSink.h"
-#include "Sinks/FunKLogSink.h"
-#include "Sinks/FunKSink.h"
+#include "Misc/AutomationTest.h"
 #include "UObject/UnrealTypePrivate.h"
 
 class UFunKSettingsObject;
@@ -21,18 +21,22 @@ void UFunKTestRunner::Init(UFunKEngineSubsystem* funKEngineSubsystem, EFunKTestR
 {
 	Type = RunType;
 	FunKEngineSubsystem = funKEngineSubsystem;
+	EnvironmentHandler = RunType == EFunKTestRunnerType::LocalInProc
+		? NewObject<UFunKEditorEnvironmentHandler>()
+		: nullptr;
 
-	GetSinks(Sinks);
 	UpdateState(EFunKTestRunnerState::Initialized);
 }
 
-void UFunKTestRunner::Start()
+bool UFunKTestRunner::Start(const FFunKTestInstructions& Instructions)
 {	
 	UpdateState(Type > EFunKTestRunnerType::LocalInProc ? EFunKTestRunnerState::ExecutingTest : EFunKTestRunnerState::Started);
-	RaiseStartEvent();
+	RaiseInfoEvent("FunK Start");
+	ActiveTestInstructions = Instructions;	
+	return true;
 }
 
-bool UFunKTestRunner::Test(const FFunKTestInstructions& Instructions)
+bool UFunKTestRunner::Update()
 {
 	if(Type != EFunKTestRunnerType::LocalInProc)
 	{
@@ -44,9 +48,19 @@ bool UFunKTestRunner::Test(const FFunKTestInstructions& Instructions)
 	{
 		if(State <= EFunKTestRunnerState::Ended)
 		{
-			RaiseErrorEvent("The test run ist not active!", "UFunKTestRun::Next");
+			RaiseErrorEvent("The test run is not active!", "UFunKTestRun::Next");
 			return true;
 		}
+
+		EFunKEnvironmentWorldState environmentState = EnvironmentHandler->UpdateWorldState(ActiveTestInstructions);
+		if(environmentState == EFunKEnvironmentWorldState::CantStart)
+		{
+			RaiseErrorEvent("Test environment could not be setup", "UFunKTestRunner::StartEnvironment");
+			End();
+			return true;
+		}
+		
+		UpdateState(environmentState == EFunKEnvironmentWorldState::IsRunning ? EFunKTestRunnerState::Ready : EFunKTestRunnerState::EnvironmentSetup);
 
 		if(State == EFunKTestRunnerState::Started)
 		{
@@ -106,6 +120,11 @@ bool UFunKTestRunner::Test(const FFunKTestInstructions& Instructions)
 		
 		if(State == EFunKTestRunnerState::Ready)
 		{
+			EventBusRegistration.Add(EnvironmentHandler->GetEventBus()->On<FFunKEvent>([this](const FFunKEvent& Event)
+			{
+				RaiseEvent(Event);
+			}));
+			
 			if(ActiveTestInstructions.MapTestName.Len() > 0)
 			{
 				GetCurrentWorldController()->ExecuteTestByName(ActiveTestInstructions.MapTestName, this);
@@ -134,7 +153,7 @@ bool UFunKTestRunner::Test(const FFunKTestInstructions& Instructions)
 
 	if(State == EFunKTestRunnerState::EvaluatingTest)
 	{
-		UpdateState(EFunKTestRunnerState::Started);
+		End();
 		return true;
 	}
 
@@ -144,8 +163,7 @@ bool UFunKTestRunner::Test(const FFunKTestInstructions& Instructions)
 void UFunKTestRunner::End()
 {
 	UpdateState(EFunKTestRunnerState::Ended);
-	CurrentTestWorld = nullptr;
-	Sinks.Empty();
+	EventBusRegistration.Unregister();
 }
 
 void UFunKTestRunner::RaiseInfoEvent(const FString& Message, const FString& Context) const
@@ -165,12 +183,15 @@ void UFunKTestRunner::RaiseErrorEvent(const FString& Message, const FString& Con
 
 void UFunKTestRunner::RaiseEvent(const FFunKEvent& raisedEvent) const
 {
-	for (TScriptInterface<IFunKSink> FunKSink : Sinks)
-	{
-		if(FunKSink)
-		{
-			FunKSink->RaiseEvent(raisedEvent);
-		}
+	if(auto* AutomationEntryRuntime = FAutomationTestFramework::Get().GetCurrentTest())
+	{	
+		EAutomationEventType type = raisedEvent.Type == EFunKEventType::Info
+			? EAutomationEventType::Info
+			: raisedEvent.Type == EFunKEventType::Warning
+				? EAutomationEventType::Warning
+				: EAutomationEventType::Error;
+		
+		AutomationEntryRuntime->AddEvent(FAutomationEvent(type, raisedEvent.Message, raisedEvent.GetContext()));
 	}
 }
 
@@ -218,11 +239,6 @@ AFunKWorldTestController* UFunKTestRunner::GetCurrentWorldController() const
 		return nullptr;
 		
 	return CurrentTestWorld->GetSubsystem<UFunKWorldSubsystem>()->GetLocalTestController();
-}
-
-void UFunKTestRunner::RaiseStartEvent()
-{
-	RaiseInfoEvent("FunK Start");
 }
 
 void UFunKTestRunner::GetSinks(TArray<TScriptInterface<IFunKSink>>& outSinks)

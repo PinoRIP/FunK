@@ -6,7 +6,6 @@
 #include "FunKSettingsObject.h"
 #include "FunKWorldSubsystem.h"
 #include "FunKWorldTestController.h"
-#include "Sinks/FunKSink.h"
 
 
 FString UFunKWorldTestExecution::FunKTestLifeTimeBeginEvent = FString("FunKTestLifeTimeBeginEvent");

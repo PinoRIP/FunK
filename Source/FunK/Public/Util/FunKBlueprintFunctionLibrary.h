@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "FunKTypes.h"
+#include "FunKWorldSubsystem.h"
 #include "FunKBlueprintFunctionLibrary.generated.h"
 
 
@@ -18,10 +19,10 @@ class FUNK_API UFunKBlueprintFunctionLibrary : public UBlueprintFunctionLibrary
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
-	static AFunKWorldTestController* GetTestController(UObject* WorldContext);
+	static UFunKWorldSubsystem* GetFunKWorldSubsystem(UObject* WorldContext);
 	
 	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
-	static int32 GetTestControllerNumber(UObject* WorldContext);
+	static int32 GetRoleNumber(UObject* WorldContext);
 
 	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
 	static EFunKNetMode GetNetMode(UObject* WorldContext);

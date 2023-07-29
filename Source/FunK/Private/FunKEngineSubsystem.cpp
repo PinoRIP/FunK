@@ -63,14 +63,12 @@ UFunKTestRunner* UFunKEngineSubsystem::SetupTestRun(EFunKTestRunnerType RunType)
 {
 	EndTestRun();
 
-	const UClass* ReplicatedManagerClass = GetDefault<UFunKSettingsObject>()->Settings.TestRunnerClassOverride.Get();
-	ActiveTestRun = ReplicatedManagerClass
-		? NewObject<UFunKTestRunner>(this, ReplicatedManagerClass)
+	const UClass* TestRunnerClass = GetDefault<UFunKSettingsObject>()->Settings.TestRunnerClassOverride.Get();
+	ActiveTestRun = TestRunnerClass
+		? NewObject<UFunKTestRunner>(this, TestRunnerClass)
 		: NewObject<UFunKTestRunner>(this);
 
 	ActiveTestRun->Init(this, RunType);
-	ActiveTestRun->Start();
-	check(ActiveTestRun->IsRunning())
 
 	return ActiveTestRun;
 }

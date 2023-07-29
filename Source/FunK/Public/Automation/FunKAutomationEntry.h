@@ -5,6 +5,8 @@
 #include "CoreMinimal.h"
 #include "Misc/AutomationTest.h"
 
+class UFunKTestRunner;
+
 /**
  * 
  */
@@ -17,4 +19,6 @@ public:
 	}
 
 	static void ParseTestMapInfo(const FString& Parameters, FString& MapObjectPath, FString& MapPackageName, FString& MapTestName, FString& Params);
+
+	static void StartTest(class UFunKEngineSubsystem* EngineSubsystem, const struct FFunKTestInstructions& TestInstructions);
 };

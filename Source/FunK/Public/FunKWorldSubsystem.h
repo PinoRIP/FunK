@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "EventBus/FunKEventBusSubsystem.h"
 #include "FunKWorldSubsystem.generated.h"
 
 class AFunKWorldTestController;
@@ -15,15 +16,23 @@ class FUNK_API UFunKWorldSubsystem : public UWorldSubsystem
 	GENERATED_BODY()
 
 public:
-	void CheckLocalTestController();
 	AFunKWorldTestController* GetLocalTestController();
 	void SetLocalTestController(AFunKWorldTestController* localTestController);
 
 	bool HasLocalTestController() const;
+
+	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
+
+	virtual void Deinitialize() override;
+
+	int32 GetRoleNum() const;
+	bool IsServerDedicated() const;
 	
 private:
 	UPROPERTY()
 	AFunKWorldTestController* LocalTestController = nullptr;
 
 	AFunKWorldTestController* NewTestController() const;
+
+	FFunKEventBusRegistration Registration;
 };

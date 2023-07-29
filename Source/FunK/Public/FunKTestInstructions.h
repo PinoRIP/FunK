@@ -29,4 +29,8 @@ struct FFunKTestInstructions
 	FString MapPackageName;
 	FString MapTestName;
 	FString Params;
+
+	bool IsStandaloneTest() const;
+	bool IsDedicatedServerTest() const;
+	bool IsListenServerTest() const;
 };

@@ -5,10 +5,10 @@
 #include "CoreMinimal.h"
 #include "FunKTestResult.h"
 #include "FunKTestRunID.h"
-#include "Sinks/FunKSink.h"
 #include "Stages/FunKStages.h"
 #include "FunKTestBase.generated.h"
 
+class UFunKWorldSubsystem;
 struct FFunKStagesSetup;
 class AFunKWorldTestController;
 
@@ -16,7 +16,7 @@ class AFunKWorldTestController;
  * 
  */
 UCLASS(Abstract, NotBlueprintable)
-class FUNK_API AFunKTestBase : public AActor, public IFunKSink
+class FUNK_API AFunKTestBase : public AActor
 {
 	GENERATED_BODY()
 
@@ -44,7 +44,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category="FunK|Setup")
 	bool IsRunOnListenServerClients() const;
 
-	virtual void BeginTest(AFunKWorldTestController* Controller, FFunKTestRunID InTestRunID, int32 InSeed);
+	virtual void BeginTest(FGuid InTestRunID, int32 InSeed);
 	virtual void BeginTestStage(int32 StageIndex);
 
 	FORCEINLINE FName GetStageName() const;
@@ -66,7 +66,7 @@ public:
 
 	EFunKTestResult GetTestResult() const;
 	
-	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const override;
+	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const;
 	
 	virtual void PostLoad() override;
 	virtual void PostActorCreated() override;
@@ -93,8 +93,6 @@ protected:
 	virtual bool IsLastStage();
 	virtual bool IsExecutingStage(const FFunKStage& stage) const;
 	
-	virtual void CheckLocalTestController();
-	
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
@@ -107,12 +105,12 @@ protected:
 	bool IsValidStageIndex(int32 StageIndex) const;
 	int32 GetCurrentStageIndex() const { return CurrentStageIndex; }
 
-	AFunKWorldTestController* GetCurrentController() const { return CurrentController; }
+	UFunKWorldSubsystem* GetWorldSubsystem() const;
 	
 private:
 	int32 Seed;
 	int32 CurrentStageIndex = INDEX_NONE;
-	FFunKTestRunID TestRunID;
+	FGuid TestRunID;
 	FFunKStages Stages;
 	EFunKTestResult Result = EFunKTestResult::None;
 	

@@ -7,6 +7,7 @@
 #include "FunKWorldSubsystem.h"
 #include "FunKWorldTestController.h"
 #include "FunKWorldTestExecution.h"
+#include "Events/FunKEvent.h"
 #include "Stages/FunKStagesSetup.h"
 
 AFunKTestBase::AFunKTestBase()
@@ -50,9 +51,8 @@ bool AFunKTestBase::IsRunOnListenServerClients() const
 	return Stages.OnListenServerClientCount > 0;
 }
 
-void AFunKTestBase::BeginTest(AFunKWorldTestController* Controller, FFunKTestRunID InTestRunID, int32 InSeed)
+void AFunKTestBase::BeginTest(FGuid InTestRunID, int32 InSeed)
 {
-	CurrentController = Controller;
 	TestRunID = InTestRunID;
 	Result = EFunKTestResult::None;
 	Seed = InSeed;
@@ -171,7 +171,7 @@ void AFunKTestBase::RaiseEvent(const FFunKEvent& raisedEvent) const
 	{
 		FFunKEvent Event(raisedEvent);
 		
-		Event.AddToContext(TestRunID.ToString()).AddToContext(GetName()).AddToContext(CurrentController->GetRoleName());
+		Event.AddToContext(TestRunID.ToString()).AddToContext(GetName()).AddToContext(FString::FromInt(GetWorldSubsystem()->GetRoleNum()));
 		if(const FFunKStage* CurrentStage = GetCurrentStage())
 			Event.AddToContext(CurrentStage->Name.ToString());
 		
@@ -257,15 +257,7 @@ bool AFunKTestBase::IsExecutingStage(const FFunKStage& stage) const
 	return 	(stage.IsOnStandalone && netMode == NM_Standalone) ||
 			(stage.IsOnDedicatedServer && netMode == NM_DedicatedServer) ||
 			(stage.IsOnListenServer && netMode == NM_ListenServer) ||
-			(netMode == NM_Client && (GetCurrentController()->GetIsServerDedicated() ? stage.IsOnDedicatedServerClient : stage.IsOnListenServerClient));
-}
-
-void AFunKTestBase::CheckLocalTestController()
-{
-	if(UFunKWorldSubsystem* funk = GetWorld()->GetSubsystem<UFunKWorldSubsystem>())
-	{
-		funk->CheckLocalTestController();
-	}
+			(netMode == NM_Client && (GetWorldSubsystem()->IsServerDedicated() ? stage.IsOnDedicatedServerClient : stage.IsOnListenServerClient));
 }
 
 void AFunKTestBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -281,7 +273,6 @@ void AFunKTestBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void AFunKTestBase::BeginPlay()
 {
 	Super::BeginPlay();
-	CheckLocalTestController();
 	SetActorTickEnabled(false);
 }
 
@@ -319,6 +310,11 @@ void AFunKTestBase::SetupStages()
 bool AFunKTestBase::IsValidStageIndex(int32 StageIndex) const
 {
 	return Stages.Stages.Num() > StageIndex && StageIndex >= 0;
+}
+
+UFunKWorldSubsystem* AFunKTestBase::GetWorldSubsystem() const
+{
+	return GetWorld()->GetSubsystem<UFunKWorldSubsystem>();
 }
 
 bool AFunKTestBase::IsBpEventImplemented(const FName& Name) const

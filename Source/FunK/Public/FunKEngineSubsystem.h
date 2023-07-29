@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "FunKTestRunnerType.h"
-#include "Sinks/FunKSink.h"
 #include "FunKEngineSubsystem.generated.h"
 
 class UFunKSink;

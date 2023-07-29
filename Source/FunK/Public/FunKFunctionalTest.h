@@ -24,8 +24,7 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup|Timeout")
 	FFunKTimeLimit ActTimeLimit;
-	
-	
+		
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
 	bool RunOnStandalone = true;
 	

@@ -3,26 +3,20 @@
 
 #include "Util/FunKBlueprintFunctionLibrary.h"
 #include "FunKWorldSubsystem.h"
-#include "FunKWorldTestController.h"
 
-AFunKWorldTestController* UFunKBlueprintFunctionLibrary::GetTestController(UObject* WorldContext)
+UFunKWorldSubsystem* UFunKBlueprintFunctionLibrary::GetFunKWorldSubsystem(UObject* WorldContext)
 {
 	if(!WorldContext)
 		return nullptr;
 
-	if(UFunKWorldSubsystem* funk = WorldContext->GetWorld()->GetSubsystem<UFunKWorldSubsystem>())
-	{
-		return funk->GetLocalTestController();
-	}
-
-	return nullptr;
+	return WorldContext->GetWorld()->GetSubsystem<UFunKWorldSubsystem>();
 }
 
-int32 UFunKBlueprintFunctionLibrary::GetTestControllerNumber(UObject* WorldContext)
+int32 UFunKBlueprintFunctionLibrary::GetRoleNumber(UObject* WorldContext)
 {
-	if(const AFunKWorldTestController* controller = GetTestController(WorldContext))
+	if(const UFunKWorldSubsystem* Subsystem = GetFunKWorldSubsystem(WorldContext))
 	{
-		return controller->GetControllerNumber();
+		return Subsystem->GetRoleNum();
 	}
 
 	return INDEX_NONE;
@@ -63,7 +57,7 @@ void UFunKBlueprintFunctionLibrary::SwitchClients(UObject* WorldContext, EFunKCl
 	}
 	else if (netMode == EFunKNetMode::Client)
 	{
-		const int32 number = GetTestControllerNumber(WorldContext);
+		const int32 number = GetRoleNumber(WorldContext);
 		if (number == 1)
 			Branches = EFunKClient::First;
 		else if (number == 2)
@@ -100,9 +94,9 @@ void UFunKBlueprintFunctionLibrary::SwitchTestEnvironmentType(UObject* WorldCont
 
 bool UFunKBlueprintFunctionLibrary::IsServerDedicated(UObject* WorldContext)
 {
-	if(const AFunKWorldTestController* controller = GetTestController(WorldContext))
+	if(const UFunKWorldSubsystem* Subsystem = GetFunKWorldSubsystem(WorldContext))
 	{
-		return controller->GetIsServerDedicated();
+		return Subsystem->IsServerDedicated();
 	}
 
 	return false;

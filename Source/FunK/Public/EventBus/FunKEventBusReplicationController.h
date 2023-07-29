@@ -19,6 +19,10 @@ public:
 
 	virtual void GetLifetimeReplicatedProps( TArray< FLifetimeProperty > & OutLifetimeProps ) const override;
 
+	int32 GetActiveController() const { return ActiveController; }
+	int32 GetControllerNumber() const { return ControllerNumber; }
+	int32 GetIsServerDedicated() const { return IsServerDedicated; }
+	
 protected:
 	bool IsControllerLocallyReady() const;
 

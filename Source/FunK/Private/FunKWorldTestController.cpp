@@ -16,18 +16,7 @@
 AFunKWorldTestController::AFunKWorldTestController()
 {
 	PrimaryActorTick.bCanEverTick = true;
-	bReplicates = true;
-
-	RootComponent = CreateDefaultSubobject<USceneComponent>("TEST");
-}
-
-void AFunKWorldTestController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME( AFunKWorldTestController, ActiveController );
-	DOREPLIFETIME( AFunKWorldTestController, ControllerNumber );
-	DOREPLIFETIME( AFunKWorldTestController, IsServerDedicated );
+	RootComponent = CreateDefaultSubobject<USceneComponent>("Root");
 }
 
 // Called when the game starts or when spawned
@@ -123,17 +112,17 @@ void AFunKWorldTestController::OnConnection(AGameModeBase* GameMode, APlayerCont
 	CreateTestControllerForClient(NewPlayer);
 }
 
-void AFunKWorldTestController::ServerExecuteTestByName_Implementation(const FString& TestName, const FFunKTestRunID TestRunID)
+void AFunKWorldTestController::ServerExecuteTestByName_Implementation(const FString& TestName, const FGuid TestRunID)
 {
 	ExecuteTestByName(TestName, this, TestRunID);
 }
 
-void AFunKWorldTestController::ServerExecuteAllTests_Implementation(FFunKTestRunID TestRunID)
+void AFunKWorldTestController::ServerExecuteAllTests_Implementation(FGuid TestRunID)
 {
 	ExecuteAllTests(this, TestRunID);
 }
 
-void AFunKWorldTestController::ExecuteTests(const TArray<AFunKTestBase*>& TestToExecute, TScriptInterface<IFunKSink> ReportSink, const FFunKTestRunID TestRunID)
+void AFunKWorldTestController::ExecuteTests(const TArray<AFunKTestBase*>& TestToExecute, TScriptInterface<IFunKSink> ReportSink, const FGuid TestRunID)
 {
 	if(!CurrentTestExecution)
 	{
@@ -141,7 +130,7 @@ void AFunKWorldTestController::ExecuteTests(const TArray<AFunKTestBase*>& TestTo
 	}
 }
 
-void AFunKWorldTestController::ExecuteTestByName(const FString& TestName, TScriptInterface<IFunKSink> ReportSink, const FFunKTestRunID TestRunID)
+void AFunKWorldTestController::ExecuteTestByName(const FString& TestName, TScriptInterface<IFunKSink> ReportSink, const FGuid TestRunID)
 {
 	for (TActorIterator<AFunKTestBase> ActorItr(GetWorld(), AFunKTestBase::StaticClass(), EActorIteratorFlags::AllActors); ActorItr; ++ActorItr)
 	{
@@ -156,7 +145,7 @@ void AFunKWorldTestController::ExecuteTestByName(const FString& TestName, TScrip
 	}
 }
 
-void AFunKWorldTestController::ExecuteAllTests(TScriptInterface<IFunKSink> ReportSink, const FFunKTestRunID TestRunID)
+void AFunKWorldTestController::ExecuteAllTests(TScriptInterface<IFunKSink> ReportSink, const FGuid TestRunID)
 {
 	TArray<AFunKTestBase*> Test;
 	for (TActorIterator<AFunKTestBase> ActorItr(GetWorld(), AFunKTestBase::StaticClass(), EActorIteratorFlags::AllActors); ActorItr; ++ActorItr)
@@ -168,7 +157,7 @@ void AFunKWorldTestController::ExecuteAllTests(TScriptInterface<IFunKSink> Repor
 	ExecuteTests(Test, ReportSink, TestRunID);
 }
 
-void AFunKWorldTestController::ClientBeginLocalTest_Implementation(AFunKTestBase* TestToBegin, FFunKTestRunID TestRunID, int32 Seed)
+void AFunKWorldTestController::ClientBeginLocalTest_Implementation(AFunKTestBase* TestToBegin, FGuid TestRunID, int32 Seed)
 {
 	if(TestToBegin)
 	{
@@ -180,7 +169,7 @@ void AFunKWorldTestController::ClientBeginLocalTest_Implementation(AFunKTestBase
 	}
 }
 
-void AFunKWorldTestController::BeginLocalTest(AFunKTestBase* TestToBegin, FFunKTestRunID TestRunID, int32 Seed)
+void AFunKWorldTestController::BeginLocalTest(AFunKTestBase* TestToBegin, FGuid TestRunID, int32 Seed)
 {
 	if(IsLocalTestController())
 	{
@@ -280,7 +269,7 @@ void AFunKWorldTestController::Tick(float DeltaTime)
 void AFunKWorldTestController::ExecuteTestByName(FString TestName, TScriptInterface<IFunKSink> InReportSink)
 {
 	const ENetMode netMode = GetNetMode();
-	const FFunKTestRunID TestRunID = FFunKTestRunID::NewGuid();
+	const FGuid TestRunID = FGuid::NewGuid();
 	
 	if(netMode == NM_Client)
 	{
@@ -295,7 +284,7 @@ void AFunKWorldTestController::ExecuteTestByName(FString TestName, TScriptInterf
 void AFunKWorldTestController::ExecuteAllTests(TScriptInterface<IFunKSink> InReportSink)
 {
 	const ENetMode NetMode = GetNetMode();
-	const FFunKTestRunID TestRunID = FFunKTestRunID::NewGuid();
+	const FGuid TestRunID = FGuid::NewGuid();
 	
 	if(NetMode == NM_Client)
 	{

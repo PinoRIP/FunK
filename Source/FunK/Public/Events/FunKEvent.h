@@ -51,9 +51,14 @@ public:
 		, Context(InContext)
 	{
 	}
-	
+
+	UPROPERTY()
 	EFunKEventType Type = EFunKEventType::Error;
+
+	UPROPERTY()
 	FString Message;
+
+	UPROPERTY()
 	TArray<FString> Context;
 
 	void GetContext(FString& outContext) const

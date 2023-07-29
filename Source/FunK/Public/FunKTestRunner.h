@@ -5,13 +5,14 @@
 #include "CoreMinimal.h"
 #include "FunKTestInstructions.h"
 #include "FunKTestRunnerType.h"
-#include "Sinks/FunKSink.h"
+#include "EventBus/FunKEventBusRegistrationContainer.h"
+#include "EventBus/FunKEventBusSubsystem.h"
 #include "UObject/Object.h"
 #include "FunKTestRunner.generated.h"
 
+class IFunKEnvironmentHandler;
 class AFunKWorldTestController;
 struct FFunKTestInstructions;
-class UFunKSink;
 class UFunKEngineSubsystem;
 class FFunKAutomationEntry;
 
@@ -23,8 +24,7 @@ enum class EFunKTestRunnerState : uint8
 	Initialized,
 	Ended,
 	Started,
-	WaitingForWorld,
-	WaitingForConnections,
+	EnvironmentSetup,
 	Ready,
 	ExecutingTest,
 	EvaluatingTest
@@ -34,21 +34,21 @@ enum class EFunKTestRunnerState : uint8
  * 
  */
 UCLASS()
-class FUNK_API UFunKTestRunner : public UObject, public IFunKSink
+class FUNK_API UFunKTestRunner : public UObject
 {
 	GENERATED_BODY()
 
 public:
 	virtual void Init(UFunKEngineSubsystem* FunKEngineSubsystem, EFunKTestRunnerType RunType);
 	
-	virtual void Start();
-	virtual bool Test(const FFunKTestInstructions& Instructions);
+	virtual bool Start(const FFunKTestInstructions& Instructions);
+	virtual bool Update();
 	virtual void End();
 
 	virtual void RaiseInfoEvent(const FString& Message, const FString& Context = "") const;
 	virtual void RaiseWarningEvent(const FString& Message, const FString& Context = "") const;
 	virtual void RaiseErrorEvent(const FString& Message, const FString& Context = "") const;
-	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const override;
+	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const;
 
 	bool IsRunning() const;
 	bool IsWaitingForMap() const;
@@ -61,9 +61,6 @@ public:
 	AFunKWorldTestController* GetCurrentWorldController() const;
 	
 protected:
-	virtual void RaiseStartEvent();
-	virtual void GetSinks(TArray<TScriptInterface<IFunKSink>>& outSinks);
-
 	virtual void UpdateState(EFunKTestRunnerState newState);
 
 	bool IsStandaloneTest() const;
@@ -77,18 +74,17 @@ protected:
 	bool IsEnvironmentRunning(const FFunKTestInstructions& Instructions, bool& isWrongEnvironmentRunning);
 	FString GetCurrentPieWorldPackageName();
 	bool IsHoldingSubprocesses() const;
-
+	
 private:
 	EFunKTestRunnerType Type = EFunKTestRunnerType::None;
 	FFunKTestInstructions ActiveTestInstructions;
 	EFunKTestRunnerState State = EFunKTestRunnerState::None;
 
-	TWeakObjectPtr<UWorld> CurrentTestWorld = nullptr;
-
 	UPROPERTY()
-	TArray<TScriptInterface<IFunKSink>> Sinks;
-
-	TArray<uint32> StartedProcesses;
+	TScriptInterface<IFunKEnvironmentHandler> EnvironmentHandler;
+	
+	TWeakObjectPtr<UWorld> CurrentTestWorld = nullptr;
+	FFunKEventBusRegistrationContainer EventBusRegistration;
 
 	TWeakObjectPtr<UFunKEngineSubsystem> FunKEngineSubsystem;
 	

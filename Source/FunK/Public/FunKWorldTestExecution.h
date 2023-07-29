@@ -3,8 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FunKTestRunID.h"
-#include "Sinks/FunKSink.h"
 #include "UObject/Object.h"
 #include "FunKWorldTestExecution.generated.h"
 
@@ -20,7 +18,7 @@ struct FFunKTestExecutionState
 
 public:
 	FFunKTestExecutionState()
-		: Id(FFunKTestRunID())
+		: Id(FGuid())
 		, LastStartedStage(INDEX_NONE)
 		, LastFinishedStage(INDEX_NONE)
 		, IsExecutionFinished(false)
@@ -28,7 +26,7 @@ public:
 		, Controller(nullptr)
 	{ }
 	
-	FFunKTestRunID Id;
+	FGuid Id;
 
 	int32 LastStartedStage;
 	int32 LastFinishedStage;
@@ -44,21 +42,18 @@ public:
  * 
  */
 UCLASS()
-class FUNK_API UFunKWorldTestExecution : public UObject, public FTickableGameObject, public IFunKSink
+class FUNK_API UFunKWorldTestExecution : public UObject, public FTickableGameObject
 {
 	GENERATED_BODY()
 
 public:
-	void Start(const UWorld* world, const TArray<AFunKTestBase*>& testsToExecute, TScriptInterface<IFunKSink> reportSink, FFunKTestRunID executionId);
+	void Start(const UWorld* world, const TArray<AFunKTestBase*>& testsToExecute, TScriptInterface<IFunKSink> reportSink, FGuid executionId);
 
 	AFunKWorldTestController* GetMasterController() const;
 
 	bool IsFinished() const;
 	
 private:
-	UPROPERTY()
-	TScriptInterface<IFunKSink> ReportSink;
-
 	UPROPERTY()
 	int32 CurrentTestIndex = -1;
 	int32 CurrentStageIndex = -1;
@@ -110,7 +105,7 @@ private:
 	FFunKTestExecutionState* GetStateFromEvent(const FFunKEvent& raisedEvent);
 
 public:
-	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const override;
+	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const;
 	virtual void Tick(float DeltaTime) override;
 	virtual TStatId GetStatId() const override;
 	virtual bool IsTickableInEditor() const override;
