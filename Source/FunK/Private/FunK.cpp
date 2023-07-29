@@ -4,6 +4,9 @@
 #include "EngineUtils.h"
 #include "FunKEngineSubsystem.h"
 #include "FunKFunctionalTest.h"
+#include "FunKSettingsObject.h"
+#include "ISettingsModule.h"
+#include "ISettingsSection.h"
 #include "AssetRegistry/AssetRegistryModule.h"
 #include "Misc/AutomationTest.h"
 
@@ -24,6 +27,16 @@ void FFunKModule::StartupModule()
 {
 	// This code will execute after your module is loaded into memory; the exact timing is specified in the .uplugin file per-module
 #if WITH_EDITOR
+	// register settings
+	if (ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
+	{
+		ISettingsSectionPtr SettingsSection = SettingsModule->RegisterSettings("Project", "Plugins", "FunK",
+			LOCTEXT("FunKSettingsName", "FunK Settings"),
+			LOCTEXT("FunKSettingsNameDescription", "Configure the FunK automated tests"),
+			GetMutableDefault<UFunKSettingsObject>()
+		);
+	}
+	
 	FWorldDelegates::GetAssetTags.AddRaw(this, &FFunKModule::OnWorldGetAssetTags);
 #endif
 }
@@ -33,6 +46,11 @@ void FFunKModule::ShutdownModule()
 	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
 	// we call this function before unloading the module.
 #if WITH_EDITOR
+	if(ISettingsModule* SettingsModule = FModuleManager::GetModulePtr<ISettingsModule>("Settings"))
+	{
+		SettingsModule->UnregisterSettings("Project", "Plugins", "FunK");
+	}
+	
 	FWorldDelegates::GetAssetTags.RemoveAll(this);
 	FAutomationTestFramework::Get().PreTestingEvent.RemoveAll(this);
 	FAutomationTestFramework::Get().PostTestingEvent.RemoveAll(this);

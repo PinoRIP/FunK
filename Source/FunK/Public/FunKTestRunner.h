@@ -79,9 +79,7 @@ protected:
 	bool IsEnvironmentRunning(const FFunKTestInstructions& Instructions, bool& isWrongEnvironmentRunning);
 	FString GetCurrentPieWorldPackageName();
 	bool IsHoldingSubprocesses() const;
-	
-	virtual TSubclassOf<AFunKWorldTestController> GetWorldControllerClass() const;
-	
+
 private:
 	EFunKTestRunnerType Type = EFunKTestRunnerType::None;
 	FFunKTestInstructions ActiveTestInstructions;
@@ -97,4 +95,5 @@ private:
 	TWeakObjectPtr<UFunKEngineSubsystem> FunKEngineSubsystem;
 	
 	virtual bool StartEnvironment(const FFunKTestInstructions& Instructions);
+	static void SetFpsSettings(ULevelEditorPlaySettings* playSettings, const FFunKSettings& funkSettings, bool isDedicated);
 };

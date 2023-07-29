@@ -4,6 +4,7 @@
 #include "FunKWorldSubsystem.h"
 
 #include "FunKEngineSubsystem.h"
+#include "FunKSettingsObject.h"
 #include "FunKWorldTestController.h"
 
 void UFunKWorldSubsystem::CheckLocalTestController()
@@ -45,6 +46,8 @@ bool UFunKWorldSubsystem::HasLocalTestController() const
 
 AFunKWorldTestController* UFunKWorldSubsystem::NewTestController() const
 {
-	//TODO
-	return GetWorld()->SpawnActor<AFunKWorldTestController>();
+	UClass* ReplicatedManagerClass = GetDefault<UFunKSettingsObject>()->Settings.WorldTestControllerClassOverride.Get();
+	return ReplicatedManagerClass
+		? GetWorld()->SpawnActor<AFunKWorldTestController>(ReplicatedManagerClass)
+		: GetWorld()->SpawnActor<AFunKWorldTestController>();
 }

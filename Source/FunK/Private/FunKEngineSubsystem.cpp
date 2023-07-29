@@ -3,6 +3,7 @@
 #include "FunKEngineSubsystem.h"
 #include "FunK.h"
 #include "FunKLogging.h"
+#include "FunKSettingsObject.h"
 #include "FunKTestRunner.h"
 
 UFunKTestRunner* UFunKEngineSubsystem::StartTestRunner()
@@ -63,9 +64,12 @@ bool UFunKEngineSubsystem::IsSeparateTestingProcess()
 UFunKTestRunner* UFunKEngineSubsystem::SetupTestRun(EFunKTestRunnerType RunType)
 {
 	EndTestRun();
-	
-	//TODO: Make this configurable
-	ActiveTestRun = NewObject<UFunKTestRunner>(this);
+
+	const UClass* ReplicatedManagerClass = GetDefault<UFunKSettingsObject>()->Settings.TestRunnerClassOverride.Get();
+	ActiveTestRun = ReplicatedManagerClass
+		? NewObject<UFunKTestRunner>(this, ReplicatedManagerClass)
+		: NewObject<UFunKTestRunner>(this);
+
 	ActiveTestRun->Init(this, RunType);
 	ActiveTestRun->Start();
 	check(ActiveTestRun->IsRunning())

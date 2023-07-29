@@ -6,6 +6,7 @@
 #include "FunKEngineSubsystem.h"
 #include "FunKFailedPieStartCapture.h"
 #include "FunKNewProcessCapture.h"
+#include "FunKSettingsObject.h"
 #include "FunKWorldSubsystem.h"
 #include "FunKWorldTestController.h"
 #include "GameFramework/GameStateBase.h"
@@ -13,6 +14,8 @@
 #include "Sinks/FunKLogSink.h"
 #include "Sinks/FunKSink.h"
 #include "UObject/UnrealTypePrivate.h"
+
+class UFunKSettingsObject;
 
 void UFunKTestRunner::Init(UFunKEngineSubsystem* funKEngineSubsystem, EFunKTestRunnerType RunType)
 {
@@ -325,11 +328,6 @@ bool UFunKTestRunner::IsHoldingSubprocesses() const
 	return StartedProcesses.Num() > 0;
 }
 
-TSubclassOf<AFunKWorldTestController> UFunKTestRunner::GetWorldControllerClass() const
-{
-	return TSubclassOf<AFunKWorldTestController>(AFunKWorldTestController::StaticClass());
-}
-
 bool UFunKTestRunner::StartEnvironment(const FFunKTestInstructions& Instructions)
 {
 	FFunKFailedPieStartCapture FailHandler;
@@ -351,6 +349,7 @@ bool UFunKTestRunner::StartEnvironment(const FFunKTestInstructions& Instructions
 	}
 	
 	//TODO: Maybe one day we want to integrate bAllowOnlineSubsystem...
+	const FFunKSettings& settings = GetDefault<UFunKSettingsObject>()->Settings;
 
 	const bool isStandalone = IsStandaloneTest(Instructions);
 	if(isStandalone)
@@ -358,6 +357,7 @@ bool UFunKTestRunner::StartEnvironment(const FFunKTestInstructions& Instructions
 		params.EditorPlaySettings->SetPlayNumberOfClients(1);
 		params.EditorPlaySettings->bLaunchSeparateServer = false;
 		params.EditorPlaySettings->SetPlayNetMode(EPlayNetMode::PIE_Standalone);
+		SetFpsSettings(params.EditorPlaySettings, settings, false);
 		
 		GEditor->RequestPlaySession(params);
 	}
@@ -369,6 +369,8 @@ bool UFunKTestRunner::StartEnvironment(const FFunKTestInstructions& Instructions
 			params.EditorPlaySettings->bLaunchSeparateServer = false;
 			params.EditorPlaySettings->SetRunUnderOneProcess(IsRunningTestUnderOneProcess);
 			params.EditorPlaySettings->SetPlayNetMode(EPlayNetMode::PIE_ListenServer);
+			SetFpsSettings(params.EditorPlaySettings, settings, false);
+			
 			GEditor->RequestPlaySession(params);
 		}
 		else if(IsDedicatedServerTest(Instructions))
@@ -377,6 +379,8 @@ bool UFunKTestRunner::StartEnvironment(const FFunKTestInstructions& Instructions
 			params.EditorPlaySettings->bLaunchSeparateServer = true;
 			params.EditorPlaySettings->SetRunUnderOneProcess(IsRunningTestUnderOneProcess);
 			params.EditorPlaySettings->SetPlayNetMode(EPlayNetMode::PIE_Client);
+			SetFpsSettings(params.EditorPlaySettings, settings, true);
+			
 			GEditor->RequestPlaySession(params);
 		}
 		else
@@ -392,4 +396,31 @@ bool UFunKTestRunner::StartEnvironment(const FFunKTestInstructions& Instructions
 		ProcessStartCapture.GetProcessIds(StartedProcesses);
 	
 	return FailHandler.CanProceed() && (IsRunningTestUnderOneProcess || isStandalone || (ProcessStartCapture.IsValid() && StartedProcesses.Num() == 2));
+}
+
+void UFunKTestRunner::SetFpsSettings(ULevelEditorPlaySettings* playSettings, const FFunKSettings& funkSettings, bool isDedicated)
+{
+	if(funkSettings.FixedTickFrameRates.Num() <= 0)
+		return;
+
+	const int32 server = funkSettings.FixedTickFrameRates[0];
+	if(isDedicated)
+		playSettings->ServerFixedFPS = server;
+	else
+		playSettings->ClientFixedFPS.Add(server);
+
+	int32 client1 = server;
+	int32 client2 = server;
+	if(funkSettings.FixedTickFrameRates.Num() == 2)
+	{
+		client1 = client2 = funkSettings.FixedTickFrameRates[1];
+	}
+	else if(funkSettings.FixedTickFrameRates.Num() > 2)
+	{
+		client1 = funkSettings.FixedTickFrameRates[1];
+		client2 = funkSettings.FixedTickFrameRates[2];
+	}
+
+	playSettings->ClientFixedFPS.Add(client1);
+	playSettings->ClientFixedFPS.Add(client2);
 }
