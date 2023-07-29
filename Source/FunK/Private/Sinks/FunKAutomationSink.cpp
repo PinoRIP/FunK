@@ -10,7 +10,7 @@ void UFunKAutomationSink::RaiseEvent(const FFunKEvent& raisedEvent) const
 {
 	if(FFunKAutomationEntry* AutomationEntryRuntime = GetCurrentAutomationEntry())
 	{
-		AutomationEntryRuntime->AddEvent(FAutomationEvent(GetAutomationEventType(raisedEvent.Type), raisedEvent.Message, raisedEvent.Context));
+		AutomationEntryRuntime->AddEvent(FAutomationEvent(GetAutomationEventType(raisedEvent.Type), raisedEvent.Message, raisedEvent.GetContext()));
 	}
 }
 

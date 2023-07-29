@@ -37,7 +37,7 @@ void AFunKWorldTestController::BeginPlay()
 	Super::BeginPlay();
 
 	const ENetMode netMode = GetNetMode();
-	if(GetNetMode() == NM_Client)
+	if(netMode == NM_Client)
 	{
 		CheckControllerReady();
 	}
@@ -230,7 +230,7 @@ void AFunKWorldTestController::SendEvent(const FFunKEvent& raisedEvent) const
 	}
 }
 
-void AFunKWorldTestController::ApplySendEvent(EFunKEventType eventType, const FString& Message, const FString& Context) const
+void AFunKWorldTestController::ApplySendEvent(EFunKEventType eventType, const FString& Message, const TArray<FString>& Context) const
 {
 	const FFunKEvent event = FFunKEvent(eventType, Message, Context);
 	if(!ReportEvent(event))
@@ -239,12 +239,12 @@ void AFunKWorldTestController::ApplySendEvent(EFunKEventType eventType, const FS
 	}
 }
 
-void AFunKWorldTestController::ServerSendEvent_Implementation(EFunKEventType eventType, const FString& Message, const FString& Context) const
+void AFunKWorldTestController::ServerSendEvent_Implementation(EFunKEventType eventType, const FString& Message, const TArray<FString>& Context) const
 {
 	ApplySendEvent(eventType, Message, Context);
 }
 
-void AFunKWorldTestController::ClientSendEvent_Implementation(EFunKEventType eventType, const FString& Message, const FString& Context) const
+void AFunKWorldTestController::ClientSendEvent_Implementation(EFunKEventType eventType, const FString& Message, const TArray<FString>& Context) const
 {
 	ApplySendEvent(eventType, Message, Context);
 }
@@ -278,15 +278,19 @@ void AFunKWorldTestController::FulfillSubExecution(const FFunKEvent& raisedEvent
 	if(SubExecutionIds.Num() > 0 && raisedEvent.Message.StartsWith("Finished"))
 	{
 		FGuid parsedExecutionId;
-		if(FGuid::ParseExact(raisedEvent.Context, EGuidFormats::Digits, parsedExecutionId))
+		for (const FString& Context : raisedEvent.Context)
 		{
-			//TODO: This not cool... FixThis
-			AFunKWorldTestController* mutableThis = const_cast<AFunKWorldTestController*>(this);
-			mutableThis->SubExecutionIds.Remove(parsedExecutionId);
+			if(FGuid::ParseExact(Context, EGuidFormats::Digits, parsedExecutionId))
+			{
+				//TODO: This not cool... FixThis
+				AFunKWorldTestController* mutableThis = const_cast<AFunKWorldTestController*>(this);
+				mutableThis->SubExecutionIds.Remove(parsedExecutionId);
+			}
 		}
-		else
+		
+		if(!parsedExecutionId.IsValid())
 		{
-			RaiseErrorEvent("Could not parse execution id: " + raisedEvent.Context, raisedEvent.Message);
+			RaiseEvent(FFunKEvent::Error("Could not parse execution finished!", raisedEvent.Message).AddToContext(raisedEvent.Context));
 		}
 	}
 }

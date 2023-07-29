@@ -245,6 +245,14 @@ void AFunKFunctionalTest::BuildTestRegistry(FString& append) const
 	}
 }
 
+void AFunKFunctionalTest::RaiseEvent(const FFunKEvent& raisedEvent) const
+{
+	if(Controller)
+	{
+		Controller->RaiseEvent(raisedEvent);
+	}
+}
+
 void AFunKFunctionalTest::GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const
 {
 	Super::GetAssetRegistryTags(OutTags);

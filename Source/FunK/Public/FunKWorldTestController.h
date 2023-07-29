@@ -71,13 +71,13 @@ private:
 	void ExecuteTestRun(AFunKFunctionalTest* TestToExecute, TScriptInterface<IFunKSink> ReportSink, FGuid ExecutionId);
 	
 	virtual void SendEvent(const FFunKEvent& raisedEvent) const;
-	virtual void ApplySendEvent(EFunKEventType eventType, const FString& Message, const FString& Context) const;
+	virtual void ApplySendEvent(EFunKEventType eventType, const FString& Message, const TArray<FString>& Context) const;
 
 	UFUNCTION(Server, Reliable)
-	virtual void ServerSendEvent(EFunKEventType eventType, const FString& Message, const FString& Context) const;
+	virtual void ServerSendEvent(EFunKEventType eventType, const FString& Message, const TArray<FString>& Context) const;
 	
 	UFUNCTION(Client, Reliable)
-	virtual void ClientSendEvent(EFunKEventType eventType, const FString& Message, const FString& Context) const;
+	virtual void ClientSendEvent(EFunKEventType eventType, const FString& Message, const TArray<FString>& Context) const;
 
 	UFUNCTION(Server, Reliable)
 	virtual void ServerControllerReady() const;

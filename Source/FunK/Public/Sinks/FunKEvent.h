@@ -42,14 +42,43 @@ public:
 	FFunKEvent(EFunKEventType InType, const FString& InMessage, const FString& InContext)
 		: Type(InType)
 		, Message(InMessage)
+	{
+		if(!InContext.IsEmpty())
+			Context.Add(InContext);
+	}
+
+	FFunKEvent(EFunKEventType InType, const FString& InMessage, const TArray<FString>& InContext)
+		: Type(InType)
+		, Message(InMessage)
 		, Context(InContext)
 	{
 	}
-
 	
 	EFunKEventType Type = EFunKEventType::Error;
 	FString Message;
-	FString Context;
+	TArray<FString> Context;
+
+	void GetContext(FString& outContext) const
+	{
+		outContext = GetContext();
+	}
+
+	FORCEINLINE FString GetContext() const
+	{
+		return FString::Join(Context, TEXT(" | "));
+	}
+
+	FFunKEvent& AddToContext(const FString& InContext)
+	{
+		Context.Add(InContext);
+		return *this;
+	}
+
+	FFunKEvent& AddToContext(const TArray<FString>& InContext)
+	{
+		Context.Append(InContext);
+		return *this;
+	}
 
 	static FFunKEvent Info(const FString& Message, const FString& Context = "")
 	{

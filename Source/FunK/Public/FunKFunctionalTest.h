@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "FunKFunctionalTestResult.h"
 #include "GameFramework/Actor.h"
+#include "Sinks/FunKSink.h"
 #include "FunkFunctionalTest.generated.h"
 
 class AFunKWorldTestController;
@@ -28,7 +29,7 @@ struct FFunKTimeLimit
 
 
 UCLASS()
-class FUNK_API AFunKFunctionalTest : public AActor
+class FUNK_API AFunKFunctionalTest : public AActor, public IFunKSink
 {
 	GENERATED_BODY()
 
@@ -138,6 +139,8 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	void BuildTestRegistry(FString& append) const;
+	
+	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const override;
 	
 #if WITH_EDITOR
 	virtual void GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const override;
