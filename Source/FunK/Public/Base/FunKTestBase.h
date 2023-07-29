@@ -10,7 +10,6 @@
 #include "Events/FunKEvent.h"
 #include "Events/Internal/FunKTestFinishedEvent.h"
 #include "Events/Internal/FunKTestStageFinishedEvent.h"
-#include "Events/Internal/FunKTestStageEvent.h"
 #include "Util/FunKAnonymousBitmask.h"
 
 #include "FunKTestBase.generated.h"
