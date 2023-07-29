@@ -14,4 +14,6 @@ UCLASS()
 class FUNK_API UFunKExtAutomationSink : public UFunKSink
 {
 	GENERATED_BODY()
+
+	virtual void RaiseEvent(const FFunKEvent& raisedEvent, const UFunKTestRunner* run) override;
 };

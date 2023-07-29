@@ -25,7 +25,7 @@ public:
 		return &Get();
 	}
 
-	virtual void SetTemp() = 0;
+	virtual void EngineSubsystemIsReady() = 0;
 };
 
 
@@ -49,9 +49,9 @@ public:
 	static FString FunkListenParameter;
 	static FString FunkDedicatedParameter;
 
-	//TODO: remove this -> The Pre and Post Events get called at module startup which is too early for the subsystem to be created... Just a dirty fix here to test some stuff
-	bool Temp = false;
-	virtual void SetTemp() override { Temp = true; }
+	static FString FunkTestStartParameter;
+
+	virtual void EngineSubsystemIsReady() override;
 
 private:
 	void OnWorldGetAssetTags(const UWorld* World, TArray<UObject::FAssetRegistryTag>& OutTags);

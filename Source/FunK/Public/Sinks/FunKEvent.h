@@ -6,6 +6,8 @@
 #include "UObject/Object.h"
 #include "FunKEvent.generated.h"
 
+
+UENUM()
 enum class EFunKEventType : uint8
 {
 	Info,

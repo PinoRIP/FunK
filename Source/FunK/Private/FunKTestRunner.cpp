@@ -7,11 +7,13 @@
 #include "FunK.h"
 #include "FunKAutomationEntry.h"
 #include "FunKEngineSubsystem.h"
+#include "FunKWorldTestController.h"
 #include "GameFramework/GameStateBase.h"
 #include "Sinks/FunKExtAutomationSink.h"
 #include "Sinks/FunKInProcAutomationSink.h"
 #include "Sinks/FunKLogSink.h"
 #include "Sinks/FunKSink.h"
+#include "UObject/UnrealTypePrivate.h"
 
 void UFunKTestRunner::Init(UFunKEngineSubsystem* funKEngineSubsystem, EFunKTestRunnerType RunType)
 {
@@ -26,46 +28,94 @@ void UFunKTestRunner::Init(UFunKEngineSubsystem* funKEngineSubsystem, EFunKTestR
 	{
 		Sinks.Add(NewSink(sinkType));
 	}
-}
 
-bool UFunKTestRunner::Prepare(const FFunKTestInstructions& Instructions)
-{
-	if(Type == EFunKTestRunnerType::LocalInProc)
-	{
-		return StartEnvironment(Instructions);
-	}
-	else
-	{
-		return true;
-	}
+	UpdateState(EFunKTestRunnerState::Initialized);
 }
 
 void UFunKTestRunner::Start()
 {	
-	IsStarted = true;
+	UpdateState(Type > EFunKTestRunnerType::LocalInProc ? EFunKTestRunnerState::ExecutingTest : EFunKTestRunnerState::Started);
 	RaiseStartEvent();
 }
 
-bool UFunKTestRunner::Next()
+bool UFunKTestRunner::Test(const FFunKTestInstructions& Instructions)
 {
-	if(!IsStarted)
+	if(Type != EFunKTestRunnerType::LocalInProc)
 	{
-		RaiseErrorEvent("The Test run ist not active anymore!", "UFunKTestRun::Next");
+		RaiseErrorEvent("The tests can currently only be started via. Editor!", "UFunKTestRun::Next");
 		return true;
 	}
-
-	UWorld* TestWorld = nullptr;
-	const TIndirectArray<FWorldContext>& WorldContexts = GEngine->GetWorldContexts();
-	for ( const FWorldContext& Context : WorldContexts )
+	
+	if(State != EFunKTestRunnerState::ExecutingTest)
 	{
-		if ( ( ( Context.WorldType == EWorldType::PIE ) || ( Context.WorldType == EWorldType::Game ) ) && ( Context.World() != NULL ) )
+		if(State <= EFunKTestRunnerState::Ended)
 		{
-			TestWorld = Context.World();
-			break;
+			RaiseErrorEvent("The test run ist not active!", "UFunKTestRun::Next");
+			return true;
+		}
+
+		if(IsDifferentEnvironment(Instructions))
+		{
+			if(!StartEnvironment(Instructions))
+			{
+				RaiseErrorEvent("Test environment could not be setup", "UFunKTestRunner::StartEnvironment");
+				return true;
+			}
+
+			ActiveTestInstructions = Instructions;
+			UpdateState(EFunKTestRunnerState::WaitingForWorld);
+		}
+		
+		if(State == EFunKTestRunnerState::WaitingForWorld)
+		{
+			if (CurrentTestWorld && CurrentTestWorld->AreActorsInitialized() )
+			{
+				AGameStateBase* GameState = CurrentTestWorld->GetGameState();
+				if (GameState && GameState->HasMatchStarted())
+				{
+					UpdateState(IsStandaloneTest() ? EFunKTestRunnerState::Ready : EFunKTestRunnerState::WaitingForConnections);
+				}
+			}
+		}
+
+		if (State == EFunKTestRunnerState::WaitingForConnections)
+		{
+			if(CurrentWorldController)
+			{
+				int32 players = IsDedicatedServerTest() ? 2 : 3;
+				if(CurrentTestWorld->GetGameState()->PlayerArray.Num() >= players)
+				{
+					UpdateState(EFunKTestRunnerState::Ready);
+				}
+			}
+		}
+
+		if(State == EFunKTestRunnerState::Ready)
+		{
+			if(ActiveTestInstructions.TestName.IsSet())
+			{
+				CurrentWorldController->ExecuteTestByName(ActiveTestInstructions.TestName.GetValue());
+			}
+			else
+			{
+				CurrentWorldController->ExecuteAllTests();
+			}
+			
+			UpdateState(EFunKTestRunnerState::ExecutingTest);
 		}
 	}
-	
-//TODO: TEST EXEC
+	else
+	{
+		if(CurrentWorldController->IsFinished())
+		{
+			UpdateState(EFunKTestRunnerState::EvaluatingTest);
+		}
+	}
+
+	if(State == EFunKTestRunnerState::EvaluatingTest)
+	{
+		return true;
+	}
 
 	RaiseInfoEvent("WAIT");
 	return false;
@@ -73,7 +123,10 @@ bool UFunKTestRunner::Next()
 
 void UFunKTestRunner::End()
 {
-	IsStarted = false;
+	UpdateState(EFunKTestRunnerState::Ended);
+	CurrentTestWorld = nullptr;
+	CurrentWorldController = nullptr;
+	
 	for (UFunKSink* FunKSink : Sinks)
 	{
 		if(FunKSink)
@@ -110,6 +163,16 @@ void UFunKTestRunner::RaiseEvent(const FFunKEvent& raisedEvent) const
 	}
 }
 
+bool UFunKTestRunner::IsRunning() const
+{
+	return State >= EFunKTestRunnerState::Started;
+}
+
+bool UFunKTestRunner::IsWaitingForMap() const
+{
+	return State == EFunKTestRunnerState::WaitingForWorld;
+}
+
 UFunKEngineSubsystem* UFunKTestRunner::GetSubsystem() const
 {
 	return FunKEngineSubsystem.Get();
@@ -118,6 +181,44 @@ UFunKEngineSubsystem* UFunKTestRunner::GetSubsystem() const
 const FString& UFunKTestRunner::GetParameter()
 {
 	return ActiveTestInstructions.Params;
+}
+
+bool UFunKTestRunner::SetWorld(UWorld* world)
+{
+	if(!world)
+		return false;
+	
+	if(State != EFunKTestRunnerState::WaitingForWorld && Type <= EFunKTestRunnerType::LocalInProc)
+		return false;
+
+	if(world == CurrentTestWorld)
+		return false;
+	
+	CurrentTestWorld = world;
+
+	if(CurrentTestWorld->GetNetMode() != NM_Client)
+	{
+		CurrentWorldController = CurrentTestWorld->SpawnActor<AFunKWorldTestController>(GetWorldControllerClass());
+		CurrentWorldController->SetTestRunner(this);
+	}
+	
+	return true;
+}
+
+bool UFunKTestRunner::RegisterWorldController(AFunKWorldTestController* localTestController)
+{
+	if(CurrentTestWorld->GetNetMode() != NM_Client)
+		return false;
+	
+	CurrentWorldController = localTestController;
+	CurrentWorldController->SetTestRunner(this);
+
+	return true;
+}
+
+AFunKWorldTestController* UFunKTestRunner::GetCurrentWorldController() const
+{
+	return CurrentWorldController;
 }
 
 void UFunKTestRunner::RaiseStartEvent()
@@ -145,6 +246,51 @@ UFunKSink* UFunKTestRunner::NewSink(TSubclassOf<UFunKSink> sinkType)
 	return sink;
 }
 
+void UFunKTestRunner::UpdateState(EFunKTestRunnerState newState)
+{
+	State = newState;
+}
+
+bool UFunKTestRunner::IsStandaloneTest() const
+{
+	return IsStandaloneTest(ActiveTestInstructions);
+}
+
+bool UFunKTestRunner::IsStandaloneTest(const FFunKTestInstructions& Instructions)
+{
+	return Instructions.Params.Contains(FFunKModule::FunkStandaloneParameter);
+}
+
+bool UFunKTestRunner::IsDedicatedServerTest() const
+{
+	return IsDedicatedServerTest(ActiveTestInstructions);
+}
+
+bool UFunKTestRunner::IsDedicatedServerTest(const FFunKTestInstructions& Instructions)
+{
+	return Instructions.Params.Contains(FFunKModule::FunkDedicatedParameter);
+}
+
+bool UFunKTestRunner::IsListenServerTest() const
+{
+	return IsListenServerTest(ActiveTestInstructions);
+}
+
+bool UFunKTestRunner::IsListenServerTest(const FFunKTestInstructions& Instructions)
+{
+	return Instructions.Params.Contains(FFunKModule::FunkListenParameter);
+}
+
+bool UFunKTestRunner::IsDifferentEnvironment(const FFunKTestInstructions& Instructions) const
+{
+	return Instructions.MapTestName != ActiveTestInstructions.MapTestName || Instructions.Params != ActiveTestInstructions.Params;
+}
+
+TSubclassOf<AFunKWorldTestController> UFunKTestRunner::GetWorldControllerClass() const
+{
+	return TSubclassOf<AFunKWorldTestController>(AFunKWorldTestController::StaticClass());
+}
+
 bool UFunKTestRunner::StartEnvironment(const FFunKTestInstructions& Instructions)
 {
 	struct FFailedGameStartHandler
@@ -170,92 +316,57 @@ bool UFunKTestRunner::StartEnvironment(const FFunKTestInstructions& Instructions
 		}
 	};
 
-	bool bLoadAsTemplate = false;
-	bool bShowProgress = false;
-	bool bForceReload = Instructions.MapTestName != ActiveTestInstructions.MapTestName || Instructions.Params != ActiveTestInstructions.Params;
+	FFailedGameStartHandler FailHandler;
+		
+	FRequestPlaySessionParams params;
+	params.EditorPlaySettings = NewObject<ULevelEditorPlaySettings>();
+	params.EditorPlaySettings->NewWindowHeight = 1080;
+	params.EditorPlaySettings->NewWindowWidth = 1920;
+	params.GlobalMapOverride = Instructions.MapPackageName;
+	params.AdditionalStandaloneCommandLineParameters = FFunKModule::FunkTestStartParameter;
 
-	bool bNeedLoadEditorMap = true;
-	bool bNeedPieStart = true;
-	bool bPieRunning = false;
-
-	//check existing worlds
-	const TIndirectArray<FWorldContext> WorldContexts = GEngine->GetWorldContexts();
-	for (auto& Context : WorldContexts)
+	FProperty* Property = ULevelEditorPlaySettings::StaticClass()->FindPropertyByName(FName("ServerMapNameOverride"));
+	if(Property)
 	{
-		if (Context.World())
-		{
-			FString WorldPackage = Context.World()->GetOutermost()->GetName();
-
-			if (Context.WorldType == EWorldType::PIE)
-			{
-				//don't quit!  This was triggered while pie was already running!
-				bNeedPieStart = Instructions.MapPackageName != UWorld::StripPIEPrefixFromPackageName(WorldPackage, Context.World()->StreamingLevelsPrefix);
-				bPieRunning = true;
-				break;
-			}
-			else if (Context.WorldType == EWorldType::Editor)
-			{
-				bNeedLoadEditorMap = Instructions.MapPackageName != WorldPackage;
-			}
-		}
-	}
-
-	if (bNeedLoadEditorMap || bForceReload)
-	{
-		if (bPieRunning)
-		{
-			GEditor->EndPlayMap();
-		}
-		FEditorFileUtils::LoadMap(*Instructions.MapPackageName, bLoadAsTemplate, bShowProgress);
-		bNeedPieStart = true;
+		Property->SetValue_InContainer(params.EditorPlaySettings, &Instructions.MapPackageName);
 	}
 	
-	if(bNeedPieStart)
-	{
-		FFailedGameStartHandler FailHandler;
-		
-		FRequestPlaySessionParams params;
-		params.EditorPlaySettings = NewObject<ULevelEditorPlaySettings>();
-		params.EditorPlaySettings->NewWindowHeight = 315;
-		params.EditorPlaySettings->NewWindowWidth = 560;
-		
-		//TODO: Maybe one day we want to integrate bAllowOnlineSubsystem...
+	//TODO: Maybe one day we want to integrate bAllowOnlineSubsystem...
 
-		if(Instructions.Params.Contains(FFunKModule::FunkStandaloneParameter))
+	if(IsStandaloneTest(Instructions))
+	{
+		params.EditorPlaySettings->SetPlayNumberOfClients(1);
+		params.EditorPlaySettings->bLaunchSeparateServer = false;
+		params.EditorPlaySettings->SetPlayNetMode(EPlayNetMode::PIE_Standalone);
+		
+		GEditor->RequestPlaySession(params);
+	}
+	else
+	{
+		if(IsListenServerTest(Instructions))
 		{
-			params.EditorPlaySettings->SetPlayNumberOfClients(1);
+			params.EditorPlaySettings->SetPlayNumberOfClients(3);
 			params.EditorPlaySettings->bLaunchSeparateServer = false;
-			params.EditorPlaySettings->SetPlayNetMode(EPlayNetMode::PIE_Standalone);
-			
+			params.EditorPlaySettings->SetRunUnderOneProcess(IsRunningTestUnderOneProcess);
+			params.EditorPlaySettings->SetPlayNetMode(EPlayNetMode::PIE_ListenServer);
+			GEditor->RequestPlaySession(params);
+		}
+		else if(IsDedicatedServerTest(Instructions))
+		{
+			params.EditorPlaySettings->SetPlayNumberOfClients(2);
+			params.EditorPlaySettings->bLaunchSeparateServer = true;
+			params.EditorPlaySettings->SetRunUnderOneProcess(IsRunningTestUnderOneProcess);
+			params.EditorPlaySettings->SetPlayNetMode(EPlayNetMode::PIE_Client);
 			GEditor->RequestPlaySession(params);
 		}
 		else
 		{
-			if(Instructions.Params.Contains(FFunKModule::FunkListenParameter))
-			{
-				params.EditorPlaySettings->SetPlayNumberOfClients(3);
-				params.EditorPlaySettings->bLaunchSeparateServer = false;
-				params.EditorPlaySettings->SetPlayNetMode(EPlayNetMode::PIE_ListenServer);
-				GEditor->RequestPlaySession(params);
-			}
-			else if(Instructions.Params.Contains(FFunKModule::FunkDedicatedParameter))
-			{
-				params.EditorPlaySettings->SetPlayNumberOfClients(2);
-				params.EditorPlaySettings->bLaunchSeparateServer = true;
-				params.EditorPlaySettings->SetPlayNetMode(EPlayNetMode::PIE_Client);
-				GEditor->RequestPlaySession(params);
-			}
-			else
-			{
-				RaiseErrorEvent("Invalid Parameter at start");
-				return false;
-			}
+			RaiseErrorEvent("Invalid Parameter at start");
+			return false;
 		}
-
-		// Immediately launch the session 
-		GEditor->StartQueuedPlaySessionRequest();
-		return FailHandler.CanProceed();
 	}
 
-	return true;
+	// Immediately launch the session 
+	GEditor->StartQueuedPlaySessionRequest();
+	return FailHandler.CanProceed();
 }

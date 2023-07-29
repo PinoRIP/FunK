@@ -8,17 +8,25 @@
 #include "UObject/Object.h"
 #include "FunKTestRunner.generated.h"
 
+class AFunKWorldTestController;
 struct FFunKTestInstructions;
 class UFunKSink;
 class UFunKEngineSubsystem;
 class FFunKAutomationEntry;
 
-USTRUCT()
-struct FFunKTestRunnerState
+UENUM(BlueprintType)
+enum class EFunKTestRunnerState : uint8
 {
-	GENERATED_BODY()
-
-	FFunKTestInstructions CurrentInstructions;
+	None,
+	Canceled,
+	Initialized,
+	Ended,
+	Started,
+	WaitingForWorld,
+	WaitingForConnections,
+	Ready,
+	ExecutingTest,
+	EvaluatingTest
 };
 
 /**
@@ -31,11 +39,9 @@ class FUNK_API UFunKTestRunner : public UObject
 
 public:
 	virtual void Init(UFunKEngineSubsystem* FunKEngineSubsystem, EFunKTestRunnerType RunType);
-
-	virtual bool Prepare(const FFunKTestInstructions& Instructions);
 	
 	virtual void Start();
-	virtual bool Next();
+	virtual bool Test(const FFunKTestInstructions& Instructions);
 	virtual void End();
 
 	virtual void RaiseInfoEvent(const FString& Message, const FString& Context = "") const;
@@ -44,20 +50,48 @@ public:
 	
 	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const;
 
-	bool IsRunning() const { return IsStarted; }
+	bool IsRunning() const;
+	bool IsWaitingForMap() const;
 	EFunKTestRunnerType GetType() const { return Type; }
 	UFunKEngineSubsystem* GetSubsystem() const;
 	const FString& GetParameter();
+
+	bool SetWorld(UWorld* world);
+	bool RegisterWorldController(AFunKWorldTestController* localTestController);
+
+	AFunKWorldTestController* GetCurrentWorldController() const;
+	
 protected:
 	virtual void RaiseStartEvent();
 	virtual void GetSinks(TArray<TSubclassOf<UFunKSink>>& outSinks);
 
 	virtual UFunKSink* NewSink(TSubclassOf<UFunKSink> sinkType);
+
+	virtual void UpdateState(EFunKTestRunnerState newState);
+
+	bool IsRunningTestUnderOneProcess = false;
+
+	bool IsStandaloneTest() const;
+	static bool IsStandaloneTest(const FFunKTestInstructions& Instructions);
+	bool IsDedicatedServerTest() const;
+	static bool IsDedicatedServerTest(const FFunKTestInstructions& Instructions);
+	bool IsListenServerTest() const;
+	static bool IsListenServerTest(const FFunKTestInstructions& Instructions);
+	
+	bool IsDifferentEnvironment(const FFunKTestInstructions& Instructions) const;
+
+	virtual TSubclassOf<AFunKWorldTestController> GetWorldControllerClass() const;
 	
 private:
-	bool IsStarted;
 	EFunKTestRunnerType Type = EFunKTestRunnerType::None;
 	FFunKTestInstructions ActiveTestInstructions;
+	EFunKTestRunnerState State = EFunKTestRunnerState::None;
+
+	UPROPERTY()
+	UWorld* CurrentTestWorld = nullptr;
+
+	UPROPERTY()
+	AFunKWorldTestController* CurrentWorldController = nullptr;
 
 	UPROPERTY()
 	TArray<UFunKSink*> Sinks;

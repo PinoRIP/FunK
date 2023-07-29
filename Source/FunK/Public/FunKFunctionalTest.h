@@ -7,6 +7,7 @@
 #include "GameFramework/Actor.h"
 #include "FunkFunctionalTest.generated.h"
 
+class AFunKWorldTestController;
 USTRUCT(BlueprintType)
 struct FFunKTimeLimit
 {
@@ -14,7 +15,7 @@ struct FFunKTimeLimit
 
 	/** Test's time limit. '0' means no limit */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float Time;
+	float Time = 0.f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FText Message;
@@ -36,40 +37,93 @@ public:
 	/**
 	 * A description of the test, like what is this test trying to determine.
 	 */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Funk", meta = (MultiLine = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "FunK", meta = (MultiLine = "true"))
 	FString Description;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Funk")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK")
 	bool IsEnabled = true;
 
 	/** The Test's time limit for preparation, this is the time it has to return true when checking IsReady(). '0' means no limit. */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Funk|Setup|Timeout")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup|Timeout")
 	FFunKTimeLimit PreparationTimeLimit;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Funk|Setup|Timeout")
-	FFunKTimeLimit NetworkingTimeLimit;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Funk|Setup|Timeout")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup|Timeout")
 	FFunKTimeLimit TimeLimit;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Funk|Setup")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
 	bool RunInStandaloneMode = true;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Funk|Setup")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
 	bool RunInDedicatedServerMode = true;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Funk|Setup")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
 	bool RunInListenServerMode = true;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Funk|Setup")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
 	bool RunOnServer = true;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Funk|Setup")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
 	bool RunOnClient = true;
 
+	uint32 RunFrame;
+	float RunTime;
+	uint32 StartFrame;
+	float StartTime;
+
+	float TotalTime;
+	float PreparationTime;
+	float ExecutionTime;
+
+	bool IsSetupReady;
+
+	virtual void RunTest(AFunKWorldTestController* Controller);
+
+	UFUNCTION(BlueprintCallable, Category="FunK")
+	virtual void FinishTest(EFunKFunctionalTestResult TestResult, const FString& Message);
+
+	virtual void RaiseInfoEvent(const FString& Message, const FString& Context = "") const;
+	virtual void RaiseWarningEvent(const FString& Message, const FString& Context = "") const;
+	virtual void RaiseErrorEvent(const FString& Message, const FString& Context = "") const;
+
+	UFUNCTION(BlueprintCallable, Category="FunK")
+	bool IsStarted() const;
+
+	EFunKFunctionalTestResult GetTestResult() const;
+	
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+
+	virtual bool Assume();
+	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="Assume")
+	bool BpAssume();
+
+	virtual void StartSetup();
+	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="StartSetup")
+	void BpStartSetup();
+	
+	virtual bool IsReady();
+	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="IsReady")
+	bool BpReady();
+
+	virtual void StartTest();
+	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="StartTest")
+	void BpStartTest();
+
+	virtual void Cleanup();
+	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="Cleanup")
+	void BpCleanup();
+
+	EFunKFunctionalTestResult TestResult = EFunKFunctionalTestResult::Default;
+
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+	virtual bool IsTimeout(const FFunKTimeLimit& limit, float time);
+	virtual void OnTimeout(const FFunKTimeLimit& limit);
+
+private:
+	UPROPERTY()
+	AFunKWorldTestController* Controller;
 
 public:
 	// Called every frame
