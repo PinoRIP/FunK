@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Stages/FunKTimeLimit.h"
 #include "FunKSettingsObject.generated.h"
 
 class UFunKTestRunner;
@@ -22,6 +23,9 @@ public:
 
 	UPROPERTY(config, EditAnywhere, Category = FixedTick)
 	TArray<int32> FixedTickFrameRates;
+	
+	UPROPERTY(config, EditAnywhere, Category = Synchronization)
+	FFunKTimeLimit SyncTimeLimit;
 };
 
 /**

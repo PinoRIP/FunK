@@ -153,7 +153,7 @@ public:
 	FFunKLatentStageSetup(const FFunKLatentStageSetup&) = delete;
 
 	template <typename UserClass, typename... VarTypes>
-	FORCEINLINE FFunKStageSetupBase& WithTickDelegate(typename TMemFunPtrType<false, UserClass, void (float, VarTypes...)>::Type InFunc, VarTypes... Vars)
+	FORCEINLINE FFunKLatentStageSetup& WithTickDelegate(typename TMemFunPtrType<false, UserClass, void (float, VarTypes...)>::Type InFunc, VarTypes... Vars)
 	{
 		if(Stage)
 			Stage->TickDelegate.BindUObject(Cast<UserClass, AFunKTestBase>(TestBase), InFunc, Vars...);
@@ -161,7 +161,7 @@ public:
 		return *this;
 	}
 
-	FFunKStageSetupBase& UpdateTimeLimitTime(const float Time)
+	FFunKLatentStageSetup& UpdateTimeLimitTime(const float Time)
 	{
 		if(Stage)
 			Stage->TimeLimit.Time = Time;
@@ -169,7 +169,7 @@ public:
 		return *this;
 	}
 
-	FFunKStageSetupBase& UpdateTimeLimitMessage(const FText Message)
+	FFunKLatentStageSetup& UpdateTimeLimitMessage(const FText Message)
 	{
 		if(Stage)
 			Stage->TimeLimit.Message = Message;
@@ -177,7 +177,7 @@ public:
 		return *this;
 	}
 
-	FFunKStageSetupBase& UpdateTimeLimitMessage(const FString Message)
+	FFunKLatentStageSetup& UpdateTimeLimitMessage(const FString Message)
 	{
 		if(Stage)
 			Stage->TimeLimit.Message = FText::FromString(Message);
@@ -185,7 +185,7 @@ public:
 		return *this;
 	}
 
-	FFunKStageSetupBase& UpdateTimeLimitResult(EFunKTestResult Result)
+	FFunKLatentStageSetup& UpdateTimeLimitResult(EFunKTestResult Result)
 	{
 		if(Stage)
 			Stage->TimeLimit.Result = Result;
@@ -193,7 +193,7 @@ public:
 		return *this;
 	}
 
-	FFunKStageSetupBase& UpdateTimeLimit(const FFunKTimeLimit TimeLimit)
+	FFunKLatentStageSetup& UpdateTimeLimit(const FFunKTimeLimit TimeLimit)
 	{
 		if(Stage)
 			Stage->TimeLimit = TimeLimit;
@@ -283,6 +283,8 @@ public:
 	FFunKStageSetupBaseIterator GetStageSetupBaseIterator() const { return FFunKStageSetupBaseIterator(Stages, TestBase); }
 	FFunKStageSetupIterator GetStageSetupIterator() const { return FFunKStageSetupIterator(Stages, TestBase); }
 	FFunKLatentStageSetupIterator GetLatentStageSetupIterator() const { return FFunKLatentStageSetupIterator(Stages, TestBase); }
+
+	int32 Num() const;
 };
 
 template <typename UserClass, typename ... VarTypes>

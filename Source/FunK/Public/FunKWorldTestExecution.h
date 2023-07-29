@@ -10,6 +10,7 @@
 
 class AFunKWorldTestController;
 class AFunKTestBase;
+class UFunKSettingsObject;
 struct FFunKTimeLimit;
 
 USTRUCT()
@@ -20,7 +21,8 @@ struct FFunKTestExecutionState
 public:
 	FFunKTestExecutionState()
 		: Id(FFunKTestRunID())
-		, IsCurrentStageFinished(false)
+		, LastStartedStage(INDEX_NONE)
+		, LastFinishedStage(INDEX_NONE)
 		, IsExecutionFinished(false)
 		, NetMode(ENetMode::NM_MAX)
 		, Controller(nullptr)
@@ -28,7 +30,8 @@ public:
 	
 	FFunKTestRunID Id;
 
-	bool IsCurrentStageFinished;
+	int32 LastStartedStage;
+	int32 LastFinishedStage;
 	bool IsExecutionFinished;
 
 	ENetMode NetMode;
@@ -71,6 +74,9 @@ private:
 	TArray<AFunKTestBase*> TestsToExecute;
 
 	uint32 LastTickFrame = INDEX_NONE;
+
+	UPROPERTY()
+	const UFunKSettingsObject* Settings = nullptr;
 
 	bool IsAllFinished = false;
 	bool IsAnyStarted = false;

@@ -180,11 +180,6 @@ void AFunKTestBase::RaiseEvent(const FFunKEvent& raisedEvent) const
 	}
 }
 
-FFunKTimeLimit* AFunKTestBase::GetSyncTimeLimit()
-{
-	return nullptr;
-}
-
 void AFunKTestBase::PostLoad()
 {
 	Super::PostLoad();

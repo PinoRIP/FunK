@@ -68,8 +68,6 @@ public:
 	
 	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const override;
 	
-	virtual FFunKTimeLimit* GetSyncTimeLimit();
-	
 	virtual void PostLoad() override;
 	virtual void PostActorCreated() override;
 
@@ -99,6 +97,10 @@ protected:
 	const FFunKStage* GetStage(int32 StageIndex) const;
 
 	bool IsStageTickDelegateBound(int32 StageIndex);
+	bool IsValidStageIndex(int32 StageIndex) const;
+	int32 GetCurrentStageIndex() const { return CurrentStageIndex; }
+
+	AFunKWorldTestController* GetCurrentController() const { return CurrentController; }
 	
 private:
 	int32 CurrentStageIndex = INDEX_NONE;
@@ -112,7 +114,6 @@ private:
 	AFunKWorldTestController* CurrentController;
 	
 	void SetupStages();
-	bool IsValidStageIndex(int32 StageIndex) const;
 	FFunKStage* GetCurrentStageMutable();
 	FFunKStage* GetStageMutable(int32 StageIndex);
 

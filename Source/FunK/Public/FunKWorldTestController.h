@@ -77,6 +77,8 @@ public:
 	FString GetRoleName() const;
 	bool GetIsServerDedicated() const { return IsServerDedicated; }
 
+	const TArray<AFunKWorldTestController*>& GetSpawnedController() const { return SpawnedController; }
+
 private:
 	UPROPERTY()
 	TScriptInterface<IFunKSink> LocalReportSink;

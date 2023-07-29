@@ -42,11 +42,11 @@ private:
 		FFunKStage& stage = Stages.EmplaceAt_GetRef(index, FFunKStage());
 		stage.Name = stageName;
 
-		OnStandaloneCount = OnStandaloneCount + stage.IsOnStandalone ? 1 : 0;
-		OnDedicatedServerCount = OnDedicatedServerCount + stage.IsOnDedicatedServer ? 1 : 0;
-		OnDedicatedServerClientCount = OnDedicatedServerClientCount + stage.IsOnDedicatedServerClient ? 1 : 0;
-		OnListenServerCount = OnListenServerCount + stage.IsOnListenServer ? 1 : 0;
-		OnListenServerClientCount = OnListenServerClientCount + stage.IsOnListenServerClient ? 1 : 0;
+		OnStandaloneCount = OnStandaloneCount + (stage.IsOnStandalone ? 1 : 0);
+		OnDedicatedServerCount = OnDedicatedServerCount + (stage.IsOnDedicatedServer ? 1 : 0);
+		OnDedicatedServerClientCount = OnDedicatedServerClientCount + (stage.IsOnDedicatedServerClient ? 1 : 0);
+		OnListenServerCount = OnListenServerCount + (stage.IsOnListenServer ? 1 : 0);
+		OnListenServerClientCount = OnListenServerClientCount + (stage.IsOnListenServerClient ? 1 : 0);
 		
 		return stage;
 	}

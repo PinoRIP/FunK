@@ -10,15 +10,13 @@ class AFunKWorldTestController;
 
 
 
-UCLASS()
+UCLASS(Blueprintable)
 class FUNK_API AFunKFunctionalTest : public AFunKTestBase
 {
 	GENERATED_BODY()
 
 public:
 	AFunKFunctionalTest();
-	
-	virtual FFunKTimeLimit* GetSyncTimeLimit() override;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup|Timeout")
@@ -27,8 +25,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup|Timeout")
 	FFunKTimeLimit ActTimeLimit;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup|Timeout")
-	FFunKTimeLimit SyncTimeLimit;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
 	bool RunOnStandalone = true;

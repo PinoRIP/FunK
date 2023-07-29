@@ -19,7 +19,7 @@ int32 FFunKStageSetupBase::GetStageIndex() const
 
 void FFunKStageSetupBase::Update(int32& count, bool& oldValue, bool newValue)
 {
-	if(!newValue)
+	if(!newValue && oldValue)
 		count--;
 	else if(!oldValue)
 		count++;
@@ -34,4 +34,12 @@ FFunKLatentStageSetup FFunKStageSetup::MakeLatent()
 		Stage->IsLatent = true;
 	
 	return FFunKLatentStageSetup(Stage, Stages, TestBase);
+}
+
+int32 FFunKStagesSetup::Num() const
+{
+	if(Stages)
+		return Stages->Stages.Num();
+
+	return 0;
 }

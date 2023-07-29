@@ -3,6 +3,7 @@
 
 #include "FunKWorldTestExecution.h"
 #include "FunKFunctionalTest.h"
+#include "FunKSettingsObject.h"
 #include "FunKWorldSubsystem.h"
 #include "FunKWorldTestController.h"
 #include "Sinks/FunKSink.h"
@@ -31,6 +32,8 @@ void UFunKWorldTestExecution::Start(const UWorld* world, const TArray<AFunKTestB
 	{
 		SpawnedController->CurrentTestExecution = this;
 	}
+	
+	Settings = GetDefault<UFunKSettingsObject>();
 
 	TotalTime = 0.f;
 	IsAnyStarted = true;
@@ -95,6 +98,7 @@ void UFunKWorldTestExecution::Finish()
 	RaiseEvent(FFunKEvent::Info("Test execution finished", FunKTestLifeTimeAllTestExecutionsFinishedEvent).AddToContext(ThisExecutionID));
 	CurrentExecutions.Empty();
 	ThisExecutionID.Empty();
+	Settings = nullptr;
 
 	if(MasterController->CurrentTestExecution == this)
 		MasterController->CurrentTestExecution = nullptr;
@@ -136,7 +140,18 @@ void UFunKWorldTestExecution::NextStage()
 	
 	if(stages->Stages.Num() <= CurrentStageIndex)
 	{
-		StartSync();
+		bool isAnyExecutionForLastStageActive = false;
+		for(int32 i = 0; i < CurrentExecutions.Num(); i++)
+		{
+			isAnyExecutionForLastStageActive = CurrentExecutions[i].LastStartedStage == CurrentStageIndex - 1;
+			if(isAnyExecutionForLastStageActive) break;
+		}
+		
+		if(isAnyExecutionForLastStageActive)
+			StartSync();
+		else
+			NextTestAsync();
+		
 		return;
 	}
 
@@ -148,17 +163,18 @@ void UFunKWorldTestExecution::NextStage()
 	{
 		FFunKTestExecutionState& state = CurrentExecutions[i];
 		
-		state.IsCurrentStageFinished = (!stage.IsOnStandalone && state.NetMode == NM_Standalone) ||
+		state.LastFinishedStage = ((!stage.IsOnStandalone && state.NetMode == NM_Standalone) ||
 			(!stage.IsOnDedicatedServer && state.NetMode == NM_DedicatedServer) ||
 				(!stage.IsOnListenServer && state.NetMode == NM_ListenServer) ||
 					(!stage.IsOnListenServerClient && netMode == NM_ListenServer && state.NetMode == NM_Client) ||
-						(!stage.IsOnDedicatedServerClient && netMode == NM_DedicatedServer && state.NetMode == NM_Client);
+						(!stage.IsOnDedicatedServerClient && netMode == NM_DedicatedServer && state.NetMode == NM_Client)) ? CurrentStageIndex : state.LastFinishedStage;
 
 		isExecutionFinished = isExecutionFinished && state.IsExecutionFinished;
-		if(!state.IsCurrentStageFinished && !state.IsExecutionFinished)
+		if(state.LastFinishedStage < CurrentStageIndex && !state.IsExecutionFinished)
 		{
 			isAnyStageStarted = true;
-			
+
+			state.LastStartedStage = CurrentStageIndex;
 			state.Controller->BeginLocalTestStage(test, CurrentStageIndex);
 			
 			if(stage.IsLatent)
@@ -170,8 +186,7 @@ void UFunKWorldTestExecution::NextStage()
 
 	if(!isAnyStageStarted && !isExecutionFinished)
 	{
-		// This should normally never happen... just in case
-		OnTestExecutionCanceled("No stages started");
+		NextStage();
 	}
 }
 
@@ -232,11 +247,11 @@ void UFunKWorldTestExecution::OnTestStageFinished(const FFunKEvent& raisedEvent)
 
 void UFunKWorldTestExecution::OnTestStageFinished(FFunKTestExecutionState* State)
 {
-	State->IsCurrentStageFinished = true;
+	State->LastFinishedStage = CurrentStageIndex;
 	
 	for(int32 i = 0; i < CurrentExecutions.Num(); i++)
 	{
-		if(!CurrentExecutions[i].IsCurrentStageFinished)
+		if(CurrentExecutions[i].LastFinishedStage < CurrentStageIndex)
 			return;
 	}
 
@@ -339,11 +354,11 @@ void UFunKWorldTestExecution::Tick(float DeltaTime)
 	if(PendingSyncTime >= 0.f)
 	{
 		PendingSyncTime += DeltaTime;
-		if(AFunKTestBase* currentTest = GetCurrentTest())
+		if(const AFunKTestBase* currentTest = GetCurrentTest())
 		{
-			if(IsTimeout(currentTest->GetSyncTimeLimit(), PendingSyncTime))
+			const FFunKTimeLimit* limit = &Settings->Settings.SyncTimeLimit;
+			if(IsTimeout(limit, PendingSyncTime))
 			{
-				const FFunKTimeLimit* limit = currentTest->GetSyncTimeLimit();
 				RaiseEvent(currentTest->CreateEvent(limit->Result, limit->Message.ToString()));
 				NextTest();
 				return;

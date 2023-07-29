@@ -7,15 +7,10 @@
 
 
 AFunKFunctionalTest::AFunKFunctionalTest()
+	: AFunKTestBase()
 {
 	ArrangeTimeLimit.Message = FText::FromString("Preparation time limit reached");
 	ActTimeLimit.Message = FText::FromString("Execution time limit reached");
-	SyncTimeLimit.Message = FText::FromString("Sync time limit reached");
-}
-
-FFunKTimeLimit* AFunKFunctionalTest::GetSyncTimeLimit()
-{
-	return &SyncTimeLimit;
 }
 
 void AFunKFunctionalTest::SetupStages(FFunKStagesSetup& stages)
