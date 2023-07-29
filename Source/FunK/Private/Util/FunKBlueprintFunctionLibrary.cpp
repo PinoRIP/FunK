@@ -72,3 +72,57 @@ void UFunKBlueprintFunctionLibrary::SwitchClients(UObject* WorldContext, EFunKCl
 			Branches = EFunKClient::Any;
 	}
 }
+
+void UFunKBlueprintFunctionLibrary::SwitchTestEnvironmentType(UObject* WorldContext, EFunKTestEnvironmentType& Branches)
+{
+	Branches = EFunKTestEnvironmentType::MAX;
+	
+	const auto netMode = GetNetMode(WorldContext);
+	if (netMode == EFunKNetMode::Standalone)
+	{
+		Branches = EFunKTestEnvironmentType::Standalone;
+	}
+	else if (netMode == EFunKNetMode::ListenServer)
+	{
+		Branches = EFunKTestEnvironmentType::ListenServer;
+	}
+	else if (netMode == EFunKNetMode::DedicatedServer)
+	{
+		Branches = EFunKTestEnvironmentType::DedicatedServer;
+	}
+	else if (netMode == EFunKNetMode::Client)
+	{
+		Branches = IsServerDedicated(WorldContext)
+			? EFunKTestEnvironmentType::DedicatedServer
+			: EFunKTestEnvironmentType::ListenServer;
+	}
+}
+
+bool UFunKBlueprintFunctionLibrary::IsServerDedicated(UObject* WorldContext)
+{
+	if(const AFunKWorldTestController* controller = GetTestController(WorldContext))
+	{
+		return controller->GetIsServerDedicated();
+	}
+
+	return false;
+}
+
+void UFunKBlueprintFunctionLibrary::SwitchNetLocation(UObject* WorldContext, EFunKNetLocation& Branches)
+{
+	Branches = EFunKNetLocation::MAX;
+	
+	const auto netMode = GetNetMode(WorldContext);
+	if (netMode == EFunKNetMode::Standalone)
+	{
+		Branches = EFunKNetLocation::Standalone;
+	}
+	else if (netMode == EFunKNetMode::ListenServer || netMode == EFunKNetMode::DedicatedServer)
+	{
+		Branches = EFunKNetLocation::Server;
+	}
+	else if (netMode == EFunKNetMode::Client)
+	{
+		Branches = EFunKNetLocation::Client;
+	}
+}

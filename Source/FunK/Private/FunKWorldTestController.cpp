@@ -28,6 +28,7 @@ void AFunKWorldTestController::GetLifetimeReplicatedProps(TArray<FLifetimeProper
 
 	DOREPLIFETIME( AFunKWorldTestController, ActiveController );
 	DOREPLIFETIME( AFunKWorldTestController, ControllerIndex );
+	DOREPLIFETIME( AFunKWorldTestController, IsServerDedicated );
 }
 
 // Called when the game starts or when spawned
@@ -43,6 +44,7 @@ void AFunKWorldTestController::BeginPlay()
 	else
 	{
 		ControllerReady();
+		IsServerDedicated = GetNetMode() == NM_DedicatedServer;
 	}
 	
 	SetActorTickEnabled(false);

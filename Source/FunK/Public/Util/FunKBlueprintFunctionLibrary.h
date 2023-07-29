@@ -47,6 +47,26 @@ enum class EFunKClient : uint8
 	MAX UMETA(Hidden),
 };
 
+UENUM(BlueprintType)
+enum class EFunKTestEnvironmentType : uint8
+{
+	Standalone,
+	DedicatedServer,
+	ListenServer,
+
+	MAX UMETA(Hidden),
+};
+
+UENUM(BlueprintType)
+enum class EFunKNetLocation : uint8
+{
+	Standalone,
+	Server,
+	Client,
+
+	MAX UMETA(Hidden),
+};
+
 /**
  * 
  */
@@ -70,4 +90,13 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext", ExpandEnumAsExecs = "Branches"))
 	static void SwitchClients(UObject* WorldContext, EFunKClient& Branches);
+
+	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext", ExpandEnumAsExecs = "Branches"))
+	static void SwitchTestEnvironmentType(UObject* WorldContext, EFunKTestEnvironmentType& Branches);
+	
+	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
+	static bool IsServerDedicated(UObject* WorldContext);
+
+	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext", ExpandEnumAsExecs = "Branches"))
+	static void SwitchNetLocation(UObject* WorldContext, EFunKNetLocation& Branches);
 };

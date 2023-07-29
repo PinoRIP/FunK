@@ -49,6 +49,9 @@ private:
 	UPROPERTY( replicated )
 	int32 ControllerIndex = INDEX_NONE;
 
+	UPROPERTY( replicated )
+	bool IsServerDedicated = false;
+
 	bool IsControllerReadinessSend = false;
 	bool IsControllerLocallyReady() const;
 	void CheckControllerReady();
@@ -71,6 +74,7 @@ public:
 	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const override;
 
 	FString GetRoleName() const;
+	bool GetIsServerDedicated() const { return IsServerDedicated; }
 
 private:
 	UPROPERTY()
