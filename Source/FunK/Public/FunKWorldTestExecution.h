@@ -87,7 +87,7 @@ private:
 	void NextTest();
 	void NextTestAsync();
 	void RunTest(AFunKTestBase* test);
-	void RunTestOnController(AFunKTestBase* test, AFunKWorldTestController* controller, ENetMode netMode);
+	void RunTestOnController(AFunKTestBase* test, AFunKWorldTestController* controller, ENetMode netMode, int32 Seed);
 	void NextStage();
 	void NextStageAsync();
 

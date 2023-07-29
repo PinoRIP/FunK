@@ -205,10 +205,12 @@ void UFunKWorldTestExecution::NextStageAsync()
 void UFunKWorldTestExecution::RunTest(AFunKTestBase* test)
 {
 	const ENetMode netMode = MasterController->GetNetMode();
+	int32 seed = FMath::Rand();
+	
 	if(netMode == NM_Standalone)
 	{
 		if(test->IsStandaloneModeTest())
-			RunTestOnController(test, MasterController, netMode);
+			RunTestOnController(test, MasterController, netMode, seed);
 	}
 	else
 	{
@@ -216,16 +218,16 @@ void UFunKWorldTestExecution::RunTest(AFunKTestBase* test)
 		const bool executeClients = (netMode == NM_DedicatedServer && test->IsRunOnDedicatedServerClients()) || (netMode == NM_ListenServer && test->IsRunOnListenServerClients());
 		
 		if(executeServer)
-			RunTestOnController(test, MasterController, netMode);
+			RunTestOnController(test, MasterController, netMode, seed);
 
 		if(executeClients) for (AFunKWorldTestController* SpawnedController : MasterController->SpawnedController)
 		{
-			RunTestOnController(test, SpawnedController, ENetMode::NM_Client);
+			RunTestOnController(test, SpawnedController, ENetMode::NM_Client, seed);
 		}
 	}
 }
 
-void UFunKWorldTestExecution::RunTestOnController(AFunKTestBase* test, AFunKWorldTestController* controller, const ENetMode netMode)
+void UFunKWorldTestExecution::RunTestOnController(AFunKTestBase* test, AFunKWorldTestController* controller, const ENetMode netMode, int32 Seed)
 {
 	const FGuid guid = FGuid::NewGuid();
 	FFunKTestExecutionState& state = CurrentExecutions.Add_GetRef(FFunKTestExecutionState());
@@ -233,7 +235,7 @@ void UFunKWorldTestExecution::RunTestOnController(AFunKTestBase* test, AFunKWorl
 	state.Id = guid;
 	state.NetMode = netMode;
 	
-	controller->BeginLocalTest(test, guid);
+	controller->BeginLocalTest(test, guid, Seed);
 }
 
 AFunKTestBase* UFunKWorldTestExecution::GetCurrentTest()

@@ -33,8 +33,15 @@ void AFunKFunctionalTest::SetupFunctionalTestStages(FFunKStagesSetup& stages)
 {
 	stages
 		.AddNamedStage<AFunKFunctionalTest>("Assume", &AFunKFunctionalTest::InvokeAssume)
-		.ThenAddNamedLatentStage<AFunKFunctionalTest>("Arrange", &AFunKFunctionalTest::InvokeArrange).UpdateTimeLimit(ArrangeTimeLimit)
-		.ThenAddLatentStage(AFunKFunctionalTest, Act).UpdateTimeLimit(ActTimeLimit)
+	
+		.ThenAddNamedLatentStage<AFunKFunctionalTest>("Arrange", &AFunKFunctionalTest::InvokeArrange)
+		.UpdateTimeLimit(ArrangeTimeLimit)
+		.WithOptionalBpTickDelegate(AFunKFunctionalTest, BpArrangeTick)
+	
+		.ThenAddLatentStage(AFunKFunctionalTest, Act)
+		.UpdateTimeLimit(ActTimeLimit)
+		.WithOptionalBpTickDelegate(AFunKFunctionalTest, BpActTick)
+	
 		.ThenAddStage(AFunKFunctionalTest, Assert);
 }
 
@@ -66,12 +73,21 @@ bool AFunKFunctionalTest::BpAssume_Implementation()
 
 bool AFunKFunctionalTest::Arrange()
 {
-	return BpArrange();
+	if(IsBpEventImplemented(GET_FUNCTION_NAME_CHECKED(AFunKFunctionalTest, BpArrange)))
+	{
+		BpArrange();
+		return false;
+	}
+	
+	return true;
 }
 
-bool AFunKFunctionalTest::BpArrange_Implementation()
+void AFunKFunctionalTest::BpArrange_Implementation()
 {
-	return true;
+}
+
+void AFunKFunctionalTest::BpArrangeTick_Implementation(float DeltaTime)
+{
 }
 
 void AFunKFunctionalTest::Act()
@@ -80,6 +96,10 @@ void AFunKFunctionalTest::Act()
 }
 
 void AFunKFunctionalTest::BpAct_Implementation()
+{
+}
+
+void AFunKFunctionalTest::BpActTick_Implementation(float DeltaTime)
 {
 }
 

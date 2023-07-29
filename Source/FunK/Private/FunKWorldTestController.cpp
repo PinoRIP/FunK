@@ -168,11 +168,11 @@ void AFunKWorldTestController::ExecuteAllTests(TScriptInterface<IFunKSink> Repor
 	ExecuteTests(Test, ReportSink, TestRunID);
 }
 
-void AFunKWorldTestController::ClientBeginLocalTest_Implementation(AFunKTestBase* TestToBegin, FFunKTestRunID TestRunID)
+void AFunKWorldTestController::ClientBeginLocalTest_Implementation(AFunKTestBase* TestToBegin, FFunKTestRunID TestRunID, int32 Seed)
 {
 	if(TestToBegin)
 	{
-		BeginLocalTest(TestToBegin, TestRunID);
+		BeginLocalTest(TestToBegin, TestRunID, Seed);
 	}
 	else
 	{
@@ -180,15 +180,15 @@ void AFunKWorldTestController::ClientBeginLocalTest_Implementation(AFunKTestBase
 	}
 }
 
-void AFunKWorldTestController::BeginLocalTest(AFunKTestBase* TestToBegin, FFunKTestRunID TestRunID)
+void AFunKWorldTestController::BeginLocalTest(AFunKTestBase* TestToBegin, FFunKTestRunID TestRunID, int32 Seed)
 {
 	if(IsLocalTestController())
 	{
-		TestToBegin->BeginTest(this, TestRunID);
+		TestToBegin->BeginTest(this, TestRunID, Seed);
 	}
 	else if(GetNetMode() != NM_Client)
 	{
-		ClientBeginLocalTest(TestToBegin, TestRunID);
+		ClientBeginLocalTest(TestToBegin, TestRunID, Seed);
 	}
 }
 

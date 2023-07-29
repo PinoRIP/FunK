@@ -50,11 +50,13 @@ bool AFunKTestBase::IsRunOnListenServerClients() const
 	return Stages.OnListenServerClientCount > 0;
 }
 
-void AFunKTestBase::BeginTest(AFunKWorldTestController* Controller, FFunKTestRunID InTestRunID)
+void AFunKTestBase::BeginTest(AFunKWorldTestController* Controller, FFunKTestRunID InTestRunID, int32 InSeed)
 {
 	CurrentController = Controller;
 	TestRunID = InTestRunID;
 	Result = EFunKTestResult::None;
+	Seed = InSeed;
+	
 	SetActorTickEnabled(true);
 }
 
@@ -115,6 +117,7 @@ void AFunKTestBase::FinishStage(EFunKTestResult TestResult, const FString& Messa
 
 		CurrentController = nullptr;
 		TestRunID = FGuid();
+		Seed = 0;
 	}
 
 	CurrentStageIndex = INDEX_NONE;
@@ -195,6 +198,11 @@ void AFunKTestBase::PostActorCreated()
 {
 	Super::PostActorCreated();
 	SetupStages();
+}
+
+int32 AFunKTestBase::GetCurrentSeed() const
+{
+	return Seed;
 }
 
 void AFunKTestBase::OnBegin()
@@ -289,6 +297,12 @@ void AFunKTestBase::SetupStages()
 bool AFunKTestBase::IsValidStageIndex(int32 StageIndex) const
 {
 	return Stages.Stages.Num() > StageIndex && StageIndex >= 0;
+}
+
+bool AFunKTestBase::IsBpEventImplemented(const FName& Name) const
+{
+	const UFunction* function = FindFunction(Name);
+	return function && function->IsInBlueprint();
 }
 
 FFunKStage* AFunKTestBase::GetCurrentStageMutable()

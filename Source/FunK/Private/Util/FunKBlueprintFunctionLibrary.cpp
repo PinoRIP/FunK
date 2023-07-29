@@ -18,7 +18,7 @@ AFunKWorldTestController* UFunKBlueprintFunctionLibrary::GetTestController(UObje
 	return nullptr;
 }
 
-int32 UFunKBlueprintFunctionLibrary::GetTestControllerIndex(UObject* WorldContext)
+int32 UFunKBlueprintFunctionLibrary::GetTestControllerNumber(UObject* WorldContext)
 {
 	if(const AFunKWorldTestController* controller = GetTestController(WorldContext))
 	{
@@ -63,10 +63,10 @@ void UFunKBlueprintFunctionLibrary::SwitchClients(UObject* WorldContext, EFunKCl
 	}
 	else if (netMode == EFunKNetMode::Client)
 	{
-		const int32 index = GetTestControllerIndex(WorldContext);
-		if (index == 0)
+		const int32 number = GetTestControllerNumber(WorldContext);
+		if (number == 1)
 			Branches = EFunKClient::First;
-		else if (index == 1)
+		else if (number == 2)
 			Branches = EFunKClient::Second;
 		else
 			Branches = EFunKClient::Any;

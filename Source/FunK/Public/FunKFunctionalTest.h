@@ -53,11 +53,15 @@ protected:
 
 	virtual bool Arrange();
 	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="Arrange")
-	bool BpArrange();
+	void BpArrange();
+	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="ArrangeTick")
+	void BpArrangeTick(float DeltaTime);
 	
 	virtual void Act();
 	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="Act")
 	void BpAct();
+	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="ActTick")
+	void BpActTick(float DeltaTime);
 
 	virtual void Assert();
 	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="Assert")

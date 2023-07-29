@@ -48,8 +48,6 @@ protected:
 	virtual void SetupStages(FFunKStagesSetup& stages) override final;
 
 	void InvokeAssume();
-	void InvokeArrange();
-	void InvokeAssert();
 
 	bool Assume();
 	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="Assume")
@@ -58,17 +56,23 @@ protected:
 	void ArrangeScenario();
 	void CheckArrangeScenarioFinish(float DeltaTime);
 
-	bool Arrange();
+	void Arrange();
 	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="Arrange")
-	bool BpArrange();
+	void BpArrange();
+	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="ArrangeTick")
+	void BpArrangeTick(float DeltaTime);
 	
 	void Act();
 	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="Act")
 	void BpAct();
+	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="ActTick")
+	void BpActTick(float DeltaTime);
 
-	bool Assert();
+	void Assert();
 	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="Assert")
-	bool BpAssert();
+	void BpAssert();
+	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="AssertTick")
+	void BpAssertTick(float DeltaTime);
 
 	bool HasMoreScenarios() const;
 	virtual void OnStageScenarioChanged(const FName& StageName, const FString& NewStageScenario);

@@ -44,7 +44,7 @@ public:
 	UFUNCTION(BlueprintCallable, Category="FunK|Setup")
 	bool IsRunOnListenServerClients() const;
 
-	virtual void BeginTest(AFunKWorldTestController* Controller, FFunKTestRunID InTestRunID);
+	virtual void BeginTest(AFunKWorldTestController* Controller, FFunKTestRunID InTestRunID, int32 InSeed);
 	virtual void BeginTestStage(int32 StageIndex);
 
 	FORCEINLINE FName GetStageName() const;
@@ -70,6 +70,10 @@ public:
 	
 	virtual void PostLoad() override;
 	virtual void PostActorCreated() override;
+
+	int32 GetCurrentSeed() const;
+
+	bool IsBpEventImplemented(const FName& Name) const;
 
 protected:
 	/**
@@ -103,6 +107,7 @@ protected:
 	AFunKWorldTestController* GetCurrentController() const { return CurrentController; }
 	
 private:
+	int32 Seed;
 	int32 CurrentStageIndex = INDEX_NONE;
 	FFunKTestRunID TestRunID;
 	FFunKStages Stages;
@@ -128,4 +133,6 @@ public:
 #if WITH_EDITOR
 	virtual void GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const override;
 #endif // WITH_EDITOR
+
+private:
 };

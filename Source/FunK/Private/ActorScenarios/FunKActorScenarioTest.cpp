@@ -107,22 +107,6 @@ void AFunKActorScenarioTest::InvokeAssume()
 	}
 }
 
-void AFunKActorScenarioTest::InvokeArrange()
-{
-	if(Arrange())
-	{
-		Super::FinishStage();
-	}
-}
-
-void AFunKActorScenarioTest::InvokeAssert()
-{
-	if(Assert() && !IsFinished())
-	{
-		Super::FinishStage();
-	}
-}
-
 bool AFunKActorScenarioTest::Assume()
 {
 	return BpAssume();
@@ -149,6 +133,7 @@ void AFunKActorScenarioTest::ArrangeScenario()
 	if(NetMode != NM_Client)
 	{
 		const FString StageName = stage->Name.ToString();
+		
 		for (UFunKActorScenarioComponent* ActorScenarioComponent : ActorScenarioComponents)
 		{
 			AActor* actor = ActorScenarioComponent->AcquireActor();
@@ -187,6 +172,9 @@ void AFunKActorScenarioTest::ArrangeScenario()
 					else if(StageName.Contains(FunKTestActorScenarioStageExtensionListenServerClientToClient))
 						actor->SetOwner(GetCurrentController()->GetSpawnedController()[0]->GetOwner());
 				}
+
+				if(ActorScenarioComponent->IsAutonomousProxy)
+					actor->SetAutonomousProxy(true);
 			}
 			
 			AcquiredActors.Add(actor);
@@ -207,14 +195,24 @@ void AFunKActorScenarioTest::CheckArrangeScenarioFinish(float DeltaTime)
 	}
 }
 
-bool AFunKActorScenarioTest::Arrange()
+void AFunKActorScenarioTest::Arrange()
 {
-	return BpArrange();
+	if(IsBpEventImplemented(GET_FUNCTION_NAME_CHECKED(AFunKActorScenarioTest, BpArrange)))
+	{
+		BpArrange();
+	}
+	else
+	{
+		Super::FinishStage();
+	}
 }
 
-bool AFunKActorScenarioTest::BpArrange_Implementation()
+void AFunKActorScenarioTest::BpArrange_Implementation()
 {
-	return true;
+}
+
+void AFunKActorScenarioTest::BpArrangeTick_Implementation(float DeltaTime)
+{
 }
 
 void AFunKActorScenarioTest::Act()
@@ -226,9 +224,28 @@ void AFunKActorScenarioTest::BpAct_Implementation()
 {
 }
 
-bool AFunKActorScenarioTest::Assert()
+void AFunKActorScenarioTest::BpActTick_Implementation(float DeltaTime)
 {
-	return BpAssert();
+}
+
+void AFunKActorScenarioTest::Assert()
+{
+	if(IsBpEventImplemented(GET_FUNCTION_NAME_CHECKED(AFunKActorScenarioTest, BpAssert)))
+	{
+		BpAssert();
+	}
+	else if(!IsFinished())
+	{
+		Super::FinishStage();
+	}
+}
+
+void AFunKActorScenarioTest::BpAssert_Implementation()
+{
+}
+
+void AFunKActorScenarioTest::BpAssertTick_Implementation(float DeltaTime)
+{
 }
 
 bool AFunKActorScenarioTest::HasMoreScenarios() const
@@ -280,20 +297,23 @@ void AFunKActorScenarioTest::OnStageScenarioChanged(const FName& StageName, cons
 bool AFunKActorScenarioTest::IsSkippingClient2() const
 {
 	const ENetMode netMode = GetNetMode();
-	if(netMode != NM_Client || CurrentStageScenario == FunKTestActorScenarioStageExtensionDedicatedServerClientToClient && CurrentStageScenario == FunKTestActorScenarioStageExtensionListenServerClientToClient)
+	if(netMode != NM_Client || CurrentStageScenario == FunKTestActorScenarioStageExtensionDedicatedServerClientToClient || CurrentStageScenario == FunKTestActorScenarioStageExtensionListenServerClientToClient)
 		return false;
 
-	const bool isDedicated = GetCurrentController()->GetIsServerDedicated();
+	const AFunKWorldTestController* currentController = GetCurrentController();
+	
+	const bool isDedicated = currentController->GetIsServerDedicated();
+	const bool isClient2 = currentController->GetControllerNumber() == 2;
 	const FString StageName = GetStageName().ToString();
 
 	if (StageName.Contains("Arrange") && isDedicated ? IsArrangeAlsoOn(EFunKTestLocationTarget::DedicatedServerClient) : IsArrangeAlsoOn(EFunKTestLocationTarget::ListenServerClient))
-		return false;
+		return isClient2;
 
 	if (StageName.Contains("Act") && isDedicated ? IsActAlsoOn(EFunKTestLocationTarget::DedicatedServerClient) : IsActAlsoOn(EFunKTestLocationTarget::ListenServerClient))
-		return false;
+		return isClient2;
 
 	if (StageName.Contains("Assert") && isDedicated ? IsAssertAlsoOn(EFunKTestLocationTarget::DedicatedServerClient) : IsAssertAlsoOn(EFunKTestLocationTarget::ListenServerClient))
-		return false;
+		return isClient2;
 
 	return true;
 }
@@ -346,11 +366,6 @@ AActor* AFunKActorScenarioTest::GetAcquireActorByComponent(UFunKActorScenarioCom
 	}
 
 	return nullptr;
-}
-
-bool AFunKActorScenarioTest::BpAssert_Implementation()
-{
-	return true;
 }
 
 void AFunKActorScenarioTest::ErrorFallbackStage()
@@ -421,7 +436,8 @@ void AFunKActorScenarioTest::AddScenarioStages(FFunKStagesSetup& stages, const F
 			.SetRunOnListenServerClient(listenClient);
 
 		stages
-			.AddNamedLatentStage<AFunKActorScenarioTest>(FName("Arrange for " + name), &AFunKActorScenarioTest::InvokeArrange)
+			.AddNamedLatentStage<AFunKActorScenarioTest>(FName("Arrange for " + name), &AFunKActorScenarioTest::Arrange)
+			.WithOptionalBpTickDelegate(AFunKActorScenarioTest, BpArrangeTick)
 			.UpdateTimeLimit(ArrangeTimeLimit)
 			.SetRunOnStandalone(standalone)
 			.SetRunOnDedicatedServer(dedicated || (dedicatedClient && IsArrangeAlsoOn(EFunKTestLocationTarget::DedicatedServer)))
@@ -431,6 +447,7 @@ void AFunKActorScenarioTest::AddScenarioStages(FFunKStagesSetup& stages, const F
 
 		stages
 			.AddNamedLatentStage<AFunKActorScenarioTest>(FName("Act for " + name), &AFunKActorScenarioTest::Act)
+			.WithOptionalBpTickDelegate(AFunKActorScenarioTest, BpActTick)
 			.UpdateTimeLimit(ActTimeLimit)
 			.SetRunOnStandalone(standalone)
 			.SetRunOnDedicatedServer(dedicated || (dedicatedClient && IsArrangeAlsoOn(EFunKTestLocationTarget::DedicatedServer)))
@@ -439,7 +456,8 @@ void AFunKActorScenarioTest::AddScenarioStages(FFunKStagesSetup& stages, const F
 			.SetRunOnListenServerClient(listenClient || (listen && IsArrangeAlsoOn(EFunKTestLocationTarget::ListenServerClient)));
 
 		stages
-			.AddNamedLatentStage<AFunKActorScenarioTest>(FName("Assert for " + name), &AFunKActorScenarioTest::InvokeAssert)
+			.AddNamedLatentStage<AFunKActorScenarioTest>(FName("Assert for " + name), &AFunKActorScenarioTest::Assert)
+			.WithOptionalBpTickDelegate(AFunKActorScenarioTest, BpAssertTick)
 			.UpdateTimeLimit(AssertTimeLimit)
 			.SetRunOnStandalone(standalone)
 			.SetRunOnDedicatedServer(dedicated || (dedicatedClient && IsArrangeAlsoOn(EFunKTestLocationTarget::DedicatedServer)))

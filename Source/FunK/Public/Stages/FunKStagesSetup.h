@@ -161,6 +161,8 @@ public:
 		return *this;
 	}
 
+	#define WithOptionalBpTickDelegate(Type, InFunc) Update([](FFunKLatentStageSetup& setup) { FFunKLatentStageSetupPrivateAccessHelper::WithOptionalBpTickDelegateImpl<Type>(setup, GET_FUNCTION_NAME_CHECKED(Type, InFunc), &Type::InFunc); })
+
 	FFunKLatentStageSetup& UpdateTimeLimitTime(const float Time)
 	{
 		if(Stage)
@@ -199,6 +201,37 @@ public:
 			Stage->TimeLimit = TimeLimit;
 		
 		return *this;
+	}
+
+	FFunKLatentStageSetup& Update(void (*f)(FFunKLatentStageSetup&))
+	{
+		f(*this);
+		
+		return *this;
+	}
+
+private:
+	template <typename UserClass, typename... VarTypes>
+	FORCEINLINE FFunKLatentStageSetup& WithOptionalBpTickDelegateImpl(const FName& name, typename TMemFunPtrType<false, UserClass, void (float, VarTypes...)>::Type InFunc, VarTypes... Vars)
+	{
+		if(Stage && TestBase && TestBase->IsBpEventImplemented(name))
+			Stage->TickDelegate.BindUObject(Cast<UserClass, AFunKTestBase>(TestBase), InFunc, Vars...);
+		
+		return *this;
+	}
+
+	friend struct FFunKLatentStageSetupPrivateAccessHelper;
+};
+
+struct FUNK_API FFunKLatentStageSetupPrivateAccessHelper
+{
+	/**
+	 * This should never be called directly. This is a helper for the "WithOptionalBpTickDelegate"-Makro for "FFunKLatentStageSetup"
+	 */
+	template <typename UserClass, typename... VarTypes>
+	FORCEINLINE static FFunKLatentStageSetup& WithOptionalBpTickDelegateImpl(FFunKLatentStageSetup& setup, const FName& name, typename TMemFunPtrType<false, UserClass, void (float, VarTypes...)>::Type InFunc, VarTypes... Vars)
+	{
+		return setup.WithOptionalBpTickDelegateImpl<UserClass, VarTypes...>(name, InFunc, Vars...);
 	}
 };
 

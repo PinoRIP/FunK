@@ -21,7 +21,7 @@ public:
 	static AFunKWorldTestController* GetTestController(UObject* WorldContext);
 	
 	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
-	static int32 GetTestControllerIndex(UObject* WorldContext);
+	static int32 GetTestControllerNumber(UObject* WorldContext);
 
 	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
 	static EFunKNetMode GetNetMode(UObject* WorldContext);

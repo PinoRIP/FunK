@@ -101,8 +101,8 @@ private:
 	virtual void ExecuteAllTests(TScriptInterface<IFunKSink> ReportSink, FFunKTestRunID TestRunID);
 	
 	UFUNCTION(Client, Reliable)
-	void ClientBeginLocalTest(AFunKTestBase* TestToBegin, FGuid TestRunID);
-	void BeginLocalTest(AFunKTestBase* TestToBegin, FFunKTestRunID TestRunID);
+	void ClientBeginLocalTest(AFunKTestBase* TestToBegin, FGuid TestRunID, int32 Seed);
+	void BeginLocalTest(AFunKTestBase* TestToBegin, FFunKTestRunID TestRunID, int32 Seed);
 	
 	UFUNCTION(Client, Reliable)
 	void ClientBeginLocalTestStage(AFunKTestBase* Test, int32 StageIndex);
