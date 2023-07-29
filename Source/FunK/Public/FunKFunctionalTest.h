@@ -15,8 +15,23 @@ class FUNK_API AFunKFunctionalTest : public AFunKTestBase
 {
 	GENERATED_BODY()
 
+public:
+	AFunKFunctionalTest();
+	
+	virtual FFunKTimeLimit* GetPreparationTimeLimit() override;
+	virtual FFunKTimeLimit* GetTimeLimit() override;
+	virtual FFunKTimeLimit* GetNetworkingTimeLimit() override;
 
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup|Timeout")
+	FFunKTimeLimit PreparationTimeLimit;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup|Timeout")
+	FFunKTimeLimit TimeLimit;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup|Timeout")
+	FFunKTimeLimit NetworkingTimeLimit;
+	
 	virtual bool InvokeAssume() override;
 	virtual void InvokeStartSetup() override;
 	virtual bool InvokeIsReady() override;

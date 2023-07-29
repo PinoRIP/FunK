@@ -73,9 +73,9 @@ public:
 	
 	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const override;
 
-	FFunKTimeLimit* GetPreparationTimeLimit();
-	FFunKTimeLimit* GetTimeLimit();
-	FFunKTimeLimit* GetNetworkingTimeLimit();
+	virtual FFunKTimeLimit* GetPreparationTimeLimit();
+	virtual FFunKTimeLimit* GetTimeLimit();
+	virtual FFunKTimeLimit* GetNetworkingTimeLimit();
 
 protected:
 	/**

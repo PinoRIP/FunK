@@ -2,11 +2,29 @@
 
 
 #include "FunKFunctionalTest.h"
-#include "FunK.h"
-#include "FunKWorldSubsystem.h"
-#include "FunKWorldTestController.h"
-#include "FunKWorldTestExecution.h"
 
+
+AFunKFunctionalTest::AFunKFunctionalTest()
+{
+	PreparationTimeLimit.Message = FText::FromString("Preparation time limit reached");
+	TimeLimit.Message = FText::FromString("Execution time limit reached");
+	NetworkingTimeLimit.Message = FText::FromString("Networking time limit reached");
+}
+
+FFunKTimeLimit* AFunKFunctionalTest::GetPreparationTimeLimit()
+{
+	return &PreparationTimeLimit;
+}
+
+FFunKTimeLimit* AFunKFunctionalTest::GetTimeLimit()
+{
+	return &TimeLimit;
+}
+
+FFunKTimeLimit* AFunKFunctionalTest::GetNetworkingTimeLimit()
+{
+	return &NetworkingTimeLimit;
+}
 
 bool AFunKFunctionalTest::InvokeAssume()
 {

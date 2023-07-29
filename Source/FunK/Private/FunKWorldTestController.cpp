@@ -326,7 +326,16 @@ void AFunKWorldTestController::RaiseEvent(const FFunKEvent& raisedEvent) const
 		if(netMode == NM_Client)
 			ServerSendEvent(raisedEvent.Type, raisedEvent.Message, raisedEvent.Context);
 		else
-			CurrentTestExecution->RaiseEvent(raisedEvent);
+		{
+			if(CurrentTestExecution)
+			{
+				CurrentTestExecution->RaiseEvent(raisedEvent);
+			}
+			else
+			{
+				UE_LOG(FunKLog, Error, TEXT("Failed to RaiseEvent due to a missing test execution: %s"), *GetRoleName());
+			}
+		}
 	}
 	else if(netMode == NM_DedicatedServer || netMode == NM_ListenServer)
 	{

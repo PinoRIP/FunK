@@ -4,6 +4,7 @@
 #include "FunKTestBase.h"
 
 #include "FunK.h"
+#include "FunKLogging.h"
 #include "FunKWorldSubsystem.h"
 #include "FunKWorldTestController.h"
 
@@ -63,6 +64,7 @@ void AFunKTestBase::BeginTestSetup(AFunKWorldTestController* Controller, FFunKTe
 	CurrentController = Controller;
 	TestID = testId;
 	IsTestStarted = false;
+	IsSetupReady = false;
 
 	if(!InvokeAssume())
 	{
@@ -90,7 +92,7 @@ void AFunKTestBase::FinishTest(EFunKFunctionalTestResult InTestResult, const FSt
 	IsTestStarted = false;
 	TestResult = InTestResult;
 
-	RaiseEvent(CreateEvent(TestResult, Message).AddToContext(UFunKWorldTestExecution::FunKTestLifeTimeTestFinishedEvent).AddToContext(TestID.ToString()));
+	RaiseEvent(CreateEvent(TestResult, Message).AddToContext(UFunKWorldTestExecution::FunKTestLifeTimeTestFinishedEvent));
 
 	InvokeCleanup();
 	GEngine->ForceGarbageCollection();
@@ -144,7 +146,7 @@ void AFunKTestBase::RaiseEvent(const FFunKEvent& raisedEvent) const
 {
 	if(CurrentController)
 	{
-		CurrentController->RaiseEvent(FFunKEvent(raisedEvent).AddToContext(GetName()).AddToContext(CurrentController->GetRoleName()));
+		CurrentController->RaiseEvent(FFunKEvent(raisedEvent).AddToContext(TestID.ToString()).AddToContext(GetName()).AddToContext(CurrentController->GetRoleName()));
 	}
 }
 
@@ -212,7 +214,7 @@ void AFunKTestBase::BeginPlay()
 
 void AFunKTestBase::Tick(float DeltaTime)
 {
-	if(!IsFinished())
+	if(IsFinished())
 		return;
 
 	GEngine->DelayGarbageCollection();
