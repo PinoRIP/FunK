@@ -136,7 +136,7 @@ void FFunKModule::GetTests(bool bEditorOnlyTests, TArray<FString>& OutBeautified
 
 								for (const FString& RunOn : RunOns)
 								{
-									OutBeautifiedNames.Add(RunOn + TEXT(".") + PartialSuiteName + TEXT(".") + *BeautifulTestName);
+									OutBeautifiedNames.Add(RunOn + TEXT(".") + PartialSuiteName + TEXT(".") + *BeautifulTestName + TEXT(" -") + *RunOn);
 									OutTestCommands.Add(MapAssetPath + TEXT(";") + MapPackageName + TEXT(";") + *RealTestName + TEXT(";-") + *RunOn);
 									OutTestMapAssets.AddUnique(MapAssetPath);
 								}
