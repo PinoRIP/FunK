@@ -3,12 +3,12 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FunKTestStageEvent.generated.h"
-
-class AFunKTestBase;
+#include "FunKTestResult.h"
+#include "UObject/Object.h"
+#include "FunKTestFinishEvent.generated.h"
 
 USTRUCT()
-struct FFunKTestStageEvent
+struct FFunKTestFinishEvent
 {
 	GENERATED_BODY()
 
@@ -17,11 +17,12 @@ public:
 	int32 TestRunID = 0;
 
 	UPROPERTY()
-	int32 Seed = 0;
-
-	UPROPERTY()
-	int32 StageIndex = 0;
-
-	UPROPERTY()
 	AFunKTestBase* Test = nullptr;
+
+	UPROPERTY()
+	EFunKTestResult Result = EFunKTestResult::None;
+
+	UPROPERTY()
+	FString Message;
 };
+

@@ -52,31 +52,33 @@ public:
 	UFUNCTION(BlueprintCallable, Category="FunK|Setup")
 	bool IsRunOnListenServerClients() const;
 
-	virtual void BeginTest(int32 InTestRunID, int32 InSeed);
-	virtual void FinishTest(const FString& Reason = "");
-	virtual void FinishTest(EFunKTestResult InResult, const FString& Reason = "");
-
-	FORCEINLINE FName GetStageName() const;
-	const FFunKStage* GetCurrentStage() const;
-	int32 GetCurrentStageExecutionTime() const { return CurrentStageExecutionTime; }
-	
-	virtual void FinishStage();
-	UFUNCTION(BlueprintCallable, Category="FunK")
-	virtual void FinishStage(EFunKStageResult StageResult, const FString& Message);
-
 	UFUNCTION(BlueprintCallable, Category="FunK")
 	bool IsRunning() const;
 
 	UFUNCTION(BlueprintCallable, Category="FunK")
 	bool IsFinished() const;
 
-	EFunKTestResult GetTestResult() const;
+	UFUNCTION(BlueprintCallable, Category="FunK")
+	EFunKTestResult GetTestResult() const { return Result; }
 
 	UFUNCTION(BlueprintCallable, Category="FunK")
-	int32 GetSeed() const;
+	int32 GetSeed() const { return Seed; }
 
-	bool IsBpEventImplemented(const FName& Name) const;
+	UFUNCTION(BlueprintCallable, Category="FunK")
+	FORCEINLINE FName GetStageName() const;
+	
+	const FFunKStage* GetCurrentStage() const;
+	const FFunKStages* GetStages() const;
+	int32 GetCurrentStageExecutionTime() const { return CurrentStageExecutionTime; }
 
+	virtual void BeginTest(int32 InTestRunID, int32 InSeed);
+	virtual void FinishTest(const FString& Reason = "");
+	virtual void FinishTest(EFunKTestResult InResult, const FString& Reason = "");
+	
+	virtual void FinishStage();
+	UFUNCTION(BlueprintCallable, Category="FunK")
+	virtual void FinishStage(EFunKStageResult StageResult, const FString& Message);
+	
 protected:
 	/**
 	 * A description of the test, like what is this test trying to determine.
@@ -91,28 +93,23 @@ protected:
 	virtual void OnBeginStage();
 	virtual void OnFinishStage(EFunKStageResult StageResult, FString Message);
 	virtual void OnFinish(const FString& Message);
-
-	virtual bool IsLastStage();
-	virtual bool IsExecutingStage(const FFunKStage& stage) const;
 	
-	virtual void BeginPlay() override;
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
 	virtual void SetupStages(FFunKStagesSetup& stages);
-
 	const FFunKStage* GetStage(int32 StageIndex) const;
-
+	virtual bool IsExecutingStage(const FFunKStage& stage) const;
 	bool IsStageTickDelegateBound(int32 StageIndex);
 	bool IsValidStageIndex(int32 StageIndex) const;
 	int32 GetCurrentStageIndex() const { return CurrentStageIndex; }
 
 	UFunKWorldSubsystem* GetWorldSubsystem() const;
-
 	UFunKEventBusSubsystem* GetEventBusSubsystem() const;
 
 	virtual void GatherContext(FFunKEvent& Event) const;
 	virtual void RaiseEvent(FFunKEvent& Event) const;
-	
+
+	bool IsServer() const;
+	bool IsDriver() const;
+
 private:
 	int32 Seed;
 	int32 CurrentStageIndex = INDEX_NONE;
@@ -120,22 +117,27 @@ private:
 	FFunKStages Stages;
 	EFunKTestResult Result = EFunKTestResult::None;
 	FFunKAnonymousBitmask PeerBitMask;
-	bool IsLocalFinish = false;
 	bool IsLocalStageFinished = false;
+	bool IsCurrentStageTickDelegateSetup = false;
 	float CurrentStageExecutionTime = 0;
 
 	FFunKEventBusRegistration BeginRegistration;
 	FFunKEventBusRegistrationContainer RunningRegistrations;
 	
-	bool IsCurrentStageTickDelegateSetup = false;
-	void OnBeginStage(const FFunKTestStageEvent& Event);
-	void UpdateStageState(const FFunKTestStageEvent& Event);
-	void OnBeginFirstStage(const FFunKTestStageEvent& Event);
+	UPROPERTY( replicated )
+	bool IsFinishComplete;
+	
+	void UpdateStageState(int32 InSeed, int32 StageIndex);
+	void OnBeginFirstStage(int32 InTestRunID, int32 InSeed, int32 StageIndex);
 	void OnFinishStage(const FFunKTestStageFinishedEvent& Event);
 	void OnFinish(const FFunKTestFinishedEvent& Event);
 	void NextStage(int32 InTestRunID, int32 InSeed);
 	void Finish(EFunKTestResult TestResult, FString Message);
 	int32 GetNextStageIndex() const;
+
+	void BeginStage(int32 InTestRunID, int32 InSeed, int32 StageIndex);
+	UFUNCTION(NetMulticast, Reliable)
+	void ClientBeginStage(int32 InTestRunID, int32 InSeed, int32 StageIndex);
 	
 	void SetupStages();
 	FFunKStage* GetCurrentStageMutable();
@@ -144,18 +146,22 @@ private:
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-
-	const FFunKStages* GetStages() const;
-
-	void BuildTestRegistry(FString& append) const;
 	
 	virtual void PostLoad() override;
 	virtual void PostActorCreated() override;
+	virtual void GetLifetimeReplicatedProps( TArray< FLifetimeProperty > & OutLifetimeProps ) const override;
 		
 #if WITH_EDITOR
 	virtual void GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const override;
 #endif // WITH_EDITOR
 
+	void BuildTestRegistry(FString& append) const;
+	bool IsBpEventImplemented(const FName& Name) const;
+
+protected:
+	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+	
 private:
 	
 	friend class UFunKAssertions;

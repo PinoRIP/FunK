@@ -91,6 +91,11 @@ public:
 		return *this;
 	}
 
+	FFunKEvent& Ref()
+	{
+		return *this;
+	}
+	
 	static FFunKEvent Info(const FString& Message, const FString& Context = "")
 	{
 		return FFunKEvent(EFunKEventType::Info, Message, Context);
