@@ -55,6 +55,9 @@ AFunKWorldTestController* UFunKWorldTestExecution::GetMasterController() const
 
 void UFunKWorldTestExecution::NextTest()
 {
+	PendingNextTest = false;
+	PendingNextStage = false;
+	
 	CurrentExecutions.Empty(CurrentExecutions.Num());
 	
 	if(IsAllFinished)
@@ -75,6 +78,8 @@ void UFunKWorldTestExecution::NextTest()
 
 	if(CurrentExecutions.Num() <= 0)
 		NextTest();
+	else
+		NextStage();
 }
 
 void UFunKWorldTestExecution::NextTestAsync()
@@ -109,6 +114,8 @@ void UFunKWorldTestExecution::StartSync()
 
 void UFunKWorldTestExecution::NextStage()
 {
+	PendingNextStage = false;
+	
 	CurrentStageIndex++;
 	PendingStageTime = -1.f;
 	PendingSyncTime = -1.f;
@@ -134,6 +141,7 @@ void UFunKWorldTestExecution::NextStage()
 	}
 
 	bool isAnyStageStarted = false;
+	bool isExecutionFinished = true;
 	const ENetMode netMode = MasterController->GetNetMode();
 	const FFunKStage& stage = stages->Stages[CurrentStageIndex];
 	for(int32 i = 0; i < CurrentExecutions.Num(); i++)
@@ -144,9 +152,10 @@ void UFunKWorldTestExecution::NextStage()
 			(!stage.IsOnDedicatedServer && state.NetMode == NM_DedicatedServer) ||
 				(!stage.IsOnListenServer && state.NetMode == NM_ListenServer) ||
 					(!stage.IsOnListenServerClient && netMode == NM_ListenServer && state.NetMode == NM_Client) ||
-						(!stage.IsOnStandalone && netMode == NM_DedicatedServer && state.NetMode == NM_Client);
+						(!stage.IsOnDedicatedServerClient && netMode == NM_DedicatedServer && state.NetMode == NM_Client);
 
-		if(!state.IsCurrentStageFinished)
+		isExecutionFinished = isExecutionFinished && state.IsExecutionFinished;
+		if(!state.IsCurrentStageFinished && !state.IsExecutionFinished)
 		{
 			isAnyStageStarted = true;
 			
@@ -159,11 +168,10 @@ void UFunKWorldTestExecution::NextStage()
 		}
 	}
 
-	// This should normally never happen... just in case
-	if(!isAnyStageStarted)
+	if(!isAnyStageStarted && !isExecutionFinished)
 	{
+		// This should normally never happen... just in case
 		OnTestExecutionCanceled("No stages started");
-		return;
 	}
 }
 
@@ -204,8 +212,6 @@ void UFunKWorldTestExecution::RunTestOnController(AFunKTestBase* test, AFunKWorl
 	state.NetMode = netMode;
 	
 	controller->BeginLocalTest(test, guid);
-
-	NextStage();
 }
 
 AFunKTestBase* UFunKWorldTestExecution::GetCurrentTest()
@@ -318,20 +324,15 @@ void UFunKWorldTestExecution::Tick(float DeltaTime)
 	TotalTime += DeltaTime;
 
 	// This is kinda jank... But in none latent stages the instant result in standalone (and under certain circumstances in server) scenarios leads to unexpected (& unwanted) behaviour.
-	if(PendingNextStage)
-	{
-		PendingNextStage = false;
-		NextStage();
-
-		if(!PendingNextTest)
-			return;
-	}
-
 	if(PendingNextTest)
 	{
-		PendingNextTest = false;
 		NextTest();
-		
+		return;
+	}
+	
+	if(PendingNextStage)
+	{
+		NextStage();
 		return;
 	}
 

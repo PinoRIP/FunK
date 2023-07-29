@@ -33,12 +33,12 @@ bool AFunKTestBase::IsListenServerModeTest() const
 
 bool AFunKTestBase::IsRunOnDedicatedServer() const
 {
-	return Stages.OnListenServerCount > 0;
+	return Stages.OnDedicatedServerCount > 0;
 }
 
 bool AFunKTestBase::IsRunOnDedicatedServerClients() const
 {
-	return Stages.OnListenServerClientCount > 0;
+	return Stages.OnDedicatedServerClientCount > 0;
 }
 
 bool AFunKTestBase::IsRunOnListenServer() const
@@ -93,7 +93,7 @@ void AFunKTestBase::FinishStage()
 void AFunKTestBase::FinishStage(EFunKTestResult TestResult, const FString& Message)
 {
 	FString ResultMessage = Message;
-	if(TestResult == EFunKTestResult::None && CurrentStageIndex >= Stages.Stages.Num() - 1 && CurrentStageIndex != INDEX_NONE)
+	if (TestResult == EFunKTestResult::None && CurrentStageIndex >= Stages.Stages.Num() - 1 && CurrentStageIndex != INDEX_NONE)
 	{
 		TestResult = EFunKTestResult::Invalid;
 		ResultMessage = "Last stage didn't specify result! " + ResultMessage;
@@ -177,7 +177,7 @@ void AFunKTestBase::RaiseEvent(const FFunKEvent& raisedEvent) const
 	else
 	{
 		const FString Type = raisedEvent.Type == EFunKEventType::Info ? "Info" : raisedEvent.Type == EFunKEventType::Warning ? "Warning" : "Error";
-		UE_LOG(FunKLog, Error, TEXT("Event could not be raised - %s:%s - %s"), *Type, *raisedEvent.Message, *raisedEvent.GetContext())
+		UE_LOG(FunKLog, Error, TEXT("Event could not be raised - %s: %s - %s"), *Type, *raisedEvent.Message, *raisedEvent.GetContext())
 	}
 }
 
@@ -236,7 +236,7 @@ void AFunKTestBase::CheckLocalTestController()
 
 void AFunKTestBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if(!IsFinished())
+	if(IsRunning() && !IsFinished())
 	{
 		FinishStage(EFunKTestResult::Invalid, TEXT("Test was aborted"));
 	}
