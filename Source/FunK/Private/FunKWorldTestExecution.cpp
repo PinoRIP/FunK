@@ -100,11 +100,12 @@ bool UFunKWorldTestExecution::HandleTimeout(AFunKTestBase* currentTest, const FF
 {
 	if(IsTimeout(limit, time))
 	{
+		const bool isPreparation = currentTest->GetPreparationTimeLimit() == limit;
 		for(int32 i = 0; i < CurrentExecutions.Num(); i++)
 		{
 			if(!CurrentExecutions[i].IsFinished())
 			{
-				CurrentExecutions[i].Controller->FinishLocalTest(currentTest, limit->Result, limit->Message.ToString());
+				CurrentExecutions[i].Controller->FinishLocalTest(currentTest, isPreparation && CurrentExecutions[i].IsSetup() ? EFunKFunctionalTestResult::Skipped : limit->Result, limit->Message.ToString());
 			}
 		}
 
@@ -234,7 +235,6 @@ void UFunKWorldTestExecution::OnTestPreparationComplete(const FFunKEvent& raised
 
 void UFunKWorldTestExecution::OnAllTestsPreparationsComplete()
 {
-	//TODO: Start all tests
 	ExecutionTime = 0.f;
 	for(int32 i = 0; i < CurrentExecutions.Num(); i++)
 	{
