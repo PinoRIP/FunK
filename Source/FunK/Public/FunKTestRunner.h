@@ -93,5 +93,5 @@ private:
 	TWeakObjectPtr<UFunKEngineSubsystem> FunKEngineSubsystem;
 	
 	virtual bool StartEnvironment(const FFunKTestInstructions& Instructions);
-	static void SetFpsSettings(ULevelEditorPlaySettings* playSettings, const FFunKSettings& funkSettings, bool isDedicated);
+	static void SetFpsSettings(class ULevelEditorPlaySettings* playSettings, const struct FFunKSettings& funkSettings, bool isDedicated);
 };
