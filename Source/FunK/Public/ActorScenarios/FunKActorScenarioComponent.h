@@ -38,5 +38,5 @@ public:
 	bool IsListenServerClientRelevant = true;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK")
-	bool IsAutonomousProxy = true;
+	bool IsTryingToPossess = true;
 };

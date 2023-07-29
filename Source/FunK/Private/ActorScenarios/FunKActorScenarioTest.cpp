@@ -144,24 +144,24 @@ void AFunKActorScenarioTest::ArrangeScenario()
 					APlayerController* Second = It->Get();
 					
 					if(StageName.Contains(FunKTestActorScenarioStageExtensionDedicatedServerServerToClient))
-						AssignOwner(actor, First);
+						AssignOwner(actor, First, ActorScenarioComponent->IsTryingToPossess);
 					else if(StageName.Contains(FunKTestActorScenarioStageExtensionDedicatedServerClientToClient))
-						AssignOwner(actor, Second);
+						AssignOwner(actor, Second, ActorScenarioComponent->IsTryingToPossess);
 					else if(StageName.Contains(FunKTestActorScenarioStageExtensionListenServerServerToClient))
-						AssignOwner(actor, First);
+						AssignOwner(actor, First, ActorScenarioComponent->IsTryingToPossess);
 					else if(StageName.Contains(FunKTestActorScenarioStageExtensionListenServerClientToClient))
-						AssignOwner(actor, Second);
+						AssignOwner(actor, Second, ActorScenarioComponent->IsTryingToPossess);
 				}
 				else
 				{
 					if(StageName.Contains(FunKTestActorScenarioStageExtensionDedicatedServerClientToServer))
-						AssignOwner(actor, First);
+						AssignOwner(actor, First, ActorScenarioComponent->IsTryingToPossess);
 					else if(StageName.Contains(FunKTestActorScenarioStageExtensionDedicatedServerClientToClient))
-						AssignOwner(actor, First);
+						AssignOwner(actor, First, ActorScenarioComponent->IsTryingToPossess);
 					else if(StageName.Contains(FunKTestActorScenarioStageExtensionListenServerClientToServer))
-						AssignOwner(actor, First);
+						AssignOwner(actor, First, ActorScenarioComponent->IsTryingToPossess);
 					else if(StageName.Contains(FunKTestActorScenarioStageExtensionListenServerClientToClient))
-						AssignOwner(actor, First);
+						AssignOwner(actor, First, ActorScenarioComponent->IsTryingToPossess);
 				}
 			}
 			
@@ -450,16 +450,20 @@ void AFunKActorScenarioTest::AddScenarioStages(FFunKStagesSetup& stages, const F
 	}
 }
 
-void AFunKActorScenarioTest::AssignOwner(AActor* Actor, AActor* NewOwner)
+void AFunKActorScenarioTest::AssignOwner(AActor* Actor, AActor* NewOwner, bool tryToPossess)
 {
-	APawn* Pawn = Cast<APawn>(Actor);
-	AController* Controller = Cast<AController>(NewOwner);
-	
-	if(Pawn && Controller)
+	if(tryToPossess)
 	{
-		Pawn->PossessedBy(Controller);
+		APawn* Pawn = Cast<APawn>(Actor);
+		AController* Controller = Cast<AController>(NewOwner);
+	
+		if(Pawn && Controller)
+		{
+			Pawn->PossessedBy(Controller);
+		}
 	}
-	else
+
+	if(Actor->GetNetOwner() != NewOwner)
 	{
 		Actor->ForceNetUpdate();
 		Actor->bAlwaysRelevant = true;
