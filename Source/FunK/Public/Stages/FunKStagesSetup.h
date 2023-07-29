@@ -152,6 +152,15 @@ public:
 	{ }
 	FFunKLatentStageSetup(const FFunKLatentStageSetup&) = delete;
 
+	template <typename UserClass, typename... VarTypes>
+	FORCEINLINE FFunKStageSetupBase& WithTickDelegate(typename TMemFunPtrType<false, UserClass, void (float, VarTypes...)>::Type InFunc, VarTypes... Vars)
+	{
+		if(Stage)
+			Stage->TickDelegate.BindUObject(Cast<UserClass, AFunKTestBase>(TestBase), InFunc, Vars...);
+		
+		return *this;
+	}
+
 	FFunKStageSetupBase& UpdateTimeLimitTime(const float Time)
 	{
 		if(Stage)
@@ -176,7 +185,7 @@ public:
 		return *this;
 	}
 
-	FFunKStageSetupBase& UpdateTimeLimitResult(EFunKFunctionalTestResult Result)
+	FFunKStageSetupBase& UpdateTimeLimitResult(EFunKTestResult Result)
 	{
 		if(Stage)
 			Stage->TimeLimit.Result = Result;
@@ -192,6 +201,58 @@ public:
 		return *this;
 	}
 };
+
+template <typename StageType>
+struct FUNK_API TFunKStagesSetupStageIterator
+{
+	TFunKStagesSetupStageIterator()
+		: TFunKStagesSetupStageIterator(nullptr, nullptr)
+	{ }
+	TFunKStagesSetupStageIterator(FFunKStages* Stages, AFunKTestBase* TestBase)
+		: Index(INDEX_NONE)
+		, Stage(nullptr)
+		, Stages(Stages)
+		, TestBase(TestBase)
+	{ }
+
+	bool Next()
+	{
+		if(!Stages)
+			return false;
+		
+		for(Index++; Index < Stages->Stages.Num(); Index++)
+		{
+			Stage = &Stages->Stages[Index];
+			if((std::is_same_v<StageType, FFunKStageSetup> && Stage->IsLatent) || (std::is_same_v<StageType, FFunKLatentStageSetup> && !Stage->IsLatent))
+				continue;
+
+			return true;
+		}
+
+		return false;
+	}
+
+	StageType Get()
+	{
+		return StageType(Stage, Stages, TestBase);
+	}
+
+	void Reset()
+	{
+		Stages = nullptr;
+		Index = INDEX_NONE;
+	}
+
+private:
+	int32 Index;
+	FFunKStage* Stage;
+	FFunKStages* Stages;
+	AFunKTestBase* TestBase;
+};
+
+typedef TFunKStagesSetupStageIterator<FFunKStageSetupBase> FFunKStageSetupBaseIterator;
+typedef TFunKStagesSetupStageIterator<FFunKStageSetup> FFunKStageSetupIterator;
+typedef TFunKStagesSetupStageIterator<FFunKLatentStageSetup> FFunKLatentStageSetupIterator;
 
 USTRUCT(BlueprintType)
 struct FUNK_API FFunKStagesSetup : public FFunKStagesSetupBase
@@ -218,6 +279,10 @@ public:
 
 	// ReSharper disable once CppUE4CodingStandardNamingViolationWarning - Macro is posing as function
 	#define AddLatentStage(Type, InFunc) AddNamedLatentStage<Type>(STATIC_FUNCTION_FNAME(TEXT(#Type "::" #InFunc)), &Type::InFunc)
+
+	FFunKStageSetupBaseIterator GetStageSetupBaseIterator() const { return FFunKStageSetupBaseIterator(Stages, TestBase); }
+	FFunKStageSetupIterator GetStageSetupIterator() const { return FFunKStageSetupIterator(Stages, TestBase); }
+	FFunKLatentStageSetupIterator GetLatentStageSetupIterator() const { return FFunKLatentStageSetupIterator(Stages, TestBase); }
 };
 
 template <typename UserClass, typename ... VarTypes>

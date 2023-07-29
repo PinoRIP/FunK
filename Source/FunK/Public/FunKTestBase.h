@@ -3,13 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FunKFunctionalTestResult.h"
-#include "FunKWorldTestExecution.h"
+#include "FunKTestResult.h"
+#include "FunKTestRunID.h"
+#include "Sinks/FunKSink.h"
 #include "Stages/FunKStages.h"
 #include "UObject/Object.h"
 #include "FunKTestBase.generated.h"
 
 struct FFunKStagesSetup;
+class AFunKWorldTestController;
 
 /**
  * 
@@ -43,27 +45,32 @@ public:
 	UFUNCTION(BlueprintCallable, Category="FunK|Setup")
 	bool IsRunOnListenServerClients() const;
 
-	virtual void BeginTest(AFunKWorldTestController* Controller, FFunKTestID testId);
-	virtual void BeginTestStage();
+	virtual void BeginTest(AFunKWorldTestController* Controller, FFunKTestRunID InTestRunID);
+	virtual void BeginTestStage(int32 StageIndex);
+
+	FORCEINLINE FName GetStageName() const; 
+
+	
+	virtual void FinishStage();
+	UFUNCTION(BlueprintCallable, Category="FunK")
+	virtual void FinishStage(EFunKTestResult TestResult, const FString& Message);
+
+	FORCEINLINE FFunKEvent CreateEvent(EFunKTestResult testResult, const FString& Message) const;
 
 	UFUNCTION(BlueprintCallable, Category="FunK")
-	virtual void FinishTest(EFunKFunctionalTestResult InTestResult, const FString& Message);
-
-	FORCEINLINE FFunKEvent CreateEvent(EFunKFunctionalTestResult testResult, const FString& Message) const;
+	bool IsRunning() const;
 
 	UFUNCTION(BlueprintCallable, Category="FunK")
-	bool IsStarted() const;
+	bool IsStageRunning() const;
 
 	UFUNCTION(BlueprintCallable, Category="FunK")
 	bool IsFinished() const;
 
-	EFunKFunctionalTestResult GetTestResult() const;
+	EFunKTestResult GetTestResult() const;
 	
 	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const override;
-
-	virtual FFunKTimeLimit* GetPreparationTimeLimit();
-	virtual FFunKTimeLimit* GetTimeLimit();
-	virtual FFunKTimeLimit* GetNetworkingTimeLimit();
+	
+	virtual FFunKTimeLimit* GetSyncTimeLimit();
 	
 	virtual void PostLoad() override;
 	virtual void PostActorCreated() override;
@@ -78,30 +85,38 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK")
 	bool IsEnabled = true;
 	
-	virtual bool InvokeAssume();
-	virtual void InvokeStartSetup();
-	virtual bool InvokeIsReady();
-	virtual void InvokeStartTest();
-	virtual void CleanupAfterTest();
+	virtual void OnBegin();
+	virtual void OnBeginStage(const FName& StageName);
+	virtual void OnFinishStage(const FName& StageName);
+	virtual void OnFinish(const FString& Message);
+	
 	virtual void CheckLocalTestController();
 	
-	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	virtual void SetupStages(FFunKStagesSetup& stages);
+
+	const FFunKStage* GetCurrentStage() const;
+	const FFunKStage* GetStage(int32 StageIndex) const;
+
+	bool IsStageTickDelegateBound(int32 StageIndex);
+	
 private:
-	EFunKFunctionalTestResult TestResult = EFunKFunctionalTestResult::None;
+	int32 CurrentStageIndex = INDEX_NONE;
+	FFunKTestRunID TestRunID;
+	FFunKStages Stages;
+	EFunKTestResult Result = EFunKTestResult::None;
 	
-	FFunKTestID TestID;
-	
+	bool IsCurrentStageTickDelegateSetup = false;
+
 	UPROPERTY()
 	AFunKWorldTestController* CurrentController;
-
-	FFunKStages Stages;
+	
 	void SetupStages();
-
-	bool IsTestStarted = false;
-	bool IsSetupReady = false;
+	bool IsValidStageIndex(int32 StageIndex) const;
+	FFunKStage* GetCurrentStageMutable();
+	FFunKStage* GetStageMutable(int32 StageIndex);
 
 public:
 	// Called every frame

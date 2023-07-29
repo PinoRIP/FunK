@@ -24,7 +24,7 @@ public:
 	inline FFunKStage& EmplaceStage(const FName& stageName, int32 index, UserClass* InUserObject, typename TMemFunPtrType<false, UserClass, void ( VarTypes...)>::Type InFunc, VarTypes... Vars)
 	{
 		FFunKStage& stage = EmplaceStage(stageName, index);
-		stage.Delegate.BindUObject(InUserObject, InFunc, Vars...);
+		stage.StartDelegate.BindUObject(InUserObject, InFunc, Vars...);
 		return stage;
 	}
 	

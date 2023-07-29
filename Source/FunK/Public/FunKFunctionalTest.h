@@ -18,19 +18,17 @@ class FUNK_API AFunKFunctionalTest : public AFunKTestBase
 public:
 	AFunKFunctionalTest();
 	
-	virtual FFunKTimeLimit* GetPreparationTimeLimit() override;
-	virtual FFunKTimeLimit* GetTimeLimit() override;
-	virtual FFunKTimeLimit* GetNetworkingTimeLimit() override;
+	virtual FFunKTimeLimit* GetSyncTimeLimit() override;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup|Timeout")
-	FFunKTimeLimit PreparationTimeLimit;
+	FFunKTimeLimit ArrangeTimeLimit;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup|Timeout")
-	FFunKTimeLimit TimeLimit;
+	FFunKTimeLimit ActTimeLimit;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup|Timeout")
-	FFunKTimeLimit NetworkingTimeLimit;
+	FFunKTimeLimit SyncTimeLimit;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
 	bool RunOnStandalone = true;
@@ -47,31 +45,25 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
 	bool RunOnListenServerClients = true;
 
-	virtual void SetupStages(FFunKStagesSetup& stages) override;
-	
-	virtual bool InvokeAssume() override;
-	virtual void InvokeStartSetup() override;
-	virtual bool InvokeIsReady() override;
-	virtual void InvokeStartTest() override;
-	virtual void CleanupAfterTest() override;
+	virtual void SetupStages(FFunKStagesSetup& stages) override final;
+	virtual void SetupFunctionalTestStages(FFunKStagesSetup& stages);
+
+	void InvokeAssume();
+	void InvokeArrange();
 
 	virtual bool Assume();
 	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="Assume")
 	bool BpAssume();
 
-	virtual void StartSetup();
-	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="StartSetup")
-	void BpStartSetup();
+	virtual bool Arrange();
+	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="Arrange")
+	bool BpArrange();
 	
-	virtual bool IsReady();
-	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="IsReady")
-	bool BpReady();
+	virtual void Act();
+	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="Act")
+	void BpAct();
 
-	virtual void StartTest();
-	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="StartTest")
-	void BpStartTest();
-
-	virtual void Cleanup();
-	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="Cleanup")
-	void BpCleanup();
+	virtual void Assert();
+	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="Assert")
+	void BpAssert();
 };

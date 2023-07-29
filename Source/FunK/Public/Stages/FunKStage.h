@@ -7,7 +7,7 @@
 #include "FunKStage.generated.h"
 
 DECLARE_DELEGATE(FFunKStageFunction);
-DECLARE_DYNAMIC_DELEGATE(FFunKStageFunctions);
+DECLARE_DELEGATE_OneParam(FFunKStageTickFunction, float);
 
 USTRUCT(BlueprintType)
 struct FUNK_API FFunKStage
@@ -15,6 +15,9 @@ struct FUNK_API FFunKStage
 	GENERATED_BODY()
 
 public:
+	FName Name;
+	FFunKStageFunction StartDelegate;
+	FFunKStageTickFunction TickDelegate;
 	FFunKTimeLimit TimeLimit;
 	bool IsOnStandalone = true;
 	bool IsOnDedicatedServer = true;
@@ -22,6 +25,4 @@ public:
 	bool IsOnListenServer = true;
 	bool IsOnListenServerClient = true;
 	bool IsLatent;
-	FFunKStageFunction Delegate;
-	FName Name;
 };

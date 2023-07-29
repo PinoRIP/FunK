@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FunKTestRunID.h"
 #include "Sinks/FunKSink.h"
 #include "UObject/Object.h"
 #include "FunKWorldTestExecution.generated.h"
@@ -11,113 +12,115 @@ class AFunKWorldTestController;
 class AFunKTestBase;
 struct FFunKTimeLimit;
 
-typedef FGuid FFunKTestID;
-
-struct FFunKTestExecutionHandle
-{
-	
-};
-
 USTRUCT()
-struct FFunKWorldTestState
+struct FFunKTestExecutionState
 {
 	GENERATED_BODY()
 
 public:
-	FFunKWorldTestState()
-		: Id(FGuid())
+	FFunKTestExecutionState()
+		: Id(FFunKTestRunID())
+		, IsCurrentStageFinished(false)
+		, IsExecutionFinished(false)
+		, NetMode(ENetMode::NM_MAX)
 		, Controller(nullptr)
-		, SetupCompleteTime(-1)
-		, FinishedTime(-1)
 	{ }
 	
-	FFunKTestID Id;
+	FFunKTestRunID Id;
 
+	bool IsCurrentStageFinished;
+	bool IsExecutionFinished;
+
+	ENetMode NetMode;
+	
 	UPROPERTY()
 	AFunKWorldTestController* Controller;
-
-	int32 SetupCompleteTime;
-	int32 FinishedTime;
-
-	bool IsSetup() const
-	{
-		return SetupCompleteTime >= 0;
-	}
-
-	bool IsFinished() const
-	{
-		return FinishedTime >= 0;
-	}
 };
 
 /**
  * 
  */
 UCLASS()
-class FUNK_API UFunKWorldTestExecution : public UObject, public IFunKSink
+class FUNK_API UFunKWorldTestExecution : public UObject, public FTickableGameObject, public IFunKSink
 {
 	GENERATED_BODY()
 
 public:
-	void Start(UWorld* world, const TArray<AFunKTestBase*>& testsToExecute, TScriptInterface<IFunKSink> reportSink, FFunKTestID executionId);
-	void Update(float DeltaTime);
-
-	bool IsFinished() const;
+	void Start(const UWorld* world, const TArray<AFunKTestBase*>& testsToExecute, TScriptInterface<IFunKSink> reportSink, FFunKTestRunID executionId);
 
 	AFunKWorldTestController* GetMasterController() const;
 
-	static bool IsExecutionFinishedEvent(const FFunKEvent& raisedEvent, FFunKTestID ExecutionId);
+	bool IsFinished() const;
 	
 private:
 	UPROPERTY()
 	TScriptInterface<IFunKSink> ReportSink;
 
 	UPROPERTY()
-	int32 CurrentTest = -1;
+	int32 CurrentTestIndex = -1;
+	int32 CurrentStageIndex = -1;
 	
 	UPROPERTY()
 	AFunKWorldTestController* MasterController = nullptr;
 
 	UPROPERTY()
-	TArray<FFunKWorldTestState> CurrentExecutions;
-	FString ThisExecutionId;
+	TArray<FFunKTestExecutionState> CurrentExecutions;
+	FString ThisExecutionID;
 
 	UPROPERTY()
 	TArray<AFunKTestBase*> TestsToExecute;
 
+	uint32 LastTickFrame = INDEX_NONE;
+
 	bool IsAllFinished = false;
+	bool IsAnyStarted = false;
+
+	bool PendingNextStage = false;
+	bool PendingNextTest = false;
 
 	void NextTest();
+	void NextTestAsync();
+	void RunTest(AFunKTestBase* test);
+	void RunTestOnController(AFunKTestBase* test, AFunKWorldTestController* controller, ENetMode netMode);
+	void NextStage();
+	void NextStageAsync();
+
+	void OnTestStageFinished(const FFunKEvent& raisedEvent);
+	void OnTestStageFinished(FFunKTestExecutionState* State);
+	void OnTestStageFinished();
+
+	void OnTestFinished(const FFunKEvent& raisedEvent);
+	void OnTestFinished(FFunKTestExecutionState* State);
+	void OnTestFinished();
+	
+	void OnTestExecutionCanceled(const FString& ReasonMessage);
+	
 	void Finish();
 
-	void RunTest(AFunKTestBase* test);
+	void StartSync();
 
-	bool HandleTimeout(AFunKTestBase* currentTest, const FFunKTimeLimit* limit, float time);
 	static bool IsTimeout(const FFunKTimeLimit* limit, float time);
-
-	FFunKWorldTestState& RunTestOnController(AFunKTestBase* test, AFunKWorldTestController* controller);
 	AFunKTestBase* GetCurrentTest();
-
-	FFunKWorldTestState* GetStateFromEvent(const FFunKEvent& raisedEvent);
-
-	void OnTestPreparationComplete(const FFunKEvent& raisedEvent);
-	void OnAllTestsPreparationsComplete();
-
-	void OnTestExecutionComplete(const FFunKEvent& raisedEvent);
-	void OnAllTestsExecutionsComplete();
+	FFunKTestExecutionState* GetStateFromEvent(const FFunKEvent& raisedEvent);
 
 public:
 	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const override;
+	virtual void Tick(float DeltaTime) override;
+	virtual TStatId GetStatId() const override;
+	virtual bool IsTickableInEditor() const override;
+	virtual UWorld* GetTickableGameObjectWorld() const override;
+	virtual ETickableTickType GetTickableTickType() const override;
+	virtual bool IsTickable() const override;
 
 private: //STATS
 	float TotalTime;
-	float PreparationTime;
-	float ExecutionTime;
-	float PendingNetworkingTime;
+	float PendingStageTime;
+	float PendingSyncTime;
 
 public:
-	static FString FunKTestLifeTimeStartEvent;
-	static FString FunKTestLifeTimePreparationCompleteEvent;
-	static FString FunKTestLifeTimeTestFinishedEvent;
-	static FString FunKTestLifeTimeTestExecutionFinishedEvent;
+	static FString FunKTestLifeTimeBeginEvent;
+	static FString FunKTestLifeTimeBeginStageEvent;
+	static FString FunKTestLifeTimeFinishStageEvent;
+	static FString FunKTestLifeTimeFinishEvent;
+	static FString FunKTestLifeTimeAllTestExecutionsFinishedEvent;
 };

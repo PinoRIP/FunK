@@ -2,16 +2,15 @@
 
 
 UENUM(BlueprintType)
-enum class EFunKFunctionalTestResult : uint8
+enum class EFunKTestResult : uint8
 {
 	None,
-	Default,
-	Invalid,
 	Error,
 	Failed,
+	Invalid,
+	Skipped,
 	Succeeded,
-	Skipped
 };
 
 /* Return a readable string of the provided EFunctionalTestResult enum */
-FString FUNK_API LexToString(const EFunKFunctionalTestResult TestResult);
+FString FUNK_API LexToString(const EFunKTestResult TestResult);

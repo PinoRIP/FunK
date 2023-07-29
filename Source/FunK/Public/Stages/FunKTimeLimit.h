@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FunKFunctionalTestResult.h"
+#include "FunKTestResult.h"
 #include "FunKTimeLimit.generated.h"
 
 /**
@@ -22,7 +22,7 @@ struct FUNK_API FFunKTimeLimit
 	FText Message;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EFunKFunctionalTestResult Result = EFunKFunctionalTestResult::Failed;
+	EFunKTestResult Result = EFunKTestResult::Failed;
 
 	bool IsTimeout(float time) const;
 

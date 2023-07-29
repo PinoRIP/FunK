@@ -3,13 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FunKWorldTestExecution.h"
 #include "GameFramework/Actor.h"
 #include "Sinks/FunKSink.h"
+#include "FunKTestRunID.h"
 #include "FunKWorldTestController.generated.h"
 
 class AFunKTestBase;
 class UFunKTestRunner;
+class UFunKWorldTestExecution;
 
 UCLASS()
 class FUNK_API AFunKWorldTestController : public AActor, public IFunKSink
@@ -40,7 +41,7 @@ protected:
 
 	virtual void OnRep_Owner() override;
 
-	virtual void ControllerReady();
+	virtual void OnControllerReady();
 	
 private:
 	UPROPERTY( replicated )
@@ -79,7 +80,7 @@ public:
 private:
 	UPROPERTY()
 	TScriptInterface<IFunKSink> LocalReportSink;
-	FString ExpectedProxyEvent;
+	FString RemoteTestRunID;
 	
 	UPROPERTY()
 	TArray<AFunKWorldTestController*> SpawnedController;
@@ -87,32 +88,33 @@ private:
 	UPROPERTY()
 	UFunKWorldTestExecution* CurrentTestExecution;
 	
-	void ExecuteTests(const TArray<AFunKTestBase*>& TestToExecute, TScriptInterface<IFunKSink> ReportSink, FGuid executionId);
+	void ExecuteTests(const TArray<AFunKTestBase*>& TestToExecute, TScriptInterface<IFunKSink> ReportSink, FFunKTestRunID TestRunID);
 
 	UFUNCTION(Server, Reliable)
-	void ServerExecuteTestByName(const FString& TestName, FGuid ExecutionId);
+	void ServerExecuteTestByName(const FString& TestName, FGuid TestRunID);
 	UFUNCTION(Server, Reliable)
-	void ServerExecuteAllTests(FGuid ExecutionId);
+	void ServerExecuteAllTests(FGuid TestRunID);
 	
-	virtual void ExecuteTestByName(const FString& TestName, TScriptInterface<IFunKSink> ReportSink, FGuid ExecutionId);
-	virtual void ExecuteAllTests(TScriptInterface<IFunKSink> ReportSink, FGuid ExecutionId);
-	
-	UFUNCTION(Client, Reliable)
-	void ClientBeginLocalTestSetup(AFunKTestBase* TestToExecute, FGuid ExecutionId);
-	void BeginLocalTestSetup(AFunKTestBase* TestToExecute, FGuid ExecutionId);
+	virtual void ExecuteTestByName(const FString& TestName, TScriptInterface<IFunKSink> ReportSink, FFunKTestRunID TestRunID);
+	virtual void ExecuteAllTests(TScriptInterface<IFunKSink> ReportSink, FFunKTestRunID TestRunID);
 	
 	UFUNCTION(Client, Reliable)
-	void ClientBeginLocalTestExecution(AFunKTestBase* TestToExecute);
-	void BeginLocalTestExecution(AFunKTestBase* TestToExecute);
+	void ClientBeginLocalTest(AFunKTestBase* TestToBegin, FGuid TestRunID);
+	void BeginLocalTest(AFunKTestBase* TestToBegin, FFunKTestRunID TestRunID);
 	
 	UFUNCTION(Client, Reliable)
-	void ClientFinishLocalTest(AFunKTestBase* TestToCancel, EFunKFunctionalTestResult Result, const FString& Message);
-	void FinishLocalTest(AFunKTestBase* TestToCancel, EFunKFunctionalTestResult Result, const FString& Message);
+	void ClientBeginLocalTestStage(AFunKTestBase* Test, int32 StageIndex);
+	void BeginLocalTestStage(AFunKTestBase* Test, int32 StageIndex);
+	
+	UFUNCTION(Client, Reliable)
+	void ClientFinishLocalTest(AFunKTestBase* TestToCancel, EFunKTestResult Result, const FString& Message);
+	void FinishLocalTest(AFunKTestBase* TestToCancel, EFunKTestResult Result, const FString& Message);
 
 	UFUNCTION(Server, Reliable)
 	virtual void ServerSendEvent(EFunKEventType eventType, const FString& Message, const TArray<FString>& Context) const;
 	UFUNCTION(Client, Reliable)
 	virtual void ClientSendEvent(EFunKEventType eventType, const FString& Message, const TArray<FString>& Context) const;
+	
 private:
-	friend class UFunKWorldTestExecution;
+	friend UFunKWorldTestExecution;
 };

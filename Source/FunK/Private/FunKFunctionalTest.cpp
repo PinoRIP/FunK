@@ -8,98 +8,91 @@
 
 AFunKFunctionalTest::AFunKFunctionalTest()
 {
-	PreparationTimeLimit.Message = FText::FromString("Preparation time limit reached");
-	TimeLimit.Message = FText::FromString("Execution time limit reached");
-	NetworkingTimeLimit.Message = FText::FromString("Networking time limit reached");
+	ArrangeTimeLimit.Message = FText::FromString("Preparation time limit reached");
+	ActTimeLimit.Message = FText::FromString("Execution time limit reached");
+	SyncTimeLimit.Message = FText::FromString("Sync time limit reached");
 }
 
-FFunKTimeLimit* AFunKFunctionalTest::GetPreparationTimeLimit()
+FFunKTimeLimit* AFunKFunctionalTest::GetSyncTimeLimit()
 {
-	return &PreparationTimeLimit;
-}
-
-FFunKTimeLimit* AFunKFunctionalTest::GetTimeLimit()
-{
-	return &TimeLimit;
-}
-
-FFunKTimeLimit* AFunKFunctionalTest::GetNetworkingTimeLimit()
-{
-	return &NetworkingTimeLimit;
+	return &SyncTimeLimit;
 }
 
 void AFunKFunctionalTest::SetupStages(FFunKStagesSetup& stages)
 {
+	SetupFunctionalTestStages(stages);
+
+	auto Iterator = stages.GetStageSetupBaseIterator();
+	while (Iterator.Next())
+	{
+		Iterator.Get()
+			.SetRunOnStandalone(RunOnStandalone)
+			.SetRunOnListenServer(RunOnListenServer)
+			.SetRunOnListenServerClient(RunOnListenServerClients)
+			.SetRunOnDedicatedServer(RunOnDedicatedServer)
+			.SetRunOnDedicatedServerClient(RunOnDedicatedServerClients);
+	}
 }
 
-bool AFunKFunctionalTest::InvokeAssume()
+void AFunKFunctionalTest::SetupFunctionalTestStages(FFunKStagesSetup& stages)
 {
-	return BpAssume();
+	stages
+		.AddNamedStage<AFunKFunctionalTest>("Assume", &AFunKFunctionalTest::InvokeAssume)
+		.ThenAddNamedLatentStage<AFunKFunctionalTest>("Arrange", &AFunKFunctionalTest::InvokeArrange).UpdateTimeLimit(ArrangeTimeLimit)
+		.ThenAddLatentStage(AFunKFunctionalTest, Act).UpdateTimeLimit(ActTimeLimit)
+		.ThenAddStage(AFunKFunctionalTest, Assert);
 }
 
-void AFunKFunctionalTest::InvokeStartSetup()
+void AFunKFunctionalTest::InvokeAssume()
 {
-	BpStartSetup();
+	if(!Assume())
+	{
+		FinishStage(EFunKTestResult::Skipped, "Assumption not met");
+	}
 }
 
-bool AFunKFunctionalTest::InvokeIsReady()
+void AFunKFunctionalTest::InvokeArrange()
 {
-	return BpReady();
-}
-
-void AFunKFunctionalTest::InvokeStartTest()
-{
-	BpStartTest();
-}
-
-void AFunKFunctionalTest::CleanupAfterTest()
-{
-	BpCleanup();
+	if(Arrange())
+	{
+		FinishStage();
+	}
 }
 
 bool AFunKFunctionalTest::Assume()
 {
-	return true;
+	return BpAssume();
 }
 
 bool AFunKFunctionalTest::BpAssume_Implementation()
 {
-	return Assume();
+	return true;
 }
 
-void AFunKFunctionalTest::StartSetup()
+bool AFunKFunctionalTest::Arrange()
 {
+	return BpArrange();
 }
 
-bool AFunKFunctionalTest::IsReady()
+bool AFunKFunctionalTest::BpArrange_Implementation()
 {
 	return true;
 }
 
-void AFunKFunctionalTest::StartTest()
+void AFunKFunctionalTest::Act()
+{
+	BpAct();
+}
+
+void AFunKFunctionalTest::BpAct_Implementation()
 {
 }
 
-void AFunKFunctionalTest::BpStartTest_Implementation()
+void AFunKFunctionalTest::Assert()
 {
-	StartTest();
+	BpAssert();
 }
 
-bool AFunKFunctionalTest::BpReady_Implementation()
+void AFunKFunctionalTest::BpAssert_Implementation()
 {
-	return IsReady();
-}
-
-void AFunKFunctionalTest::BpStartSetup_Implementation()
-{
-	StartSetup();
-}
-
-void AFunKFunctionalTest::Cleanup()
-{
-}
-
-void AFunKFunctionalTest::BpCleanup_Implementation()
-{
-	Cleanup();
 }
