@@ -22,6 +22,7 @@ public:
 
 	void GetProcessIds(TArray<uint32>& processIDs) const { processIDs = ProcessIDs; }
 	bool IsValid() const { return IsAnyProcessIdSet; }
+	
 private:
 	TArray<uint32> ProcessIDs;
 	bool IsAnyProcessIdSet;

@@ -2,7 +2,6 @@
 
 
 #include "FunKTestBase.h"
-
 #include "FunK.h"
 #include "FunKLogging.h"
 #include "FunKWorldSubsystem.h"

@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "Misc/AutomationTest.h"
-#include "UObject/Object.h"
 
 /**
  * 

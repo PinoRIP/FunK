@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "FunKEvent.h"
-#include "UObject/Object.h"
 #include "FunKSink.generated.h"
 
 class UFunKTestRunner;

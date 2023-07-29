@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "FunKLogging.h"
-#include "UObject/Object.h"
 #include "FunKAssertions.generated.h"
 
 class IFunKSink;

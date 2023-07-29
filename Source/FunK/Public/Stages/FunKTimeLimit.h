@@ -16,7 +16,7 @@ struct FUNK_API FFunKTimeLimit
 
 	/** Test's time limit. '0' means no limit */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float Time = 20.f;
+	float Time = 10.f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FText Message;

@@ -3,9 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/Object.h"
 #include "FunKEvent.generated.h"
-
 
 UENUM()
 enum class EFunKEventType : uint8

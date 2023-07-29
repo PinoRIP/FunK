@@ -7,7 +7,6 @@
 #include "FunKTestRunID.h"
 #include "Sinks/FunKSink.h"
 #include "Stages/FunKStages.h"
-#include "UObject/Object.h"
 #include "FunKTestBase.generated.h"
 
 struct FFunKStagesSetup;
@@ -48,8 +47,7 @@ public:
 	virtual void BeginTest(AFunKWorldTestController* Controller, FFunKTestRunID InTestRunID);
 	virtual void BeginTestStage(int32 StageIndex);
 
-	FORCEINLINE FName GetStageName() const; 
-
+	FORCEINLINE FName GetStageName() const;
 	
 	virtual void FinishStage();
 	UFUNCTION(BlueprintCallable, Category="FunK")

@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/Object.h"
 #include "FunKTestInstructions.generated.h"
 
 /**
@@ -15,7 +14,8 @@ struct FFunKTestInstructions
 	GENERATED_BODY()
 
 	FFunKTestInstructions()
-	: FFunKTestInstructions(FString(), FString(), FString(), FString()){}
+		: FFunKTestInstructions(FString(), FString(), FString(), FString())
+	{ }
 
 	FFunKTestInstructions(FString mapObjectPath, FString mapPackageName, FString mapTestName, FString params)
 	{

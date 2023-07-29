@@ -22,6 +22,7 @@ public:
 	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const override;
 
 	static bool IsAvailable();
+	
 private:
 	static EAutomationEventType GetAutomationEventType(EFunKEventType eventType);
 	static FFunKAutomationEntry* GetCurrentAutomationEntry();
