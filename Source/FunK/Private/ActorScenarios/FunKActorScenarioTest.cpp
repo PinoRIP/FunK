@@ -482,20 +482,20 @@ void AFunKActorScenarioTest::AddScenarioStages(FFunKStagesSetup& stages, const F
 			.WithOptionalBpTickDelegate(AFunKActorScenarioTest, BpActTick)
 			.UpdateTimeLimit(ActTimeLimit)
 			.SetRunOnStandalone(standalone)
-			.SetRunOnDedicatedServer(dedicated || (dedicatedClient && IsArrangeAlsoOn(EFunKTestLocationTarget::DedicatedServer)))
-			.SetRunOnDedicatedServerClient(dedicatedClient || (dedicated && IsArrangeAlsoOn(EFunKTestLocationTarget::DedicatedServerClient)))
-			.SetRunOnListenServer(listen || (listenClient && IsArrangeAlsoOn(EFunKTestLocationTarget::ListenServer)))
-			.SetRunOnListenServerClient(listenClient || (listen && IsArrangeAlsoOn(EFunKTestLocationTarget::ListenServerClient)));
+			.SetRunOnDedicatedServer(dedicated || (dedicatedClient && IsActAlsoOn(EFunKTestLocationTarget::DedicatedServer)))
+			.SetRunOnDedicatedServerClient(dedicatedClient || (dedicated && IsActAlsoOn(EFunKTestLocationTarget::DedicatedServerClient)))
+			.SetRunOnListenServer(listen || (listenClient && IsActAlsoOn(EFunKTestLocationTarget::ListenServer)))
+			.SetRunOnListenServerClient(listenClient || (listen && IsActAlsoOn(EFunKTestLocationTarget::ListenServerClient)));
 
 		stages
 			.AddNamedLatentStage<AFunKActorScenarioTest>(FName("Assert for " + name), &AFunKActorScenarioTest::Assert)
 			.WithOptionalBpTickDelegate(AFunKActorScenarioTest, BpAssertTick)
 			.UpdateTimeLimit(AssertTimeLimit)
 			.SetRunOnStandalone(standalone)
-			.SetRunOnDedicatedServer(dedicated || (dedicatedClient && IsArrangeAlsoOn(EFunKTestLocationTarget::DedicatedServer)))
-			.SetRunOnDedicatedServerClient(dedicatedClient || (dedicated && IsArrangeAlsoOn(EFunKTestLocationTarget::DedicatedServerClient)))
-			.SetRunOnListenServer(listen || (listenClient && IsArrangeAlsoOn(EFunKTestLocationTarget::ListenServer)))
-			.SetRunOnListenServerClient(listenClient || (listen && IsArrangeAlsoOn(EFunKTestLocationTarget::ListenServerClient)));
+			.SetRunOnDedicatedServer(dedicated || (dedicatedClient && IsAssertAlsoOn(EFunKTestLocationTarget::DedicatedServer)))
+			.SetRunOnDedicatedServerClient(dedicatedClient || (dedicated && IsAssertAlsoOn(EFunKTestLocationTarget::DedicatedServerClient)))
+			.SetRunOnListenServer(listen || (listenClient && IsAssertAlsoOn(EFunKTestLocationTarget::ListenServer)))
+			.SetRunOnListenServerClient(listenClient || (listen && IsAssertAlsoOn(EFunKTestLocationTarget::ListenServerClient)));
 	}
 }
 
