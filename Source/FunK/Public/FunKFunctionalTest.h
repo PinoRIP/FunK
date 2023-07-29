@@ -22,6 +22,8 @@ struct FFunKTimeLimit
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EFunKFunctionalTestResult Result = EFunKFunctionalTestResult::Failed;
+
+	bool IsTimeout(float time) const;
 };
 
 
@@ -49,6 +51,9 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup|Timeout")
 	FFunKTimeLimit TimeLimit;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup|Timeout")
+	FFunKTimeLimit NetworkingTimeLimit;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
 	bool RunInStandaloneMode = true;
@@ -69,6 +74,7 @@ public:
 	float RunTime;
 	uint32 StartFrame;
 	float StartTime;
+	bool IsTestStarted = false;
 
 	float TotalTime;
 	float PreparationTime;
@@ -121,7 +127,6 @@ protected:
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
-	virtual bool IsTimeout(const FFunKTimeLimit& limit, float time);
 	virtual void OnTimeout(const FFunKTimeLimit& limit);
 
 private:

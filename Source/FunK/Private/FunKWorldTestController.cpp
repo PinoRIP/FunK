@@ -10,6 +10,7 @@
 #include "FunKTestRunner.h"
 #include "FunKWorldSubsystem.h"
 #include "GameFramework/GameModeBase.h"
+#include "Net/UnrealNetwork.h"
 #include "Sinks/FunKLogSink.h"
 
 
@@ -23,29 +24,42 @@ AFunKWorldTestController::AFunKWorldTestController()
 	RootComponent = CreateDefaultSubobject<USceneComponent>("TEST");
 }
 
+void AFunKWorldTestController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME( AFunKWorldTestController, ActiveController );
+}
+
 // Called when the game starts or when spawned
 void AFunKWorldTestController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	if(GetNetMode() == NM_ListenServer || GetNetMode() == NM_DedicatedServer)
+	const ENetMode netMode = GetNetMode();
+	if(GetNetMode() == NM_Client)
 	{
-		FGameModeEvents::GameModePostLoginEvent.AddUObject(this, &AFunKWorldTestController::OnConnection);
-		//auto it = GetWorld()->GetPlayerControllerIterator();
-		//for(; it; ++it)
-		//{
-		//	if(it->IsValid() && !it->Get()->IsLocalController())
-		//	{
-		//		CreateTestControllerForClient(it->Get());
-		//	}
-		//}
+		CheckControllerReady();
 	}
-
+	else
+	{
+		ControllerReady();
+	}
+	
 	SetActorTickEnabled(false);
 }
 
 void AFunKWorldTestController::CreateTestControllerForClient(APlayerController* NewPlayer)
 {
+	if(GetOwner() == NewPlayer)
+		return;
+
+	for (const AFunKWorldTestController* Controller : SpawnedController)
+	{
+		if(Controller->GetOwner() == NewPlayer)
+			return;
+	}
+	
 	AFunKWorldTestController* NewController = GetWorld()->SpawnActor<AFunKWorldTestController>(GetClass());
 	NewController->SetOwner(NewPlayer);
 	SpawnedController.Add(NewController);
@@ -54,7 +68,6 @@ void AFunKWorldTestController::CreateTestControllerForClient(APlayerController* 
 void AFunKWorldTestController::BeginDestroy()
 {
 	Super::BeginDestroy();
-
 	FGameModeEvents::GameModePostLoginEvent.RemoveAll(this);
 }
 
@@ -67,39 +80,87 @@ void AFunKWorldTestController::OnRep_Owner()
 		if(UFunKWorldSubsystem* funk = GetWorld()->GetSubsystem<UFunKWorldSubsystem>())
 		{
 			funk->SetLocalTestController(this);
+			CheckControllerReady();
 		}
 	}
 }
 
-void AFunKWorldTestController::ExecuteTest(AFunKFunctionalTest* TestToExecute, TScriptInterface<IFunKSink> reportSink)
+void AFunKWorldTestController::ExecuteTest(AFunKFunctionalTest* TestToExecute, TScriptInterface<IFunKSink> reportSink, FGuid executionId)
 {
 	const ENetMode netMode = GetNetMode();
 	if(netMode == NM_Standalone)
 	{
-		ExecuteTestRun(TestToExecute, reportSink);
+		ExecuteTestRun(TestToExecute, reportSink, executionId);
 	}
 	else if(netMode == NM_Client)
 	{
 		ReportSink = reportSink;
-		ServerExecuteTest(TestToExecute);
+		
+		SubExecutionIds.Add(executionId);
+		ServerExecuteTest(TestToExecute, executionId);
 	}
 	else
 	{
-		ExecuteTestRun(TestToExecute, reportSink);
+		ExecuteTestRun(TestToExecute, reportSink, executionId);
 
 		for (AFunKWorldTestController* Controller : SpawnedController)
 		{
-			Controller->ReportSink = this;
-			ClientExecuteTest(TestToExecute);
+			if(Controller != reportSink.GetObject())
+				Controller->ReportSink = this;
+
+			executionId = FGuid::NewGuid();
+			SubExecutionIds.Add(executionId);
+			Controller->ClientExecuteTest(TestToExecute, executionId);
 		}
 	}
+}
+
+void AFunKWorldTestController::FinishedCurrentLocalTest()
+{
+	RaiseInfoEvent("Finished!", CurrentExecutionId.ToString());
+	NetworkingTotalTime = 0.f;
 }
 
 void AFunKWorldTestController::FinishedCurrentTest()
 {
 	SetActorTickEnabled(false);
-	CurrentTest = nullptr;
 	ReportSink = nullptr;
+	CurrentTest = nullptr;
+
+	// This should be empty already, but in cases where we cancel this needs to be reset.
+	SubExecutionIds.Empty(SubExecutionIds.Num());
+}
+
+void AFunKWorldTestController::ControllerReady()
+{
+	ActiveController++;
+	for (AFunKWorldTestController* Controller : SpawnedController)
+	{
+		Controller->ActiveController = ActiveController;
+	}
+}
+
+void AFunKWorldTestController::SetupLocalTestController()
+{
+	const ENetMode netMode = GetNetMode();
+	if(netMode == NM_ListenServer || netMode == NM_DedicatedServer)
+	{
+		FGameModeEvents::GameModePostLoginEvent.AddUObject(this, &AFunKWorldTestController::OnConnection);
+	}
+}
+
+bool AFunKWorldTestController::IsControllerLocallyReady() const
+{
+	return HasActorBegunPlay() && GetWorld()->GetSubsystem<UFunKWorldSubsystem>()->HasLocalTestController() && (GetNetMode() != NM_Client || GetOwner() == GetWorld()->GetFirstPlayerController());
+}
+
+void AFunKWorldTestController::CheckControllerReady()
+{
+	if(IsControllerLocallyReady() && !IsControllerReadinessSend)
+	{
+		IsControllerReadinessSend = true;
+		ServerControllerReady();
+	}
 }
 
 void AFunKWorldTestController::OnConnection(AGameModeBase* GameMode, APlayerController* NewPlayer)
@@ -107,17 +168,17 @@ void AFunKWorldTestController::OnConnection(AGameModeBase* GameMode, APlayerCont
 	CreateTestControllerForClient(NewPlayer);
 }
 
-void AFunKWorldTestController::ServerExecuteTest_Implementation(AFunKFunctionalTest* TestToExecute)
+void AFunKWorldTestController::ServerExecuteTest_Implementation(AFunKFunctionalTest* TestToExecute, FGuid ExecutionId)
 {
 	if(TestToExecute)
 	{
 		if(UFunKWorldSubsystem* funkWorldSubsystem = GetWorld()->GetSubsystem<UFunKWorldSubsystem>())
 		{
-			funkWorldSubsystem->GetLocalTestController()->ExecuteTest(TestToExecute, this);
+			funkWorldSubsystem->GetLocalTestController()->ExecuteTest(TestToExecute, this, ExecutionId);
 		}
 		else
 		{
-			UE_LOG(FunKLog, Error, TEXT("When the server execute test is called it should always have an Creator..."));
+			UE_LOG(FunKLog, Error, TEXT("FunKWorldSubsystem not found..."));
 		}
 	}
 	else
@@ -126,11 +187,11 @@ void AFunKWorldTestController::ServerExecuteTest_Implementation(AFunKFunctionalT
 	}
 }
 
-void AFunKWorldTestController::ClientExecuteTest_Implementation(AFunKFunctionalTest* TestToExecute)
+void AFunKWorldTestController::ClientExecuteTest_Implementation(AFunKFunctionalTest* TestToExecute, FGuid ExecutionId)
 {
 	if(TestToExecute)
 	{
-		ExecuteTestRun(TestToExecute, nullptr);
+		ExecuteTestRun(TestToExecute, nullptr, ExecutionId);
 	}
 	else
 	{
@@ -138,12 +199,16 @@ void AFunKWorldTestController::ClientExecuteTest_Implementation(AFunKFunctionalT
 	}
 }
 
-void AFunKWorldTestController::ExecuteTestRun(AFunKFunctionalTest* TestToExecute, TScriptInterface<IFunKSink> reportSink)
+void AFunKWorldTestController::ExecuteTestRun(AFunKFunctionalTest* TestToExecute, TScriptInterface<IFunKSink> reportSink, FGuid ExecutionId)
 {
 	if(!ReportSink)
 		ReportSink = reportSink;
 	
 	CurrentTest = TestToExecute;
+	CurrentExecutionId = ExecutionId;
+	TotalTime = 0.f;
+	NetworkingTotalTime = -1.f;
+	
 	SetActorTickEnabled(true);
 	TestToExecute->RunTest(this);
 }
@@ -167,11 +232,8 @@ void AFunKWorldTestController::SendEvent(const FFunKEvent& raisedEvent) const
 
 void AFunKWorldTestController::ApplySendEvent(EFunKEventType eventType, const FString& Message, const FString& Context) const
 {
-	if(ReportSink)
-	{
-		ReportSink->RaiseEvent(FFunKEvent(eventType, Message, Context));
-	}
-	else
+	const FFunKEvent event = FFunKEvent(eventType, Message, Context);
+	if(!ReportEvent(event))
 	{
 		UFunKLogSink::LogEvent(FFunKEvent(eventType, Message, Context));
 	}
@@ -187,15 +249,94 @@ void AFunKWorldTestController::ClientSendEvent_Implementation(EFunKEventType eve
 	ApplySendEvent(eventType, Message, Context);
 }
 
+void AFunKWorldTestController::ServerControllerReady_Implementation() const
+{
+	if(UFunKWorldSubsystem* funkWorldSubsystem = GetWorld()->GetSubsystem<UFunKWorldSubsystem>())
+	{
+		funkWorldSubsystem->GetLocalTestController()->ControllerReady();
+	}
+	else
+	{
+		UE_LOG(FunKLog, Error, TEXT("FunKWorldSubsystem not found..."));
+	}
+}
+
+bool AFunKWorldTestController::ReportEvent(const FFunKEvent& raisedEvent) const
+{
+	if(ReportSink)
+	{
+		FulfillSubExecution(raisedEvent);
+		ReportSink->RaiseEvent(raisedEvent);
+		return true;
+	}
+
+	return false;
+}
+
+void AFunKWorldTestController::FulfillSubExecution(const FFunKEvent& raisedEvent) const
+{
+	if(SubExecutionIds.Num() > 0 && raisedEvent.Message.StartsWith("Finished"))
+	{
+		FGuid parsedExecutionId;
+		if(FGuid::ParseExact(raisedEvent.Context, EGuidFormats::Digits, parsedExecutionId))
+		{
+			//TODO: This not cool... FixThis
+			AFunKWorldTestController* mutableThis = const_cast<AFunKWorldTestController*>(this);
+			mutableThis->SubExecutionIds.Remove(parsedExecutionId);
+		}
+		else
+		{
+			RaiseErrorEvent("Could not parse execution id: " + raisedEvent.Context, raisedEvent.Message);
+		}
+	}
+}
+
 // Called every frame
 void AFunKWorldTestController::Tick(float DeltaTime)
 {
+	TotalTime += DeltaTime;
+
 	if(CurrentTest)
 	{
-		if(CurrentTest->GetTestResult() != EFunKFunctionalTestResult::None)
+		if(IsLocallyFinished())
+		{
+			if(NetworkingTotalTime < 0)
+			{
+				FinishedCurrentLocalTest();
+			}
+			else
+			{
+				NetworkingTotalTime += DeltaTime;
+				if(CurrentTest->NetworkingTimeLimit.IsTimeout(NetworkingTotalTime))
+				{
+					//TODO: This is currently a copy of the FunctionalTest-Class finalize function
+					if(CurrentTest->NetworkingTimeLimit.Result == EFunKFunctionalTestResult::Succeeded)
+					{
+						RaiseInfoEvent(FString::Printf(TEXT("Netwoktimeout: %s"), *CurrentTest->NetworkingTimeLimit.Message.ToString()), GetName());
+					}
+					else if(CurrentTest->NetworkingTimeLimit.Result == EFunKFunctionalTestResult::Skipped)
+					{
+						RaiseInfoEvent(FString::Printf(TEXT("Netwoktimeout: %s"), *CurrentTest->NetworkingTimeLimit.Message.ToString()), GetName());
+					}
+					else
+					{
+						RaiseErrorEvent(FString::Printf(TEXT("Netwoktimeout=%s. %s"), *LexToString(CurrentTest->NetworkingTimeLimit.Result), *CurrentTest->NetworkingTimeLimit.Message.ToString()), GetName());
+					}
+
+					SubExecutionIds.Empty();
+				}
+			}
+		}
+
+		if(IsFinished())
 		{
 			FinishedCurrentTest();
 		}
+	}
+	else
+	{
+		FinishedCurrentLocalTest();
+		FinishedCurrentTest();
 	}
 	
 	Super::Tick(DeltaTime);
@@ -208,7 +349,7 @@ void AFunKWorldTestController::ExecuteTestByName(FString TestName, TScriptInterf
 		AFunKFunctionalTest* FunctionalTest = *ActorItr;
 		if(TestName == FunctionalTest->GetName())
 		{
-			ExecuteTest(FunctionalTest, reportSink);
+			ExecuteTest(FunctionalTest, reportSink, FGuid::NewGuid());
 			break;
 		}
 	}
@@ -220,7 +361,12 @@ void AFunKWorldTestController::ExecuteAllTests(TScriptInterface<IFunKSink> repor
 
 bool AFunKWorldTestController::IsFinished() const
 {
-	return !CurrentTest || (CurrentTest->IsStarted() && CurrentTest->IsFinished());
+	return IsLocallyFinished() && SubExecutionIds.IsEmpty();
+}
+
+bool AFunKWorldTestController::IsLocallyFinished() const
+{
+	return !CurrentTest || CurrentTest->IsFinished();
 }
 
 void AFunKWorldTestController::RaiseInfoEvent(const FString& Message, const FString& Context) const
@@ -240,13 +386,19 @@ void AFunKWorldTestController::RaiseErrorEvent(const FString& Message, const FSt
 
 void AFunKWorldTestController::RaiseEvent(const FFunKEvent& raisedEvent) const
 {
-	if(ReportSink)
-	{
-		ReportSink->RaiseEvent(raisedEvent);
-	}
-	else
+	if(!ReportEvent(raisedEvent))
 	{
 		SendEvent(raisedEvent);
 	}
+}
+
+int32 AFunKWorldTestController::GetActiveControllerCount() const
+{
+	return ActiveController;
+}
+
+bool AFunKWorldTestController::IsLocalTestController() const
+{
+	return GetWorld()->GetSubsystem<UFunKWorldSubsystem>()->GetLocalTestController() == this;
 }
 
