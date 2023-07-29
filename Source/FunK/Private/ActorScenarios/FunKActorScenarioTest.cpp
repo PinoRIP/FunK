@@ -201,7 +201,7 @@ void AFunKActorScenarioTest::CheckArrangeScenarioFinish(float DeltaTime)
 		for (int i = 0; i < AcquiredActors.Num(); ++i)
 		{
 			const AActor* AcquiredActor = AcquiredActors[i];
-			if(!AcquiredActor->HasActorBegunPlay())
+			if(!AcquiredActor || !AcquiredActor->HasActorBegunPlay())
 				return;
 		}
 		
