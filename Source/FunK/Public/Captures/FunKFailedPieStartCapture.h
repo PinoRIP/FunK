@@ -12,7 +12,7 @@ struct FFunKFailedPieStartCapture
 public:
 	FFunKFailedPieStartCapture()
 	{
-		IsAnyPieSessionEnded = true;
+		IsAnyPieSessionEnded = false;
 		FEditorDelegates::EndPIE.AddRaw(this, &FFunKFailedPieStartCapture::OnEndPIE);
 	}
 
@@ -21,11 +21,11 @@ public:
 		FEditorDelegates::EndPIE.RemoveAll(this);
 	}
 
-	bool CanProceed() const { return IsAnyPieSessionEnded; }
+	bool CanProceed() const { return !IsAnyPieSessionEnded; }
 
 	void OnEndPIE(const bool bInSimulateInEditor)
 	{
-		IsAnyPieSessionEnded = false;
+		IsAnyPieSessionEnded = true;
 	}
 	
 private:

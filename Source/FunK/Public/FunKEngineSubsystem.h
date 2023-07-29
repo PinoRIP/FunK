@@ -22,7 +22,6 @@ class FUNK_API UFunKEngineSubsystem : public UEngineSubsystem
 public:
 	UFunKTestRunner* StartTestRunner();
 	UFunKTestRunner* ConnectTestRunner(bool isRemote);
-
 	UFunKTestRunner* GetTestRunner() const;
 
 	bool HasTestRunner() const;

@@ -154,4 +154,7 @@ public:
 #endif // WITH_EDITOR
 
 private:
+	void RaiseEvent(FFunKEvent& Event) const;
+	
+	friend class UFunKAssertions;
 };

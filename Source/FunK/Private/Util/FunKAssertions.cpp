@@ -2,6 +2,8 @@
 
 
 #include "Util/FunKAssertions.h"
+
+#include "FunKTestBase.h"
 #include "EventBus/FunKEventBusSubsystem.h"
 #include "Events/FunKEvent.h"
 #include "Misc/AutomationTest.h"
@@ -176,8 +178,15 @@ bool UFunKAssertions::Assert(TFunctionRef<bool()> Assertion, const FString& Mess
 		event.AddToContext(FString::Printf(TEXT("%s (%s)"), *FString(Stack[1].FunctionName), *FString::FromInt(Stack[1].LineNumber)));
 #endif
 
-	UFunKEventBusSubsystem* eventBus = Context->GetWorld()->GetSubsystem<UFunKEventBusSubsystem>();
-	eventBus->Raise(event);
+	if(const AFunKTestBase* TestBase = Cast<AFunKTestBase>(Context))
+	{
+		TestBase->RaiseEvent(event);
+	}
+	else
+	{
+		UFunKEventBusSubsystem* eventBus = Context->GetWorld()->GetSubsystem<UFunKEventBusSubsystem>();
+		eventBus->Raise(event);
+	}
 	
 	return result;
 }

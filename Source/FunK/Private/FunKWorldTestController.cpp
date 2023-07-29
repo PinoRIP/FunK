@@ -4,11 +4,9 @@
 #include "FunKWorldTestController.h"
 #include "EngineUtils.h"
 #include "FunKFunctionalTest.h"
-#include "FunKLogging.h"
 #include "FunKSettingsObject.h"
 #include "FunKTestRunner.h"
 #include "FunKWorldSubsystem.h"
-#include "FunKWorldTestExecution.h"
 #include "GameFramework/GameModeBase.h"
 #include "Net/UnrealNetwork.h"
 

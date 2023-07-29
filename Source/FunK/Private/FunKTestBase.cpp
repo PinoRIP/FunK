@@ -5,7 +5,6 @@
 #include "FunK.h"
 #include "FunKWorldSubsystem.h"
 #include "FunKWorldTestController.h"
-#include "FunKWorldTestExecution.h"
 #include "Events/FunKEvent.h"
 #include "Events/FunKTestLifeTimeContext.h"
 #include "Events/Internal/FunKTestFinishedEvent.h"
@@ -523,4 +522,9 @@ void AFunKTestBase::GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) con
 		const FName TestCategory = IsEditorOnlyObject(this) ? FFunKModule::FunkEditorOnlyTestWorldTag : FFunKModule::FunkTestWorldTag;
 		OutTags.Add(UObject::FAssetRegistryTag(TestCategory, TestActor, UObject::FAssetRegistryTag::TT_Hidden));
 	}
+}
+
+void AFunKTestBase::RaiseEvent(FFunKEvent& Event) const
+{
+	GetEventBusSubsystem()->Raise<FFunKEvent>(Event.AddToContext(TestRunID).AddToContext(GetName()).AddToContext(GetStageName().ToString()));
 }
