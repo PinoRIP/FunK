@@ -25,7 +25,7 @@ enum class EFunKComparisonMethod : uint8
  * 
  */
 UCLASS()
-class FUNK_API UFunKAssertions : public UObject
+class FUNK_API UFunKAssertions : public UBlueprintFunctionLibrary
 {
 	GENERATED_BODY()
 

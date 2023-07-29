@@ -29,6 +29,7 @@ void AFunKWorldTestController::GetLifetimeReplicatedProps(TArray<FLifetimeProper
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME( AFunKWorldTestController, ActiveController );
+	DOREPLIFETIME( AFunKWorldTestController, ControllerIndex );
 }
 
 // Called when the game starts or when spawned
@@ -63,6 +64,7 @@ void AFunKWorldTestController::CreateTestControllerForClient(APlayerController* 
 	AFunKWorldTestController* NewController = GetWorld()->SpawnActor<AFunKWorldTestController>(GetClass());
 	NewController->SetOwner(NewPlayer);
 	SpawnedController.Add(NewController);
+	NewController->ControllerIndex = SpawnedController.Num();
 }
 
 void AFunKWorldTestController::BeginDestroy()
@@ -409,6 +411,11 @@ void AFunKWorldTestController::RaiseEvent(const FFunKEvent& raisedEvent) const
 int32 AFunKWorldTestController::GetActiveControllerCount() const
 {
 	return ActiveController;
+}
+
+int32 AFunKWorldTestController::GetControllerIndex() const
+{
+	return ControllerIndex;
 }
 
 bool AFunKWorldTestController::IsLocalTestController() const

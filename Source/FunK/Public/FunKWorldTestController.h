@@ -56,6 +56,9 @@ private:
 	UPROPERTY( replicated )
 	int32 ActiveController;
 
+	UPROPERTY( replicated )
+	int32 ControllerIndex;
+
 	bool IsControllerReadinessSend = false;
 	bool IsControllerLocallyReady() const;
 	void CheckControllerReady();
@@ -101,6 +104,7 @@ public:
 	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const override;
 
 	int32 GetActiveControllerCount() const;
+	int32 GetControllerIndex() const;
 
 	bool IsLocalTestController() const;
 
