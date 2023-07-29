@@ -10,9 +10,11 @@
 #include "Events/Internal/FunKTestFinishedEvent.h"
 #include "Events/Internal/FunKTestStageFinishedEvent.h"
 #include "Base/FunKStagesSetup.h"
+#include "Components/BillboardComponent.h"
 #include "Events/Internal/FunKTestBeginEvent.h"
 #include "Events/Internal/FunKTestFinishEvent.h"
 #include "Net/UnrealNetwork.h"
+#include "UObject/ConstructorHelpers.h"
 #include "Util/FunKAnonymousBitmask.h"
 
 struct FFunKAnonymousBitmask;
@@ -23,8 +25,25 @@ AFunKTestBase::AFunKTestBase()
 	PrimaryActorTick.bCanEverTick = true;
 	bAlwaysRelevant = true;
 	bReplicates = true;
+	
+	auto SpriteComponent = CreateDefaultSubobject<UBillboardComponent>(TEXT("Sprite"));
+	if (SpriteComponent)
+	{
+		SpriteComponent->bHiddenInGame = true;
+#if WITH_EDITORONLY_DATA
 
-	RootComponent = CreateDefaultSubobject<USceneComponent>("Root");
+		if (!IsRunningCommandlet())
+		{
+			ConstructorHelpers::FObjectFinderOptional<UTexture2D> Texture(TEXT("/Engine/EditorResources/S_FTest"));
+			SpriteComponent->Sprite = Texture.Get();
+			SpriteComponent->SpriteInfo.Category = TEXT("FunKTests");
+			SpriteComponent->SpriteInfo.DisplayName = FText::FromName(TEXT("FunKTests"));
+		}
+
+#endif
+	}
+
+	RootComponent = SpriteComponent;
 }
 
 bool AFunKTestBase::IsStandaloneModeTest() const
@@ -287,6 +306,7 @@ void AFunKTestBase::OnFinish(const FFunKTestFinishedEvent& Event)
 
 void AFunKTestBase::OnFinish(const FString& Message)
 {
+	OnTestFinish.Broadcast();
 }
 
 void AFunKTestBase::FinishStage()
@@ -302,6 +322,9 @@ void AFunKTestBase::FinishStage(EFunKStageResult StageResult, const FString& Mes
 	}
 
 	IsLocalStageFinished = true;
+
+	if(!IsDriver())
+		PeerBitMask.ClearAll();
 
 	FString ResultMessage = Message;
 	if (StageResult == EFunKStageResult::None)
@@ -328,15 +351,9 @@ void AFunKTestBase::OnFinishStage(EFunKStageResult StageResult, FString Message)
 
 void AFunKTestBase::OnFinishStage(const FFunKTestStageFinishedEvent& Event)
 {
-	if (Event.StageIndex != CurrentStageIndex)
-	{
-		return;
-	}
-	if (Event.TestRunID != TestRunID)
-	{
-		return;
-	}
-
+	if (Event.StageIndex != CurrentStageIndex) return;
+	if (Event.TestRunID != TestRunID) return;
+	
 	if (Event.Result != EFunKStageResult::Succeeded)
 	{
 		RaiseEvent(FFunKEvent::Info("Finish Stage", FunKTestLifeTimeContext::FinishStage).AddToContext(LexToString(Event.Result)));
@@ -344,11 +361,10 @@ void AFunKTestBase::OnFinishStage(const FFunKTestStageFinishedEvent& Event)
 		return;
 	}
 
-	PeerBitMask.Set(Event.PeerIndex);
+	MultiUpdatePeerBitMask(Event.TestRunID, Event.StageIndex, Event.PeerIndex, PeerBitMask.Num());
 	if (PeerBitMask.IsSet())
 	{
-		auto a = FFunKEvent::Info("Finish Stage", FunKTestLifeTimeContext::FinishStage);
-		RaiseEvent(a);
+		RaiseEvent(FFunKEvent::Info("Finish Stage", FunKTestLifeTimeContext::FinishStage).Ref());
 		PeerBitMask.ClearAll();
 		NextStage(TestRunID, GetSeed());
 	}
@@ -508,6 +524,18 @@ bool AFunKTestBase::IsDriver() const
 	return NetMode < NM_Client;
 }
 
+void AFunKTestBase::MultiUpdatePeerBitMask_Implementation(int32 InTestRunID, int32 StageIndex, int32 PeerIndex, int32 PeerCount)
+{
+	if(TestRunID == InTestRunID && CurrentStageIndex == StageIndex && (!IsLocalStageFinished || IsDriver()))
+	{
+		if(PeerBitMask.Num() != PeerCount)
+			PeerBitMask = FFunKAnonymousBitmask(PeerCount);
+		
+		PeerBitMask.Set(PeerIndex);
+		OnPeerStageFinishing.Broadcast(PeerIndex);
+	}
+}
+
 void AFunKTestBase::SetupStages()
 {
 	if (Stages.Stages.Num() > 0)
@@ -534,6 +562,11 @@ UFunKEventBusSubsystem* AFunKTestBase::GetEventBusSubsystem() const
 	return GetWorld()->GetSubsystem<UFunKEventBusSubsystem>();
 }
 
+const FFunKAnonymousBitmask& AFunKTestBase::GetStagePeerState() const
+{
+	return PeerBitMask;
+}
+
 void AFunKTestBase::GatherContext(FFunKEvent& Event) const
 {
 	if (TestRunID != 0)
@@ -547,6 +580,8 @@ void AFunKTestBase::GatherContext(FFunKEvent& Event) const
 	}
 
 	Event.AddToContext(GetName());
+	
+	Event.AddToContext(GetWorldSubsystem()->GetPeerIndex());
 }
 
 FFunKStage* AFunKTestBase::GetCurrentStageMutable()

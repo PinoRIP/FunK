@@ -14,6 +14,11 @@ inline void FFunKAnonymousBitmask::Set(int32 Index)
 	Bits |= (1 << Index);
 }
 
+void FFunKAnonymousBitmask::Set(const FFunKAnonymousBitmask& Bitmask)
+{
+	Bits |= Bitmask.Bits;
+}
+
 void FFunKAnonymousBitmask::ClearAll()
 {
 	const int32 Bitmask = (1 << Length) - 1;

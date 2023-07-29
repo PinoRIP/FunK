@@ -4,20 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "Base/FunKTestBase.h"
-#include "FunKTestBeginEvent.generated.h"
+#include "FunKTestWaitForSyncPointReachedEvent.generated.h"
 
 USTRUCT()
-struct FFunKTestBeginEvent
+struct FFunKTestWaitForSyncPointReachedEvent
 {
 	GENERATED_BODY()
 
 public:
 	UPROPERTY()
-	int32 TestRunID = 0;
-
-	UPROPERTY()
-	int32 Seed = 0;
-
-	UPROPERTY()
 	AFunKTestBase* Test = nullptr;
+
+	UPROPERTY()
+	int32 PeerIndex = 0;
 };
+

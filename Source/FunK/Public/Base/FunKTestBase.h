@@ -19,6 +19,9 @@ class UFunKWorldSubsystem;
 struct FFunKStagesSetup;
 class AFunKWorldTestController;
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFunKTestFinishing);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFunKPeerStageFinishing, int32, PeerIndex);
+
 /**
  * 
  */
@@ -67,6 +70,7 @@ public:
 	FORCEINLINE FName GetStageName() const;
 	
 	const FFunKStage* GetCurrentStage() const;
+	int32 GetCurrentStageIndex() const { return CurrentStageIndex; }
 	const FFunKStages* GetStages() const;
 	int32 GetCurrentStageExecutionTime() const { return CurrentStageExecutionTime; }
 
@@ -77,6 +81,14 @@ public:
 	virtual void FinishStage();
 	UFUNCTION(BlueprintCallable, Category="FunK")
 	virtual void FinishStage(EFunKStageResult StageResult, const FString& Message);
+
+	UFunKWorldSubsystem* GetWorldSubsystem() const;
+	UFunKEventBusSubsystem* GetEventBusSubsystem() const;
+
+	FFunKTestFinishing OnTestFinish;
+	FFunKPeerStageFinishing OnPeerStageFinishing;
+
+	const FFunKAnonymousBitmask& GetStagePeerState() const;
 	
 protected:
 	/**
@@ -98,10 +110,6 @@ protected:
 	virtual bool IsExecutingStage(const FFunKStage& stage) const;
 	bool IsStageTickDelegateBound(int32 StageIndex);
 	bool IsValidStageIndex(int32 StageIndex) const;
-	int32 GetCurrentStageIndex() const { return CurrentStageIndex; }
-
-	UFunKWorldSubsystem* GetWorldSubsystem() const;
-	UFunKEventBusSubsystem* GetEventBusSubsystem() const;
 
 	virtual void GatherContext(FFunKEvent& Event) const;
 	virtual void RaiseEvent(FFunKEvent& Event) const;
@@ -116,6 +124,7 @@ private:
 	FFunKStages Stages;
 	EFunKTestResult Result = EFunKTestResult::None;
 	FFunKAnonymousBitmask PeerBitMask;
+
 	bool IsLocalStageFinished = false;
 	bool IsCurrentStageTickDelegateSetup = false;
 	float CurrentStageExecutionTime = 0;
@@ -137,6 +146,8 @@ private:
 	void BeginStage(int32 InTestRunID, int32 InSeed, int32 StageIndex);
 	UFUNCTION(NetMulticast, Reliable)
 	void ClientBeginStage(int32 InTestRunID, int32 InSeed, int32 StageIndex);
+	UFUNCTION(NetMulticast, Reliable)
+	void MultiUpdatePeerBitMask(int32 InTestRunID, int32 StageIndex, int32 PeerIndex, int32 PeerCount);
 	
 	void SetupStages();
 	FFunKStage* GetCurrentStageMutable();
