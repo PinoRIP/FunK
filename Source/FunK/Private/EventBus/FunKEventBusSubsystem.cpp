@@ -93,7 +93,7 @@ void UFunKEventBusSubsystem::RegisterLocalReplicationController(AFunKEventBusRep
 
 bool UFunKEventBusSubsystem::HasLocalReplicationController() const
 {
-	return !LocalController;
+	return !!LocalController;
 }
 
 void UFunKEventBusSubsystem::ReplicationControllerReady(AFunKEventBusReplicationController* controller)
@@ -133,7 +133,7 @@ void UFunKEventBusSubsystem::OnDisconnect(AGameModeBase* GameMode, AController* 
 
 void UFunKEventBusSubsystem::UpdateControllerStats()
 {
-	FEventBusControllerEvent controllerEvent;
+	FFunKEventBusControllerEvent controllerEvent;
 	controllerEvent.Controllers = ReplicationControllers.Num();
 	const bool isDedicatedServer = GetWorld()->GetNetMode() == NM_DedicatedServer;
 
@@ -149,7 +149,7 @@ void UFunKEventBusSubsystem::UpdateControllerStats()
 		Controller.Reference->IsServerDedicated = isDedicatedServer;
 		Controller.Reference->ControllerNumber = controllerEvent.Controllers;
 	}
-
+	
 	Raise(controllerEvent);
 }
 

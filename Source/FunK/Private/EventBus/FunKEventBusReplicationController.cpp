@@ -12,6 +12,9 @@
 // Sets default values
 AFunKEventBusReplicationController::AFunKEventBusReplicationController()
 {
+	bReplicates = true;
+
+	RootComponent = CreateDefaultSubobject<USceneComponent>("Root");
 }
 
 void AFunKEventBusReplicationController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const

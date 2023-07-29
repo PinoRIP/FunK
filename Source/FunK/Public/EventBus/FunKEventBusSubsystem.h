@@ -66,7 +66,7 @@ struct FUNK_API FReplicationControllerState
 };
 
 USTRUCT()
-struct FUNK_API FEventBusControllerEvent
+struct FUNK_API FFunKEventBusControllerEvent
 {
 	GENERATED_BODY()
 
