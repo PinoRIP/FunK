@@ -17,12 +17,6 @@ struct FFunKTestInstructions
 	FFunKTestInstructions()
 	: FFunKTestInstructions(FString(), FString(), FString(), FString()){}
 
-	FFunKTestInstructions(FString mapObjectPath, FString mapPackageName, FString mapTestName, FString params, FString testName)
-		: FFunKTestInstructions(mapObjectPath, mapPackageName, mapTestName, params)
-	{
-		TestName = testName;
-	}
-
 	FFunKTestInstructions(FString mapObjectPath, FString mapPackageName, FString mapTestName, FString params)
 	{
 		MapObjectPath = mapObjectPath;
@@ -35,5 +29,4 @@ struct FFunKTestInstructions
 	FString MapPackageName;
 	FString MapTestName;
 	FString Params;
-	TOptional<FString> TestName;
 };

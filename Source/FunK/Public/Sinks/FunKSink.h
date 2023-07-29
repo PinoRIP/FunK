@@ -9,16 +9,21 @@
 
 class UFunKTestRunner;
 
+
+// This class does not need to be modified.
+UINTERFACE(BlueprintType)
+class UFunKSink : public UInterface
+{
+	GENERATED_BODY()
+};
+
 /**
  * 
  */
-UCLASS()
-class FUNK_API UFunKSink : public UObject
+class FUNK_API IFunKSink
 {
 	GENERATED_BODY()
 
 public:
-	virtual void Init(UFunKTestRunner* run) { }
-	virtual void RaiseEvent(const FFunKEvent& raisedEvent, const UFunKTestRunner* run) { }
-	virtual void End(UFunKTestRunner* run) { }
+	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const = 0;
 };

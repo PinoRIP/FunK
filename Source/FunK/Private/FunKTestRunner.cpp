@@ -7,10 +7,10 @@
 #include "FunK.h"
 #include "FunKAutomationEntry.h"
 #include "FunKEngineSubsystem.h"
+#include "FunKWorldSubsystem.h"
 #include "FunKWorldTestController.h"
 #include "GameFramework/GameStateBase.h"
-#include "Sinks/FunKExtAutomationSink.h"
-#include "Sinks/FunKInProcAutomationSink.h"
+#include "Sinks/FunKAutomationSink.h"
 #include "Sinks/FunKLogSink.h"
 #include "Sinks/FunKSink.h"
 #include "UObject/UnrealTypePrivate.h"
@@ -20,15 +20,7 @@ void UFunKTestRunner::Init(UFunKEngineSubsystem* funKEngineSubsystem, EFunKTestR
 	Type = RunType;
 	FunKEngineSubsystem = funKEngineSubsystem;
 
-	TArray<TSubclassOf<UFunKSink>> sinkTypes;
-	GetSinks(sinkTypes);
-
-	Sinks.Reserve(sinkTypes.Num());
-	for (const TSubclassOf<UFunKSink>& sinkType : sinkTypes)
-	{
-		Sinks.Add(NewSink(sinkType));
-	}
-
+	GetSinks(Sinks);
 	UpdateState(EFunKTestRunnerState::Initialized);
 }
 
@@ -56,21 +48,23 @@ bool UFunKTestRunner::Test(const FFunKTestInstructions& Instructions)
 
 		if(IsDifferentEnvironment(Instructions))
 		{
+			const EFunKTestRunnerState state = State;
+			UpdateState(EFunKTestRunnerState::WaitingForWorld);
 			if(!StartEnvironment(Instructions))
 			{
+				UpdateState(state);
 				RaiseErrorEvent("Test environment could not be setup", "UFunKTestRunner::StartEnvironment");
 				return true;
 			}
 
 			ActiveTestInstructions = Instructions;
-			UpdateState(EFunKTestRunnerState::WaitingForWorld);
 		}
 		
 		if(State == EFunKTestRunnerState::WaitingForWorld)
 		{
 			if (CurrentTestWorld && CurrentTestWorld->AreActorsInitialized() )
 			{
-				AGameStateBase* GameState = CurrentTestWorld->GetGameState();
+				const AGameStateBase* GameState = CurrentTestWorld->GetGameState();
 				if (GameState && GameState->HasMatchStarted())
 				{
 					UpdateState(IsStandaloneTest() ? EFunKTestRunnerState::Ready : EFunKTestRunnerState::WaitingForConnections);
@@ -80,7 +74,7 @@ bool UFunKTestRunner::Test(const FFunKTestInstructions& Instructions)
 
 		if (State == EFunKTestRunnerState::WaitingForConnections)
 		{
-			if(CurrentWorldController)
+			if(GetCurrentWorldController())
 			{
 				int32 players = IsDedicatedServerTest() ? 2 : 3;
 				if(CurrentTestWorld->GetGameState()->PlayerArray.Num() >= players)
@@ -89,16 +83,16 @@ bool UFunKTestRunner::Test(const FFunKTestInstructions& Instructions)
 				}
 			}
 		}
-
+		
 		if(State == EFunKTestRunnerState::Ready)
 		{
-			if(ActiveTestInstructions.TestName.IsSet())
+			if(ActiveTestInstructions.MapTestName.Len() > 0)
 			{
-				CurrentWorldController->ExecuteTestByName(ActiveTestInstructions.TestName.GetValue());
+				GetCurrentWorldController()->ExecuteTestByName(ActiveTestInstructions.MapTestName, this);
 			}
 			else
 			{
-				CurrentWorldController->ExecuteAllTests();
+				GetCurrentWorldController()->ExecuteAllTests(this);
 			}
 			
 			UpdateState(EFunKTestRunnerState::ExecutingTest);
@@ -106,7 +100,7 @@ bool UFunKTestRunner::Test(const FFunKTestInstructions& Instructions)
 	}
 	else
 	{
-		if(CurrentWorldController->IsFinished())
+		if(GetCurrentWorldController()->IsFinished())
 		{
 			UpdateState(EFunKTestRunnerState::EvaluatingTest);
 		}
@@ -125,15 +119,6 @@ void UFunKTestRunner::End()
 {
 	UpdateState(EFunKTestRunnerState::Ended);
 	CurrentTestWorld = nullptr;
-	CurrentWorldController = nullptr;
-	
-	for (UFunKSink* FunKSink : Sinks)
-	{
-		if(FunKSink)
-		{
-			FunKSink->End(this);
-		}
-	}
 	Sinks.Empty();
 }
 
@@ -154,11 +139,11 @@ void UFunKTestRunner::RaiseErrorEvent(const FString& Message, const FString& Con
 
 void UFunKTestRunner::RaiseEvent(const FFunKEvent& raisedEvent) const
 {
-	for (TWeakObjectPtr<UFunKSink> FunKSink : Sinks)
+	for (TScriptInterface<IFunKSink> FunKSink : Sinks)
 	{
-		if(FunKSink.IsValid())
+		if(FunKSink)
 		{
-			FunKSink->RaiseEvent(raisedEvent, this);
+			FunKSink->RaiseEvent(raisedEvent);
 		}
 	}
 }
@@ -194,31 +179,13 @@ bool UFunKTestRunner::SetWorld(UWorld* world)
 	if(world == CurrentTestWorld)
 		return false;
 	
-	CurrentTestWorld = world;
-
-	if(CurrentTestWorld->GetNetMode() != NM_Client)
-	{
-		CurrentWorldController = CurrentTestWorld->SpawnActor<AFunKWorldTestController>(GetWorldControllerClass());
-		CurrentWorldController->SetTestRunner(this);
-	}
-	
-	return true;
-}
-
-bool UFunKTestRunner::RegisterWorldController(AFunKWorldTestController* localTestController)
-{
-	if(CurrentTestWorld->GetNetMode() != NM_Client)
-		return false;
-	
-	CurrentWorldController = localTestController;
-	CurrentWorldController->SetTestRunner(this);
-
+	CurrentTestWorld = world;	
 	return true;
 }
 
 AFunKWorldTestController* UFunKTestRunner::GetCurrentWorldController() const
 {
-	return CurrentWorldController;
+	return CurrentTestWorld->GetSubsystem<UFunKWorldSubsystem>()->GetLocalTestController();
 }
 
 void UFunKTestRunner::RaiseStartEvent()
@@ -226,29 +193,19 @@ void UFunKTestRunner::RaiseStartEvent()
 	RaiseInfoEvent("FunK Start");
 }
 
-void UFunKTestRunner::GetSinks(TArray<TSubclassOf<UFunKSink>>& outSinks)
+void UFunKTestRunner::GetSinks(TArray<TScriptInterface<IFunKSink>>& outSinks)
 {
-	outSinks.Add(TSubclassOf<UFunKSink>(UFunKLogSink::StaticClass()));
-	if(UFunKInProcAutomationSink::IsAvailable())
+	outSinks.Add(NewObject<UFunKLogSink>(this, UFunKLogSink::StaticClass()));
+	if(UFunKAutomationSink::IsAvailable())
 	{
-		outSinks.Add(TSubclassOf<UFunKSink>(UFunKInProcAutomationSink::StaticClass()));
+		outSinks.Add(NewObject<UFunKAutomationSink>(this, UFunKAutomationSink::StaticClass()));
 	}
-	else
-	{
-		outSinks.Add(TSubclassOf<UFunKSink>(UFunKExtAutomationSink::StaticClass()));
-	}
-}
-
-UFunKSink* UFunKTestRunner::NewSink(TSubclassOf<UFunKSink> sinkType)
-{
-	UFunKSink* sink = NewObject<UFunKSink>(this, sinkType);
-	sink->Init(this);
-	return sink;
 }
 
 void UFunKTestRunner::UpdateState(EFunKTestRunnerState newState)
 {
 	State = newState;
+	RaiseInfoEvent("UpdateState");
 }
 
 bool UFunKTestRunner::IsStandaloneTest() const

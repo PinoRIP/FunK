@@ -3,7 +3,12 @@
 #include "Sinks/FunKLogSink.h"
 #include "FunKLogging.h"
 
-void UFunKLogSink::RaiseEvent(const FFunKEvent& raisedEvent, const UFunKTestRunner* run)
+void UFunKLogSink::RaiseEvent(const FFunKEvent& raisedEvent) const
+{
+	LogEvent(raisedEvent);
+}
+
+void UFunKLogSink::LogEvent(const FFunKEvent& raisedEvent)
 {
 	switch (raisedEvent.Type)
 	{

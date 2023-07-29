@@ -49,22 +49,10 @@ bool UFunKEngineSubsystem::IsRunning() const
 	return ActiveTestRun && ActiveTestRun->IsRunning();
 }
 
-void UFunKEngineSubsystem::CheckForWorldController(UWorld* world)
+void UFunKEngineSubsystem::CallbackTestWorldBeganPlay(UWorld* world) const
 {
-	if(IsSeparateTestingProcess())
-	{
-		if(!IsRunning())
-		{
-			ConnectTestRunner(false);// TODO: is IsRemote event important? (The idea was that we could use the session frontend to start a process on a remote computer for even more realistic tests... But do we need to know this is the case?)
-		}
-	}
-	
-	ActiveTestRun->SetWorld(world);
-}
-
-void UFunKEngineSubsystem::RegisterController(AFunKWorldTestController* controller) const
-{
-	ActiveTestRun->RegisterWorldController(controller);
+	if(ActiveTestRun)
+		ActiveTestRun->SetWorld(world);
 }
 
 bool UFunKEngineSubsystem::IsSeparateTestingProcess()

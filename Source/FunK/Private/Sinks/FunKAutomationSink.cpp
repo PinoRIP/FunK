@@ -1,25 +1,25 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Sinks/FunKInProcAutomationSink.h"
+#include "Sinks/FunKAutomationSink.h"
 
 #include "FunKAutomationEntry.h"
 #include "FunKTestRunner.h"
 
-void UFunKInProcAutomationSink::Init(UFunKTestRunner* run)
+void UFunKAutomationSink::RaiseEvent(const FFunKEvent& raisedEvent) const
 {
-	AutomationEntryRuntime = GetCurrentAutomationEntry();
-}
-
-void UFunKInProcAutomationSink::RaiseEvent(const FFunKEvent& raisedEvent, const UFunKTestRunner* run)
-{
-	if(AutomationEntryRuntime)
+	if(FFunKAutomationEntry* AutomationEntryRuntime = GetCurrentAutomationEntry())
 	{
 		AutomationEntryRuntime->AddEvent(FAutomationEvent(GetAutomationEventType(raisedEvent.Type), raisedEvent.Message, raisedEvent.Context));
 	}
 }
 
-EAutomationEventType UFunKInProcAutomationSink::GetAutomationEventType(EFunKEventType eventType)
+bool UFunKAutomationSink::IsAvailable()
+{
+	return GetCurrentAutomationEntry() != nullptr;
+}
+
+EAutomationEventType UFunKAutomationSink::GetAutomationEventType(EFunKEventType eventType)
 {
 	switch (eventType)
 	{
@@ -30,12 +30,7 @@ EAutomationEventType UFunKInProcAutomationSink::GetAutomationEventType(EFunKEven
 	}
 }
 
-bool UFunKInProcAutomationSink::IsAvailable()
-{
-	return GetCurrentAutomationEntry() != nullptr;
-}
-
-FFunKAutomationEntry* UFunKInProcAutomationSink::GetCurrentAutomationEntry()
+FFunKAutomationEntry* UFunKAutomationSink::GetCurrentAutomationEntry()
 {
 	return static_cast<FFunKAutomationEntry*>(FAutomationTestFramework::Get().GetCurrentTest());
 }
