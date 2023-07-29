@@ -185,7 +185,7 @@ void AFunKWorldTestController::BeginLocalTestSetup(AFunKTestBase* TestToExecute,
 {
 	if(IsLocalTestController())
 	{
-		TestToExecute->BeginTestSetup(this, ExecutionId);
+		TestToExecute->BeginTest(this, ExecutionId);
 	}
 	else if(GetNetMode() != NM_Client)
 	{
@@ -209,7 +209,7 @@ void AFunKWorldTestController::BeginLocalTestExecution(AFunKTestBase* TestToExec
 {
 	if(IsLocalTestController())
 	{
-		TestToExecute->BeginTestExecution();
+		TestToExecute->BeginTestStage();
 	}
 	else if(GetNetMode() != NM_Client)
 	{

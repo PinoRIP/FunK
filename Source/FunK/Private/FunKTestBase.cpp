@@ -4,19 +4,9 @@
 #include "FunKTestBase.h"
 
 #include "FunK.h"
-#include "FunKLogging.h"
 #include "FunKWorldSubsystem.h"
 #include "FunKWorldTestController.h"
-
-bool FFunKTimeLimit::IsTimeout(float time) const
-{
-	return IsLimitless() ? false : Time <= time;
-}
-
-bool FFunKTimeLimit::IsLimitless() const
-{
-	return Time == 0;
-}
+#include "Stages/FunKStagesSetup.h"
 
 AFunKTestBase::AFunKTestBase()
 {
@@ -24,42 +14,42 @@ AFunKTestBase::AFunKTestBase()
 	bReplicates = true;
 }
 
-bool AFunKTestBase::IsRunningInStandaloneMode() const
+bool AFunKTestBase::IsStandaloneModeTest() const
 {
-	return RunOnStandalone;
+	return Stages.OnStandaloneCount > 0;
 }
 
-bool AFunKTestBase::IsRunningInDedicatedServerMode() const
+bool AFunKTestBase::IsDedicatedServerModeTest() const
 {
-	return RunOnDedicatedServer || RunOnDedicatedServerClients;
+	return IsRunOnDedicatedServer() || IsRunOnDedicatedServerClients();
 }
 
-bool AFunKTestBase::IsRunningInListenServerMode() const
+bool AFunKTestBase::IsListenServerModeTest() const
 {
-	return RunOnListenServer || RunOnListenServerClients;
+	return IsRunOnListenServer() || IsRunOnListenServerClients();
 }
 
-bool AFunKTestBase::GetRunOnDedicatedServer() const
+bool AFunKTestBase::IsRunOnDedicatedServer() const
 {
-	return RunOnDedicatedServer;
+	return Stages.OnListenServerCount > 0;
 }
 
-bool AFunKTestBase::GetRunOnDedicatedServerClients() const
+bool AFunKTestBase::IsRunOnDedicatedServerClients() const
 {
-	return RunOnDedicatedServerClients;
+	return Stages.OnListenServerClientCount > 0;
 }
 
-bool AFunKTestBase::GetRunOnListenServer() const
+bool AFunKTestBase::IsRunOnListenServer() const
 {
-	return RunOnListenServer;
+	return Stages.OnListenServerCount > 0;
 }
 
-bool AFunKTestBase::GetRunOnListenServerClients() const
+bool AFunKTestBase::IsRunOnListenServerClients() const
 {
-	return RunOnListenServerClients;
+	return Stages.OnListenServerClientCount > 0;
 }
 
-void AFunKTestBase::BeginTestSetup(AFunKWorldTestController* Controller, FFunKTestID testId)
+void AFunKTestBase::BeginTest(AFunKWorldTestController* Controller, FFunKTestID testId)
 {
 	CurrentController = Controller;
 	TestID = testId;
@@ -77,7 +67,7 @@ void AFunKTestBase::BeginTestSetup(AFunKWorldTestController* Controller, FFunKTe
 	SetActorTickEnabled(true);
 }
 
-void AFunKTestBase::BeginTestExecution()
+void AFunKTestBase::BeginTestStage()
 {
 	check(CurrentController)
 	
@@ -94,7 +84,7 @@ void AFunKTestBase::FinishTest(EFunKFunctionalTestResult InTestResult, const FSt
 
 	RaiseEvent(CreateEvent(TestResult, Message).AddToContext(UFunKWorldTestExecution::FunKTestLifeTimeTestFinishedEvent));
 
-	InvokeCleanup();
+	CleanupAfterTest();
 	GEngine->ForceGarbageCollection();
 
 	CurrentController = nullptr;
@@ -130,12 +120,12 @@ EFunKFunctionalTestResult AFunKTestBase::GetTestResult() const
 void AFunKTestBase::BuildTestRegistry(FString& append) const
 {
 	// Only include enabled tests in the list of functional tests to run.
-	if (IsEnabled && (IsRunningInStandaloneMode() || IsRunningInDedicatedServerMode() || IsRunningInListenServerMode()))
+	if (IsEnabled && (IsStandaloneModeTest() || IsDedicatedServerModeTest() || IsListenServerModeTest()))
 	{
 		append.Append(GetActorLabel() + TEXT("|") +
-			(IsRunningInStandaloneMode() ? FFunKModule::FunkStandaloneParameter : TEXT("")) +
-			(IsRunningInDedicatedServerMode() ? FFunKModule::FunkDedicatedParameter : TEXT("")) +
-			(IsRunningInListenServerMode() ? FFunKModule::FunkListenParameter : TEXT("")) +
+			(IsStandaloneModeTest() ? FFunKModule::FunkStandaloneParameter : TEXT("")) +
+			(IsDedicatedServerModeTest() ? FFunKModule::FunkDedicatedParameter : TEXT("")) +
+			(IsListenServerModeTest() ? FFunKModule::FunkListenParameter : TEXT("")) +
 			":" + GetName()
 		);
 		append.Append(TEXT(";"));
@@ -165,6 +155,18 @@ FFunKTimeLimit* AFunKTestBase::GetNetworkingTimeLimit()
 	return nullptr;
 }
 
+void AFunKTestBase::PostLoad()
+{
+	Super::PostLoad();
+	SetupStages();
+}
+
+void AFunKTestBase::PostActorCreated()
+{
+	Super::PostActorCreated();
+	SetupStages();
+}
+
 bool AFunKTestBase::InvokeAssume()
 {
 	return true;
@@ -183,11 +185,11 @@ void AFunKTestBase::InvokeStartTest()
 {
 }
 
-void AFunKTestBase::InvokeCleanup()
+void AFunKTestBase::CleanupAfterTest()
 {
 }
 
-void AFunKTestBase::InvokeCheckForLocalTestController()
+void AFunKTestBase::CheckLocalTestController()
 {
 	if(UFunKWorldSubsystem* funk = GetWorld()->GetSubsystem<UFunKWorldSubsystem>())
 	{
@@ -208,8 +210,21 @@ void AFunKTestBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 void AFunKTestBase::BeginPlay()
 {
 	Super::BeginPlay();
-	InvokeCheckForLocalTestController();
+	CheckLocalTestController();
 	SetActorTickEnabled(false);
+}
+
+void AFunKTestBase::SetupStages(FFunKStagesSetup& stages)
+{
+}
+
+void AFunKTestBase::SetupStages()
+{
+	if(Stages.Stages.Num() > 0)
+		return;
+	
+	FFunKStagesSetup stagesFluentSetup = FFunKStagesSetup(&Stages, this);
+	SetupStages(stagesFluentSetup);
 }
 
 void AFunKTestBase::Tick(float DeltaTime)
@@ -230,6 +245,11 @@ void AFunKTestBase::Tick(float DeltaTime)
 	}
 	
 	Super::Tick(DeltaTime);
+}
+
+const FFunKStages* AFunKTestBase::GetStages() const
+{
+	return &Stages;
 }
 
 void AFunKTestBase::GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const

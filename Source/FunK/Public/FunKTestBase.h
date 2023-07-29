@@ -5,28 +5,11 @@
 #include "CoreMinimal.h"
 #include "FunKFunctionalTestResult.h"
 #include "FunKWorldTestExecution.h"
+#include "Stages/FunKStages.h"
 #include "UObject/Object.h"
 #include "FunKTestBase.generated.h"
 
-USTRUCT(BlueprintType)
-struct FFunKTimeLimit
-{
-	GENERATED_BODY()
-
-	/** Test's time limit. '0' means no limit */
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float Time = 20.f;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	FText Message;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EFunKFunctionalTestResult Result = EFunKFunctionalTestResult::Failed;
-
-	bool IsTimeout(float time) const;
-
-	bool IsLimitless() const;
-};
+struct FFunKStagesSetup;
 
 /**
  * 
@@ -40,21 +23,28 @@ public:
 	AFunKTestBase();
 	
 	UFUNCTION(BlueprintCallable, Category="FunK|Setup")
-	bool IsRunningInStandaloneMode() const;
+	bool IsStandaloneModeTest() const;
 	
 	UFUNCTION(BlueprintCallable, Category="FunK|Setup")
-	bool IsRunningInDedicatedServerMode() const;
+	bool IsDedicatedServerModeTest() const;
 	
 	UFUNCTION(BlueprintCallable, Category="FunK|Setup")
-	bool IsRunningInListenServerMode() const;
+	bool IsListenServerModeTest() const;
 
-	bool GetRunOnDedicatedServer() const;
-	bool GetRunOnDedicatedServerClients() const;
-	bool GetRunOnListenServer() const;
-	bool GetRunOnListenServerClients() const;
+	UFUNCTION(BlueprintCallable, Category="FunK|Setup")
+	bool IsRunOnDedicatedServer() const;
 
-	virtual void BeginTestSetup(AFunKWorldTestController* Controller, FFunKTestID testId);
-	virtual void BeginTestExecution();
+	UFUNCTION(BlueprintCallable, Category="FunK|Setup")
+	bool IsRunOnDedicatedServerClients() const;
+
+	UFUNCTION(BlueprintCallable, Category="FunK|Setup")
+	bool IsRunOnListenServer() const;
+
+	UFUNCTION(BlueprintCallable, Category="FunK|Setup")
+	bool IsRunOnListenServerClients() const;
+
+	virtual void BeginTest(AFunKWorldTestController* Controller, FFunKTestID testId);
+	virtual void BeginTestStage();
 
 	UFUNCTION(BlueprintCallable, Category="FunK")
 	virtual void FinishTest(EFunKFunctionalTestResult InTestResult, const FString& Message);
@@ -68,14 +58,15 @@ public:
 	bool IsFinished() const;
 
 	EFunKFunctionalTestResult GetTestResult() const;
-
-	void BuildTestRegistry(FString& append) const;
 	
 	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const override;
 
 	virtual FFunKTimeLimit* GetPreparationTimeLimit();
 	virtual FFunKTimeLimit* GetTimeLimit();
 	virtual FFunKTimeLimit* GetNetworkingTimeLimit();
+	
+	virtual void PostLoad() override;
+	virtual void PostActorCreated() override;
 
 protected:
 	/**
@@ -86,31 +77,18 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK")
 	bool IsEnabled = true;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
-	bool RunOnStandalone = true;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
-	bool RunOnDedicatedServer = true;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
-	bool RunOnDedicatedServerClients = true;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
-	bool RunOnListenServer = true;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
-	bool RunOnListenServerClients = true;
 	
 	virtual bool InvokeAssume();
 	virtual void InvokeStartSetup();
 	virtual bool InvokeIsReady();
 	virtual void InvokeStartTest();
-	virtual void InvokeCleanup();
-	virtual void InvokeCheckForLocalTestController();
+	virtual void CleanupAfterTest();
+	virtual void CheckLocalTestController();
 	
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	virtual void BeginPlay() override;
+
+	virtual void SetupStages(FFunKStagesSetup& stages);
 private:
 	EFunKFunctionalTestResult TestResult = EFunKFunctionalTestResult::None;
 	
@@ -119,12 +97,19 @@ private:
 	UPROPERTY()
 	AFunKWorldTestController* CurrentController;
 
+	FFunKStages Stages;
+	void SetupStages();
+
 	bool IsTestStarted = false;
 	bool IsSetupReady = false;
 
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+
+	const FFunKStages* GetStages() const;
+
+	void BuildTestRegistry(FString& append) const;
 		
 #if WITH_EDITOR
 	virtual void GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const override;

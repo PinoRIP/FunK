@@ -3,6 +3,8 @@
 
 #include "FunKFunctionalTest.h"
 
+#include "Stages/FunKStagesSetup.h"
+
 
 AFunKFunctionalTest::AFunKFunctionalTest()
 {
@@ -26,6 +28,10 @@ FFunKTimeLimit* AFunKFunctionalTest::GetNetworkingTimeLimit()
 	return &NetworkingTimeLimit;
 }
 
+void AFunKFunctionalTest::SetupStages(FFunKStagesSetup& stages)
+{
+}
+
 bool AFunKFunctionalTest::InvokeAssume()
 {
 	return BpAssume();
@@ -46,7 +52,7 @@ void AFunKFunctionalTest::InvokeStartTest()
 	BpStartTest();
 }
 
-void AFunKFunctionalTest::InvokeCleanup()
+void AFunKFunctionalTest::CleanupAfterTest()
 {
 	BpCleanup();
 }

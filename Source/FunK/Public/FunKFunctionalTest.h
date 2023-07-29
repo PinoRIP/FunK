@@ -32,11 +32,28 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup|Timeout")
 	FFunKTimeLimit NetworkingTimeLimit;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
+	bool RunOnStandalone = true;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
+	bool RunOnDedicatedServer = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
+	bool RunOnDedicatedServerClients = true;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
+	bool RunOnListenServer = true;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
+	bool RunOnListenServerClients = true;
+
+	virtual void SetupStages(FFunKStagesSetup& stages) override;
+	
 	virtual bool InvokeAssume() override;
 	virtual void InvokeStartSetup() override;
 	virtual bool InvokeIsReady() override;
 	virtual void InvokeStartTest() override;
-	virtual void InvokeCleanup() override;
+	virtual void CleanupAfterTest() override;
 
 	virtual bool Assume();
 	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="Assume")
