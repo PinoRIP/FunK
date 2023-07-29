@@ -22,7 +22,7 @@ int32 UFunKBlueprintFunctionLibrary::GetTestControllerIndex(UObject* WorldContex
 {
 	if(const AFunKWorldTestController* controller = GetTestController(WorldContext))
 	{
-		return controller->GetControllerIndex();
+		return controller->GetControllerNumber();
 	}
 
 	return INDEX_NONE;

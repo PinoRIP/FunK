@@ -4,6 +4,7 @@
 #include "ActorScenarios/FunKActorScenarioTest.h"
 #include "FunKWorldTestController.h"
 #include "ActorScenarios/FunKActorScenarioComponent.h"
+#include "Engine/ActorChannel.h"
 #include "Net/UnrealNetwork.h"
 #include "Stages/FunKStagesSetup.h"
 
@@ -22,6 +23,7 @@ AFunKActorScenarioTest::AFunKActorScenarioTest()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	bReplicates = true;
 }
 
 void AFunKActorScenarioTest::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -36,12 +38,17 @@ void AFunKActorScenarioTest::OnBeginStage(const FName& StageName)
 	FString newStageScenario = ParseStageScenario(StageName.ToString());
 	if(CurrentStageScenario != newStageScenario)
 	{
-		OnStageScenarioChanged();
-		CurrentStageScenario = newStageScenario;
+		OnStageScenarioChanged(StageName, newStageScenario);
 	}
 	
 	if(!IsCurrentStageScenarioFinished)
 	{
+		if(IsSkippingClient2())
+		{
+			Super::FinishStage();
+			return;
+		}
+		
 		Super::OnBeginStage(StageName);
 	}
 	else
@@ -55,6 +62,14 @@ void AFunKActorScenarioTest::OnFinish(const FString& Message)
 	CurrentStageScenario.Empty();
 	
 	Super::OnFinish(Message);
+}
+
+void AFunKActorScenarioTest::Tick(float DeltaTime)
+{
+	if(IsCurrentStageScenarioFinished)
+		return;
+	
+	Super::Tick(DeltaTime);
 }
 
 void AFunKActorScenarioTest::SetupStages(FFunKStagesSetup& stages)
@@ -131,8 +146,7 @@ void AFunKActorScenarioTest::ArrangeScenario()
 
 			if(NetMode != NM_Standalone)
 			{		
-				if(!actor->GetIsReplicated())
-					actor->SetReplicates(true);
+				actor->SetReplicates(true);
 				
 				if(ActorScenarioComponent->IsOppositionActor)
 				{
@@ -214,32 +228,54 @@ bool AFunKActorScenarioTest::HasMoreScenarios() const
 	if(!IsValidStageIndex(index))
 		return false;
 
+	ENetMode netMode = GetNetMode();
 	const TArray<FFunKStage>& stages = GetStages()->Stages;
 	for (int32 i = index; i < stages.Num(); ++i)
 	{
-		if (!stages[index].Name.ToString().Contains(CurrentStageScenario))
+		if (!stages[index].Name.ToString().Contains(CurrentStageScenario) &&
+			(stages[index].IsOnStandalone && netMode == NM_Standalone) ||
+			(stages[index].IsOnDedicatedServer && netMode == NM_DedicatedServer) ||
+			(stages[index].IsOnListenServer && netMode == NM_ListenServer) ||
+			(netMode == NM_Client && (GetCurrentController()->GetIsServerDedicated() ? stages[index].IsOnDedicatedServerClient : stages[index].IsOnListenServerClient))
+		)
 			return true;
 	}
 
 	return false;
 }
 
-void AFunKActorScenarioTest::OnStageScenarioChanged()
+void AFunKActorScenarioTest::OnStageScenarioChanged(const FName& StageName, const FString& NewStageScenario)
 {
 	IsCurrentStageScenarioFinished = false;
 
-	if(GetNetMode() != NM_Client && AcquiredActors.Num() > 0)
+	if(!CurrentStageScenario.IsEmpty())
 	{
-		TArray<UFunKActorScenarioComponent*> ActorScenarioComponents;
-		GetActorScenarioComponents(ActorScenarioComponents);
-		for (int32 i = 0; i < ActorScenarioComponents.Num(); ++i)
+		const ENetMode netMode = GetNetMode();
+		if(netMode != NM_Client && AcquiredActors.Num() > 0)
 		{
-			AcquiredActors[i]->SetOwner(nullptr);
-			ActorScenarioComponents[i]->ReleaseActor(AcquiredActors[i]);
+			TArray<UFunKActorScenarioComponent*> ActorScenarioComponents;
+			GetActorScenarioComponents(ActorScenarioComponents);
+			for (int32 i = 0; i < ActorScenarioComponents.Num(); ++i)
+			{
+				AcquiredActors[i]->SetOwner(nullptr);
+				ActorScenarioComponents[i]->ReleaseActor(AcquiredActors[i]);
+			}
 		}
-	}
 
-	AcquiredActors.Empty(AcquiredActors.Num());
+		AcquiredActors.Empty(AcquiredActors.Num());
+	}
+	
+	CurrentStageScenario = NewStageScenario;
+}
+
+bool AFunKActorScenarioTest::IsSkippingClient2() const
+{
+	const ENetMode netMode = GetNetMode();
+	return netMode == NM_Client &&
+		CurrentStageScenario != FunKTestActorScenarioStageExtensionDedicatedServerClientToClient &&
+			CurrentStageScenario != FunKTestActorScenarioStageExtensionListenServerClientToClient &&
+				!((GetCurrentController()->GetIsServerDedicated() ? IsAlsoAssertingOnDedicatedServerClient : IsAlsoAssertingOnListenServerClient) &&
+					GetStageName().ToString().Contains("Assert"));
 }
 
 void AFunKActorScenarioTest::FinishStage(EFunKTestResult TestResult, const FString& Message)
@@ -261,7 +297,7 @@ AActor* AFunKActorScenarioTest::GetAcquireActorByComponent(UFunKActorScenarioCom
 	TArray<UFunKActorScenarioComponent*> ActorScenarioComponent;
 	GetActorScenarioComponents(ActorScenarioComponent);
 
-	for (int i = 0; i < ActorScenarioComponent.Num(); ++i)
+	if(AcquiredActors.Num() == ActorScenarioComponent.Num()) for (int i = 0; i < ActorScenarioComponent.Num(); ++i)
 	{
 		if(ActorScenarioComponent[i] == Component)
 			return AcquiredActors[i];
@@ -282,16 +318,14 @@ void AFunKActorScenarioTest::ErrorFallbackStage()
 
 void AFunKActorScenarioTest::SetupStages(FFunKStagesSetup& stages, TArray<UFunKActorScenarioComponent*>& actorScenarioComponents)
 {
-	int32 standaloneCount = 0, dedicatedServerCount = 0, dedicatedServerClientCount = 0, listenServerCount = 0, listenServerClientCount = 0, dedicatedServerOppositionCount = 0, dedicatedServerClientOppositionCount = 0, listenServerOppositionCount = 0, listenServerClientOppositionCount = 0;;
+	int32 standaloneCount = 0, dedicatedServerCount = 0, dedicatedServerClientCount = 0, listenServerCount = 0, listenServerClientCount = 0, dedicatedServerClientOppositionCount = 0, listenServerClientOppositionCount = 0;;
 	for (const UFunKActorScenarioComponent* ActorScenarioComponent : actorScenarioComponents)
 	{
 		standaloneCount = standaloneCount + (ActorScenarioComponent->IsStandaloneRelevant ? 1 : 0);
 
 		if(ActorScenarioComponent->IsOppositionActor)
 		{
-			dedicatedServerOppositionCount = dedicatedServerOppositionCount + (ActorScenarioComponent->IsDedicatedServerRelevant ? 1 : 0);
 			dedicatedServerClientOppositionCount = dedicatedServerClientOppositionCount + (ActorScenarioComponent->IsDedicatedServerClientRelevant ? 1 : 0);
-			listenServerOppositionCount = listenServerOppositionCount + (ActorScenarioComponent->IsListenServerRelevant ? 1 : 0);
 			listenServerClientOppositionCount = listenServerClientOppositionCount + (ActorScenarioComponent->IsListenServerClientRelevant ? 1 : 0);
 		}
 		else
@@ -305,17 +339,27 @@ void AFunKActorScenarioTest::SetupStages(FFunKStagesSetup& stages, TArray<UFunKA
 	
 	AddScenarioStages(stages, FunKTestActorScenarioStageExtensionStandalone, standaloneCount > 0, false, false, false, false);
 	
-	AddScenarioStages(stages, FunKTestActorScenarioStageExtensionDedicatedServerClientToServer, false, dedicatedServerCount > 0, dedicatedServerClientCount > 0, false, false);
-	if(dedicatedServerOppositionCount > 0)
-		AddScenarioStages(stages, FunKTestActorScenarioStageExtensionDedicatedServerServerToClient, false, dedicatedServerCount > 0, dedicatedServerClientCount > 0, false, false);
-	if(dedicatedServerClientOppositionCount > 0)
-		AddScenarioStages(stages, FunKTestActorScenarioStageExtensionDedicatedServerClientToClient, false, dedicatedServerCount > 0, dedicatedServerClientCount > 0, false, false);
+	if(dedicatedServerCount > 0)
+	{
+		AddScenarioStages(stages, FunKTestActorScenarioStageExtensionDedicatedServerServerToClient, false, dedicatedServerCount > 0, dedicatedServerClientOppositionCount > 0, false, false);
+	}
 	
-	AddScenarioStages(stages, FunKTestActorScenarioStageExtensionListenServerClientToServer, false, false, false, listenServerCount > 0, listenServerClientCount > 0);
-	if(listenServerOppositionCount > 0)
-		AddScenarioStages(stages, FunKTestActorScenarioStageExtensionListenServerServerToClient, false, false, false, listenServerCount > 0, listenServerClientCount > 0);
-	if(listenServerClientOppositionCount > 0)
-		AddScenarioStages(stages, FunKTestActorScenarioStageExtensionListenServerClientToClient, false, false, false, listenServerCount > 0, listenServerClientCount > 0);
+	if (dedicatedServerClientCount > 0)
+	{
+		AddScenarioStages(stages, FunKTestActorScenarioStageExtensionDedicatedServerClientToServer, false, true, true, false, false);
+		AddScenarioStages(stages, FunKTestActorScenarioStageExtensionDedicatedServerClientToClient, false, dedicatedServerClientOppositionCount > 0, dedicatedServerClientOppositionCount > 0, false, false);
+	}
+
+	if(listenServerCount > 0)
+	{
+		AddScenarioStages(stages, FunKTestActorScenarioStageExtensionListenServerServerToClient, false, false, false, listenServerCount > 0, listenServerClientOppositionCount > 0);
+	}
+	
+	if (listenServerClientCount > 0)
+	{
+		AddScenarioStages(stages, FunKTestActorScenarioStageExtensionListenServerClientToServer, false, false, false, true, true);
+		AddScenarioStages(stages, FunKTestActorScenarioStageExtensionListenServerClientToClient, false, false, false, listenServerClientOppositionCount > 0, listenServerClientOppositionCount > 0);
+	}
 }
 
 void AFunKActorScenarioTest::AddScenarioStages(FFunKStagesSetup& stages, const FString& name, bool standalone, bool dedicated, bool dedicatedClient, bool listen, bool listenClient)

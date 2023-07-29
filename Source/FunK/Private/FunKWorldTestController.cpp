@@ -26,7 +26,7 @@ void AFunKWorldTestController::GetLifetimeReplicatedProps(TArray<FLifetimeProper
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME( AFunKWorldTestController, ActiveController );
-	DOREPLIFETIME( AFunKWorldTestController, ControllerIndex );
+	DOREPLIFETIME( AFunKWorldTestController, ControllerNumber );
 	DOREPLIFETIME( AFunKWorldTestController, IsServerDedicated );
 }
 
@@ -63,7 +63,7 @@ void AFunKWorldTestController::CreateTestControllerForClient(APlayerController* 
 	AFunKWorldTestController* NewController = GetWorld()->SpawnActor<AFunKWorldTestController>(GetClass());
 	NewController->SetOwner(NewPlayer);
 	SpawnedController.Add(NewController);
-	NewController->ControllerIndex = SpawnedController.Num();
+	NewController->ControllerNumber = SpawnedController.Num();
 }
 
 void AFunKWorldTestController::BeginDestroy()
@@ -329,7 +329,7 @@ void AFunKWorldTestController::RaiseEvent(const FFunKEvent& RaisedEvent) const
 			}
 			else
 			{
-				UE_LOG(FunKLog, Error, TEXT("Failed to RaiseEvent due to a missing test execution: %s"), *GetRoleName());
+				UE_LOG(FunKLog, Error, TEXT("Failed to RaiseEvent due to a missing test execution: %s - %s - %s"), *GetRoleName(), *RaisedEvent.Message, *RaisedEvent.GetContext());
 			}
 		}
 	}
@@ -349,10 +349,10 @@ FString AFunKWorldTestController::GetRoleName() const
 	if(netMode == NM_Standalone)
 		return "Standalone";
 
-	if(ControllerIndex == INDEX_NONE)
+	if(ControllerNumber == INDEX_NONE)
 		return "Server";
 	
-	return "Client_" + FString::FromInt(ControllerIndex);
+	return "Client_" + FString::FromInt(ControllerNumber);
 }
 
 int32 AFunKWorldTestController::GetActiveControllerCount() const
@@ -360,9 +360,9 @@ int32 AFunKWorldTestController::GetActiveControllerCount() const
 	return ActiveController;
 }
 
-int32 AFunKWorldTestController::GetControllerIndex() const
+int32 AFunKWorldTestController::GetControllerNumber() const
 {
-	return ControllerIndex;
+	return ControllerNumber;
 }
 
 bool AFunKWorldTestController::IsLocalTestController() const

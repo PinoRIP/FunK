@@ -98,6 +98,11 @@ void AFunKTestBase::FinishStage(EFunKTestResult TestResult, const FString& Messa
 		ResultMessage = "Last stage didn't specify result! " + ResultMessage;
 	}
 
+	if(GetStageName().ToString().Contains("Assert"))
+	{
+		ResultMessage = ResultMessage.IsEmpty() ? Message : ResultMessage;
+	}
+
 	OnFinishStage(GetStageName());
 	
 	if(TestResult != EFunKTestResult::None)
@@ -212,6 +217,11 @@ void AFunKTestBase::OnBeginStage(const FName& StageName)
 
 void AFunKTestBase::OnFinishStage(const FName& StageName)
 {
+	if(StageName == NAME_None)
+	{
+		
+	}
+	
 	RaiseEvent(FFunKEvent::Info("Finish Stage " + StageName.ToString(), UFunKWorldTestExecution::FunKTestLifeTimeFinishStageEvent));
 }
 

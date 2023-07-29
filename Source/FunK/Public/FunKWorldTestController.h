@@ -25,7 +25,7 @@ public:
 	virtual void GetLifetimeReplicatedProps( TArray< FLifetimeProperty > & OutLifetimeProps ) const override;
 
 	int32 GetActiveControllerCount() const;
-	int32 GetControllerIndex() const;
+	int32 GetControllerNumber() const;
 
 	bool IsLocalTestController() const;
 
@@ -48,7 +48,7 @@ private:
 	int32 ActiveController;
 
 	UPROPERTY( replicated )
-	int32 ControllerIndex = INDEX_NONE;
+	int32 ControllerNumber = INDEX_NONE;
 
 	UPROPERTY( replicated )
 	bool IsServerDedicated = false;

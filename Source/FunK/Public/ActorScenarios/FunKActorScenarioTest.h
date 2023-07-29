@@ -20,6 +20,8 @@ public:
 	virtual void OnBeginStage(const FName& StageName) override;
 	virtual void OnFinish(const FString& Message) override;
 
+	virtual void Tick(float DeltaTime) override;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup|Timeout")
 	FFunKTimeLimit ArrangeScenarioTimeLimit;
@@ -71,15 +73,17 @@ protected:
 	bool BpAssert();
 
 	bool HasMoreScenarios() const;
-	virtual void OnStageScenarioChanged();
+	virtual void OnStageScenarioChanged(const FName& StageName, const FString& NewStageScenario);
 
 	virtual void FinishStage(EFunKTestResult TestResult, const FString& Message) override;
 
 	UFUNCTION(BlueprintCallable, Category="FunK")
 	AActor* GetAcquireActorByComponent(UFunKActorScenarioComponent* Component);
+
+	bool IsSkippingClient2() const;
 	
 private:
-	UPROPERTY(Replicated)
+	UPROPERTY( replicated )
 	TArray<AActor*> AcquiredActors;
 
 	FString CurrentStageScenario;

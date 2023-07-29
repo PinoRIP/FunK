@@ -159,15 +159,22 @@ void UFunKWorldTestExecution::NextStage()
 	bool isExecutionFinished = true;
 	const ENetMode netMode = MasterController->GetNetMode();
 	const FFunKStage& stage = stages->Stages[CurrentStageIndex];
-	for(int32 i = 0; i < CurrentExecutions.Num(); i++)
+
+	// Using 2 iterations: So that if the server succeeds instantly we already know for what it has to wait...
+	//	1. Mark all that will be executed
+	//	2. Actually execute the stages
+	for (FFunKTestExecutionState& state : CurrentExecutions)
 	{
-		FFunKTestExecutionState& state = CurrentExecutions[i];
-		
 		state.LastFinishedStage = ((!stage.IsOnStandalone && state.NetMode == NM_Standalone) ||
 			(!stage.IsOnDedicatedServer && state.NetMode == NM_DedicatedServer) ||
 				(!stage.IsOnListenServer && state.NetMode == NM_ListenServer) ||
 					(!stage.IsOnListenServerClient && netMode == NM_ListenServer && state.NetMode == NM_Client) ||
 						(!stage.IsOnDedicatedServerClient && netMode == NM_DedicatedServer && state.NetMode == NM_Client)) ? CurrentStageIndex : state.LastFinishedStage;
+	}
+	
+	for(int32 i = 0; i < CurrentExecutions.Num(); i++)
+	{
+		FFunKTestExecutionState& state = CurrentExecutions[i];
 
 		isExecutionFinished = isExecutionFinished && state.IsExecutionFinished;
 		if(state.LastFinishedStage < CurrentStageIndex && !state.IsExecutionFinished)
