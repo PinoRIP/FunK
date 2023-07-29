@@ -88,11 +88,14 @@ void AFunKWorldTestController::OnRep_Owner()
 void AFunKWorldTestController::ExecuteTest(AFunKFunctionalTest* TestToExecute, TScriptInterface<IFunKSink> reportSink, FGuid executionId)
 {
 	const ENetMode netMode = GetNetMode();
-	if(netMode == NM_Standalone)
+	if (netMode == NM_Standalone)
 	{
+		if(!TestToExecute->RunInStandaloneMode)
+			return;
+		
 		ExecuteTestRun(TestToExecute, reportSink, executionId);
 	}
-	else if(netMode == NM_Client)
+	else if (netMode == NM_Client)
 	{
 		ReportSink = reportSink;
 		
@@ -101,9 +104,16 @@ void AFunKWorldTestController::ExecuteTest(AFunKFunctionalTest* TestToExecute, T
 	}
 	else
 	{
-		ExecuteTestRun(TestToExecute, reportSink, executionId);
+		if(netMode == NM_DedicatedServer && !TestToExecute->RunInDedicatedServerMode)
+			return;
 
-		for (AFunKWorldTestController* Controller : SpawnedController)
+		if(netMode == NM_ListenServer && !TestToExecute->RunInListenServerMode)
+			return;
+		
+		if (TestToExecute->RunOnServer)
+			ExecuteTestRun(TestToExecute, reportSink, executionId);
+
+		if (TestToExecute->RunOnClient) for (AFunKWorldTestController* Controller : SpawnedController)
 		{
 			if(Controller != reportSink.GetObject())
 				Controller->ReportSink = this;
