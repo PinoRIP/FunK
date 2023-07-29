@@ -5,11 +5,17 @@
 #include "FunK.h"
 #include "FunKWorldSubsystem.h"
 #include "FunKWorldTestController.h"
+#include "FunKWorldTestExecution.h"
 
 
 bool FFunKTimeLimit::IsTimeout(float time) const
 {
-	return Time == 0 ? false : Time <= time;
+	return IsLimitless() ? false : Time <= time;
+}
+
+bool FFunKTimeLimit::IsLimitless() const
+{
+	return Time == 0;
 }
 
 // Sets default values
@@ -20,11 +26,12 @@ AFunKFunctionalTest::AFunKFunctionalTest()
 	bReplicates = true;
 }
 
-void AFunKFunctionalTest::RunTest(AFunKWorldTestController* controller)
+void AFunKFunctionalTest::BeginTestSetup(AFunKWorldTestController* controller, FFunKTestId testId)
 {
 	Controller = controller;
 	RunFrame = GFrameNumber;
 	RunTime = GetWorld()->GetTimeSeconds();
+	TestId = testId;
 
 	TotalTime = 0;
 	PreparationTime = 0;
@@ -45,52 +52,40 @@ void AFunKFunctionalTest::RunTest(AFunKWorldTestController* controller)
 	SetActorTickEnabled(true);
 }
 
+void AFunKFunctionalTest::BeginTestExecution()
+{
+	check(IsSetupReady)
+	
+	IsTestStarted = true;
+	StartFrame = GFrameNumber;
+	StartTime = GetWorld()->GetTimeSeconds();
+
+	BpStartTest();
+}
+
 void AFunKFunctionalTest::FinishTest(EFunKFunctionalTestResult testResult, const FString& Message)
 {
 	SetActorTickEnabled(false);
 	TestResult = testResult;
 
-	if(TestResult == EFunKFunctionalTestResult::Succeeded)
-	{
-		RaiseInfoEvent(FString::Printf(TEXT("Test Finished: %s"), *Message), GetName());
-	}
-	else if(TestResult == EFunKFunctionalTestResult::Skipped)
-	{
-		RaiseInfoEvent(FString::Printf(TEXT("Skipped: %s"), *Message), GetName());
-	}
-	else
-	{
-		RaiseErrorEvent(FString::Printf(TEXT("FinishTest TestResult=%s. %s"), *LexToString(TestResult), *Message), GetName());
-	}
+	RaiseEvent(CreateEvent(testResult, Message).AddToContext(GetName()).AddToContext(UFunKWorldTestExecution::FunKTestLifeTimeTestFinishedEvent).AddToContext(TestId.ToString()));
 
 	BpCleanup();
 	GEngine->ForceGarbageCollection();
 
 	Controller = nullptr;
+	TestId = FGuid();
 }
 
-void AFunKFunctionalTest::RaiseInfoEvent(const FString& Message, const FString& Context) const
+FFunKEvent AFunKFunctionalTest::CreateEvent(EFunKFunctionalTestResult testResult, const FString& Message)
 {
-	if(Controller)
-	{
-		Controller->RaiseInfoEvent(Message, Context);
-	}
-}
+	FString EventMessage = testResult == EFunKFunctionalTestResult::Succeeded
+		? FString::Printf(TEXT("Test Finished: %s"), *Message)
+		: testResult == EFunKFunctionalTestResult::Skipped
+			? FString::Printf(TEXT("Test Skipped: %s"), *Message)
+			: FString::Printf(TEXT("TestResult=%s. %s"), *LexToString(testResult), *Message);
 
-void AFunKFunctionalTest::RaiseWarningEvent(const FString& Message, const FString& Context) const
-{
-	if(Controller)
-	{
-		Controller->RaiseWarningEvent(Message, Context);
-	}
-}
-
-void AFunKFunctionalTest::RaiseErrorEvent(const FString& Message, const FString& Context) const
-{
-	if(Controller)
-	{
-		Controller->RaiseErrorEvent(Message, Context);
-	}
+	return FFunKEvent(testResult == EFunKFunctionalTestResult::Succeeded || testResult == EFunKFunctionalTestResult::Skipped ? EFunKEventType::Info : EFunKEventType::Error, EventMessage);
 }
 
 bool AFunKFunctionalTest::IsStarted() const
@@ -181,11 +176,6 @@ void AFunKFunctionalTest::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-void AFunKFunctionalTest::OnTimeout(const FFunKTimeLimit& limit)
-{
-	FinishTest(limit.Result, limit.Message.ToString());
-}
-
 // Called every frame
 void AFunKFunctionalTest::Tick(float DeltaTime)
 {
@@ -202,28 +192,7 @@ void AFunKFunctionalTest::Tick(float DeltaTime)
 
 		if(IsSetupReady)
 		{
-			IsTestStarted = true;
-			StartFrame = GFrameNumber;
-			StartTime = GetWorld()->GetTimeSeconds();
-			BpStartTest();
-		}
-		else
-		{
-			PreparationTime += DeltaTime;
-			if(PreparationTimeLimit.IsTimeout(PreparationTime))
-			{
-				OnTimeout(PreparationTimeLimit);
-				return;
-			}
-		}
-	}
-	else
-	{
-		ExecutionTime += DeltaTime;
-		if(TimeLimit.IsTimeout(ExecutionTime))
-		{
-			OnTimeout(TimeLimit);
-			return;
+			RaiseEvent(FFunKEvent::Info("Preparation finished", TestId.ToString()).AddToContext(UFunKWorldTestExecution::FunKTestLifeTimePreparationCompleteEvent).AddToContext(Controller->GetRoleName()));
 		}
 	}
 	

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FunKWorldTestExecution.h"
 #include "GameFramework/Actor.h"
 #include "Sinks/FunKSink.h"
 #include "FunKWorldTestController.generated.h"
@@ -15,11 +16,19 @@ class FUNK_API AFunKWorldTestController : public AActor, public IFunKSink
 {
 	GENERATED_BODY()
 
+	
 public:
 	// Sets default values for this actor's properties
 	AFunKWorldTestController();
 
 	virtual void GetLifetimeReplicatedProps( TArray< FLifetimeProperty > & OutLifetimeProps ) const override;
+
+	int32 GetActiveControllerCount() const;
+	int32 GetControllerIndex() const;
+
+	bool IsLocalTestController() const;
+
+	virtual void SetupLocalTestController();
 
 protected:
 	// Called when the game starts or when spawned
@@ -30,34 +39,15 @@ protected:
 	virtual void BeginDestroy() override;
 
 	virtual void OnRep_Owner() override;
-	
-	void ExecuteTest(AFunKFunctionalTest* TestToExecute, TScriptInterface<IFunKSink> ReportSink, FGuid executionId);
-
-	void FinishedCurrentLocalTest();
-	void FinishedCurrentTest();
 
 	virtual void ControllerReady();
 	
 private:
-	UPROPERTY()
-	TScriptInterface<IFunKSink> ReportSink;
-
-	UPROPERTY()
-	TArray<AFunKWorldTestController*> SpawnedController;
-	
-	UPROPERTY()
-	AFunKFunctionalTest* CurrentTest = nullptr;
-	FGuid CurrentExecutionId;
-	TArray<FGuid> SubExecutionIds;
-	
-	float TotalTime;
-	float NetworkingTotalTime;
-
 	UPROPERTY( replicated )
 	int32 ActiveController;
 
 	UPROPERTY( replicated )
-	int32 ControllerIndex;
+	int32 ControllerIndex = INDEX_NONE;
 
 	bool IsControllerReadinessSend = false;
 	bool IsControllerLocallyReady() const;
@@ -66,28 +56,9 @@ private:
 	void OnConnection(AGameModeBase* GameMode, APlayerController* NewPlayer);
 
 	UFUNCTION(Server, Reliable)
-	void ServerExecuteTest(AFunKFunctionalTest* TestToExecute, FGuid ExecutionId);
-	
-	UFUNCTION(Client, Reliable)
-	void ClientExecuteTest(AFunKFunctionalTest* TestToExecute, FGuid ExecutionId);
-	
-	void ExecuteTestRun(AFunKFunctionalTest* TestToExecute, TScriptInterface<IFunKSink> ReportSink, FGuid ExecutionId);
-	
-	virtual void SendEvent(const FFunKEvent& raisedEvent) const;
-	virtual void ApplySendEvent(EFunKEventType eventType, const FString& Message, const TArray<FString>& Context) const;
-
-	UFUNCTION(Server, Reliable)
-	virtual void ServerSendEvent(EFunKEventType eventType, const FString& Message, const TArray<FString>& Context) const;
-	
-	UFUNCTION(Client, Reliable)
-	virtual void ClientSendEvent(EFunKEventType eventType, const FString& Message, const TArray<FString>& Context) const;
-
-	UFUNCTION(Server, Reliable)
 	virtual void ServerControllerReady() const;
 
-	bool ReportEvent(const FFunKEvent& raisedEvent) const;
-	void FulfillSubExecution(const FFunKEvent& raisedEvent) const;
-	
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -96,17 +67,48 @@ public:
 	virtual void ExecuteAllTests(TScriptInterface<IFunKSink> ReportSink);
 
 	virtual bool IsFinished() const;
-	virtual bool IsLocallyFinished() const;
-
-	virtual void RaiseInfoEvent(const FString& Message, const FString& Context = "") const;
-	virtual void RaiseWarningEvent(const FString& Message, const FString& Context = "") const;
-	virtual void RaiseErrorEvent(const FString& Message, const FString& Context = "") const;
+	
 	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const override;
 
-	int32 GetActiveControllerCount() const;
-	int32 GetControllerIndex() const;
+	FString GetRoleName() const;
 
-	bool IsLocalTestController() const;
+private:
+	UPROPERTY()
+	TScriptInterface<IFunKSink> LocalReportSink;
+	FString ExpectedProxyEvent;
+	
+	UPROPERTY()
+	TArray<AFunKWorldTestController*> SpawnedController;
+	
+	UPROPERTY()
+	UFunKWorldTestExecution* CurrentTestExecution;
+	
+	void ExecuteTests(const TArray<AFunKFunctionalTest*>& TestToExecute, TScriptInterface<IFunKSink> ReportSink, FGuid executionId);
 
-	virtual void SetupLocalTestController();
+	UFUNCTION(Server, Reliable)
+	void ServerExecuteTestByName(const FString& TestName, FGuid ExecutionId);
+	UFUNCTION(Server, Reliable)
+	void ServerExecuteAllTests(FGuid ExecutionId);
+	
+	virtual void ExecuteTestByName(const FString& TestName, TScriptInterface<IFunKSink> ReportSink, FGuid ExecutionId);
+	virtual void ExecuteAllTests(TScriptInterface<IFunKSink> ReportSink, FGuid ExecutionId);
+	
+	UFUNCTION(Client, Reliable)
+	void ClientBeginLocalTestSetup(AFunKFunctionalTest* TestToExecute, FGuid ExecutionId);
+	void BeginLocalTestSetup(AFunKFunctionalTest* TestToExecute, FGuid ExecutionId);
+	
+	UFUNCTION(Client, Reliable)
+	void ClientBeginLocalTestExecution(AFunKFunctionalTest* TestToExecute);
+	void BeginLocalTestExecution(AFunKFunctionalTest* TestToExecute);
+	
+	UFUNCTION(Client, Reliable)
+	void ClientCancelLocalTest(AFunKFunctionalTest* TestToCancel, EFunKFunctionalTestResult Result);
+	void CancelLocalTest(AFunKFunctionalTest* TestToCancel, EFunKFunctionalTestResult Result);
+
+	UFUNCTION(Server, Reliable)
+	virtual void ServerSendEvent(EFunKEventType eventType, const FString& Message, const TArray<FString>& Context) const;
+	UFUNCTION(Client, Reliable)
+	virtual void ClientSendEvent(EFunKEventType eventType, const FString& Message, const TArray<FString>& Context) const;
+private:
+	friend class UFunKWorldTestExecution;
 };

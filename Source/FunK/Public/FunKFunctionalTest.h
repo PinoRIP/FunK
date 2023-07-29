@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "FunKFunctionalTestResult.h"
+#include "FunKWorldTestExecution.h"
 #include "GameFramework/Actor.h"
 #include "Sinks/FunKSink.h"
 #include "FunkFunctionalTest.generated.h"
@@ -25,6 +26,8 @@ struct FFunKTimeLimit
 	EFunKFunctionalTestResult Result = EFunKFunctionalTestResult::Failed;
 
 	bool IsTimeout(float time) const;
+
+	bool IsLimitless() const;
 };
 
 
@@ -83,14 +86,13 @@ public:
 
 	bool IsSetupReady;
 
-	virtual void RunTest(AFunKWorldTestController* Controller);
+	virtual void BeginTestSetup(AFunKWorldTestController* Controller, FFunKTestId testId);
+	virtual void BeginTestExecution();
 
 	UFUNCTION(BlueprintCallable, Category="FunK")
 	virtual void FinishTest(EFunKFunctionalTestResult TestResult, const FString& Message);
 
-	virtual void RaiseInfoEvent(const FString& Message, const FString& Context = "") const;
-	virtual void RaiseWarningEvent(const FString& Message, const FString& Context = "") const;
-	virtual void RaiseErrorEvent(const FString& Message, const FString& Context = "") const;
+	FORCEINLINE static FFunKEvent CreateEvent(EFunKFunctionalTestResult testResult, const FString& Message);
 
 	UFUNCTION(BlueprintCallable, Category="FunK")
 	bool IsStarted() const;
@@ -127,12 +129,13 @@ protected:
 	EFunKFunctionalTestResult TestResult = EFunKFunctionalTestResult::Default;
 
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
-
-	virtual void OnTimeout(const FFunKTimeLimit& limit);
-
 private:
+	FFunKTestId TestId;
+	
 	UPROPERTY()
 	AFunKWorldTestController* Controller;
+
+	friend class AFunKWorldTestController;
 
 public:
 	// Called every frame
