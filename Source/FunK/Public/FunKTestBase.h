@@ -89,6 +89,9 @@ protected:
 	virtual void OnBeginStage(const FName& StageName);
 	virtual void OnFinishStage(const FName& StageName);
 	virtual void OnFinish(const FString& Message);
+
+	virtual bool IsLastStage();
+	virtual bool IsExecutingStage(const FFunKStage& stage) const;
 	
 	virtual void CheckLocalTestController();
 	

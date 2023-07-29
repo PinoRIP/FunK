@@ -93,16 +93,12 @@ void AFunKTestBase::FinishStage()
 
 void AFunKTestBase::FinishStage(EFunKTestResult TestResult, const FString& Message)
 {
+	ENetMode netMode = GetNetMode();
 	FString ResultMessage = Message;
-	if (TestResult == EFunKTestResult::None && CurrentStageIndex >= Stages.Stages.Num() - 1 && CurrentStageIndex != INDEX_NONE)
+	if (TestResult == EFunKTestResult::None && IsLastStage())
 	{
 		TestResult = EFunKTestResult::Invalid;
 		ResultMessage = "Last stage didn't specify result! " + ResultMessage;
-	}
-
-	if(GetStageName().ToString().Contains("Assert"))
-	{
-		ResultMessage = ResultMessage.IsEmpty() ? Message : ResultMessage;
 	}
 
 	OnFinishStage(GetStageName());
@@ -236,6 +232,32 @@ void AFunKTestBase::OnFinishStage(const FName& StageName)
 void AFunKTestBase::OnFinish(const FString& Message)
 {
 	RaiseEvent(CreateEvent(Result, Message).AddToContext(UFunKWorldTestExecution::FunKTestLifeTimeFinishEvent));
+}
+
+bool AFunKTestBase::IsLastStage()
+{
+	ENetMode netMode = GetNetMode();
+	const int32 index = GetCurrentStageIndex() + 1;
+	if(!IsValidStageIndex(index))
+		return true;
+
+	const TArray<FFunKStage>& stages = GetStages()->Stages;
+	for (int32 i = index; i < stages.Num(); ++i)
+	{
+		if (IsExecutingStage(stages[i]))
+			return false;
+	}
+
+	return true;
+}
+
+bool AFunKTestBase::IsExecutingStage(const FFunKStage& stage) const
+{
+	ENetMode netMode = GetNetMode();
+	return 	(stage.IsOnStandalone && netMode == NM_Standalone) ||
+			(stage.IsOnDedicatedServer && netMode == NM_DedicatedServer) ||
+			(stage.IsOnListenServer && netMode == NM_ListenServer) ||
+			(netMode == NM_Client && (GetCurrentController()->GetIsServerDedicated() ? stage.IsOnDedicatedServerClient : stage.IsOnListenServerClient));
 }
 
 void AFunKTestBase::CheckLocalTestController()

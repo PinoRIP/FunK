@@ -52,13 +52,14 @@ void AFunKActorScenarioTest::OnBeginStage(const FName& StageName)
 	{
 		if(IsSkippingClient2())
 		{
-			if(HasMoreScenarios())
+			if(IsLastStage())
 			{
-				Super::FinishStage();
+				// Client 2 is being executed because the TestBase doesn't differentiate between Client_1 & Client_2 (working as designed). If the test it self doesn't need this anymore this is basically a success...
+				FinishStage(EFunKTestResult::Succeeded, "");
 			}
 			else
 			{
-				FinishStage(EFunKTestResult::Succeeded, "");
+				Super::FinishStage();
 			}
 			return;
 		}
@@ -205,17 +206,10 @@ void AFunKActorScenarioTest::CheckArrangeScenarioFinish(float DeltaTime)
 				return;
 		}
 
-		const ENetMode NetMode = GetNetMode();
-		if(NetMode == NM_DedicatedServer || NetMode == NM_ListenServer)
+		if(IsLastStage())
 		{
-			if(HasMoreScenarios())
-			{
-				Super::FinishStage();
-			}
-			else
-			{
-				FinishStage(EFunKTestResult::Succeeded, "");
-			}
+			// ArrangeScenario ist just for setup. If the test it self doesn't need this anymore this is basically a success...
+			FinishStage(EFunKTestResult::Succeeded, "");
 		}
 		else
 		{
@@ -283,16 +277,10 @@ bool AFunKActorScenarioTest::HasMoreScenarios() const
 	if(!IsValidStageIndex(index))
 		return false;
 
-	ENetMode netMode = GetNetMode();
 	const TArray<FFunKStage>& stages = GetStages()->Stages;
 	for (int32 i = index; i < stages.Num(); ++i)
 	{
-		if (!stages[index].Name.ToString().Contains(CurrentStageScenario) &&
-			(stages[index].IsOnStandalone && netMode == NM_Standalone) ||
-			(stages[index].IsOnDedicatedServer && netMode == NM_DedicatedServer) ||
-			(stages[index].IsOnListenServer && netMode == NM_ListenServer) ||
-			(netMode == NM_Client && (GetCurrentController()->GetIsServerDedicated() ? stages[index].IsOnDedicatedServerClient : stages[index].IsOnListenServerClient))
-		)
+		if (!stages[i].Name.ToString().Contains(CurrentStageScenario) && IsExecutingStage(stages[i]))
 			return true;
 	}
 
