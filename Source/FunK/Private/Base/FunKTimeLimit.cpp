@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Stages/FunKTimeLimit.h"
+#include "Base/FunKTimeLimit.h"
 
 bool FFunKTimeLimit::IsTimeout(float time) const
 {

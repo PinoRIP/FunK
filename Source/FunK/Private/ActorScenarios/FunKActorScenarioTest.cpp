@@ -2,13 +2,13 @@
 
 
 #include "ActorScenarios/FunKActorScenarioTest.h"
-
 #include "FunKWorldSubsystem.h"
 #include "ActorScenarios/FunKActorScenarioComponent.h"
+#include "ActorScenarios/FunKTestLocationTarget.h"
 #include "Engine/ActorChannel.h"
 #include "GameFramework/PlayerController.h"
 #include "Net/UnrealNetwork.h"
-#include "Stages/FunKStagesSetup.h"
+#include "Base/FunKStagesSetup.h"
 
 
 FString AFunKActorScenarioTest::FunKTestActorScenarioStageExtensionStandalone = FString("Standalone");

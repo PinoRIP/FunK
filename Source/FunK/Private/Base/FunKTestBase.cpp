@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "FunKTestBase.h"
+#include "Base/FunKTestBase.h"
 #include "FunK.h"
 #include "FunKWorldSubsystem.h"
 #include "FunKWorldTestController.h"
@@ -10,7 +10,7 @@
 #include "Events/Internal/FunKTestFinishedEvent.h"
 #include "Events/Internal/FunKTestStageEvent.h"
 #include "Events/Internal/FunKTestStageFinishedEvent.h"
-#include "Stages/FunKStagesSetup.h"
+#include "Base/FunKStagesSetup.h"
 #include "Util/FunKAnonymousBitmask.h"
 
 struct FFunKAnonymousBitmask;
@@ -73,7 +73,7 @@ void AFunKTestBase::BeginTest(int32 InTestRunID, int32 InSeed)
 		}
 	}));
 
-	GetEventBusSubsystem()->Raise<FFunKEvent>(FFunKEvent::Info("Start Test", GetName()).AddToContext(FunKTestLifeTimeContext::BeginTest).AddToContext(InTestRunID));
+	RaiseEvent(FFunKEvent::Info("Start Test", FunKTestLifeTimeContext::BeginTest).AddToContext(InTestRunID));
 	
 	NextStage(InTestRunID, InSeed);
 }
@@ -98,7 +98,7 @@ void AFunKTestBase::OnFinishStage(const FFunKTestStageFinishedEvent& Event)
 	
 	if (Event.Result != EFunKStageResult::Succeeded)
 	{
-		GetEventBusSubsystem()->Raise<FFunKEvent>(FFunKEvent::Info("Finish Stage", GetStageName().ToString()).AddToContext(FunKTestLifeTimeContext::FinishStage).AddToContext(LexToString(Event.Result)).AddToContext(TestRunID));
+		RaiseEvent(FFunKEvent::Info("Finish Stage", FunKTestLifeTimeContext::FinishStage).AddToContext(LexToString(Event.Result)));
 		Finish(StageToTestResult(Event.Result), Event.Message);
 		return;
 	}
@@ -106,7 +106,8 @@ void AFunKTestBase::OnFinishStage(const FFunKTestStageFinishedEvent& Event)
 	PeerBitMask.Set(Event.PeerIndex);
 	if (PeerBitMask.IsSet())
 	{
-		GetEventBusSubsystem()->Raise<FFunKEvent>(FFunKEvent::Info("Finish Stage", GetStageName().ToString()).AddToContext(FunKTestLifeTimeContext::FinishStage).AddToContext(TestRunID));
+		auto a = FFunKEvent::Info("Finish Stage", FunKTestLifeTimeContext::FinishStage);
+		RaiseEvent(a);
 		PeerBitMask.ClearAll();
 		NextStage(TestRunID, GetSeed());
 	}
@@ -368,8 +369,8 @@ void AFunKTestBase::OnFinish(const FFunKTestFinishedEvent& Event)
 			 : Event.Result == EFunKTestResult::Skipped
 			 ? FString::Printf(TEXT("Test Skipped: %s"), *Event.Message)
 			 : FString::Printf(TEXT("TestResult=%s. %s"), *LexToString(Event.Result), *Event.Message);
-		
-		GetEventBusSubsystem()->Raise<FFunKEvent>(FFunKEvent(Event.Result == EFunKTestResult::Succeeded || Event.Result == EFunKTestResult::Skipped ? EFunKEventType::Info : EFunKEventType::Error, EventMessage, GetName()).AddToContext(FunKTestLifeTimeContext::FinishTest).AddToContext(LexToString(Event.Result)).AddToContext(TestRunID));
+
+		RaiseEvent(FFunKEvent(Event.Result == EFunKTestResult::Succeeded || Event.Result == EFunKTestResult::Skipped ? EFunKEventType::Info : EFunKEventType::Error, EventMessage, FunKTestLifeTimeContext::FinishTest).AddToContext(LexToString(Event.Result)));
 	}
 
 	RunningRegistrations.Unregister();
@@ -395,7 +396,10 @@ void AFunKTestBase::NextStage(int32 InTestRunID, int32 InSeed)
 	TestStageEvent.StageIndex = NextStageIndex;
 	TestStageEvent.Test = this;
 
-	GetEventBusSubsystem()->Raise<FFunKEvent>(FFunKEvent::Info("Start Stage", GetStage(NextStageIndex)->Name.ToString()).AddToContext(FunKTestLifeTimeContext::BeginStage).AddToContext(InTestRunID));
+	const int32 PrevStageIndex = CurrentStageIndex;
+	CurrentStageIndex = INDEX_NONE;
+	RaiseEvent(FFunKEvent::Info("Start Stage", GetStage(NextStageIndex)->Name.ToString()).AddToContext(FunKTestLifeTimeContext::BeginStage).AddToContext(InTestRunID));
+	CurrentStageIndex = PrevStageIndex;
 	GetEventBusSubsystem()->Raise(TestStageEvent);
 }
 
@@ -466,6 +470,17 @@ UFunKEventBusSubsystem* AFunKTestBase::GetEventBusSubsystem() const
 	return GetWorld()->GetSubsystem<UFunKEventBusSubsystem>();
 }
 
+void AFunKTestBase::GatherContext(FFunKEvent& Event) const
+{
+	if(TestRunID != 0)
+		Event.AddToContext(TestRunID);
+
+	if(CurrentStageIndex > INDEX_NONE)
+		Event.AddToContext(GetStageName().ToString());
+
+	Event.AddToContext(GetName());
+}
+
 bool AFunKTestBase::IsBpEventImplemented(const FName& Name) const
 {
 	const UFunction* function = FindFunction(Name);
@@ -526,5 +541,6 @@ void AFunKTestBase::GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) con
 
 void AFunKTestBase::RaiseEvent(FFunKEvent& Event) const
 {
-	GetEventBusSubsystem()->Raise<FFunKEvent>(Event.AddToContext(TestRunID).AddToContext(GetName()).AddToContext(GetStageName().ToString()));
+	GatherContext(Event);
+	GetEventBusSubsystem()->Raise<FFunKEvent>(Event);
 }

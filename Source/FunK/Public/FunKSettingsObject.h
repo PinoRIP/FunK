@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Stages/FunKTimeLimit.h"
+#include "Base/FunKTimeLimit.h"
 #include "FunKSettingsObject.generated.h"
 
 class UFunKTestRunner;

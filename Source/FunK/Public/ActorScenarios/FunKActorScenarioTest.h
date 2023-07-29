@@ -3,9 +3,10 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FunKTestBase.h"
-#include "FunKTypes.h"
+#include "Base/FunKTestBase.h"
+#include "Base/FunKTimeLimit.h"
 #include "GameFramework/Actor.h"
+#include "ActorScenarios/FunKTestLocationTarget.h"
 #include "FunKActorScenarioTest.generated.h"
 
 UCLASS(Blueprintable)

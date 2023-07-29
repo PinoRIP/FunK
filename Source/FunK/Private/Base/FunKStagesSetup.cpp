@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Stages/FunKStagesSetup.h"
+#include "Base/FunKStagesSetup.h"
 
 int32 FFunKStageSetupBase::GetStageIndex() const
 {

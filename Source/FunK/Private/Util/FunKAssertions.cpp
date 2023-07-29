@@ -2,8 +2,7 @@
 
 
 #include "Util/FunKAssertions.h"
-
-#include "FunKTestBase.h"
+#include "Base/FunKTestBase.h"
 #include "EventBus/FunKEventBusSubsystem.h"
 #include "Events/FunKEvent.h"
 #include "Misc/AutomationTest.h"

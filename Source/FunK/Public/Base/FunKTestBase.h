@@ -6,7 +6,7 @@
 #include "FunKTestResult.h"
 #include "EventBus/FunKEventBusRegistrationContainer.h"
 #include "EventBus/FunKEventBusSubsystem.h"
-#include "Stages/FunKStages.h"
+#include "Base/FunKStages.h"
 #include "Events/FunKEvent.h"
 #include "Events/Internal/FunKTestFinishedEvent.h"
 #include "Events/Internal/FunKTestStageFinishedEvent.h"
@@ -109,6 +109,9 @@ protected:
 	UFunKWorldSubsystem* GetWorldSubsystem() const;
 
 	UFunKEventBusSubsystem* GetEventBusSubsystem() const;
+
+	virtual void GatherContext(FFunKEvent& Event) const;
+	virtual void RaiseEvent(FFunKEvent& Event) const;
 	
 private:
 	int32 Seed;
@@ -154,7 +157,6 @@ public:
 #endif // WITH_EDITOR
 
 private:
-	void RaiseEvent(FFunKEvent& Event) const;
 	
 	friend class UFunKAssertions;
 };
