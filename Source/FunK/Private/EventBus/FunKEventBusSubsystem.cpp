@@ -57,8 +57,13 @@ void FEventBusRegistration::Unregister() const
 {
 	if(Subsystem)
 	{
-		Subsystem->Unregister(Index);
+		Subsystem->Unregister(Key);
 	}
+}
+
+bool FEventBusRegistration::IsValid() const
+{
+	return Subsystem && Key > INDEX_NONE && Subsystem->HasHandler(Key);
 }
 
 void UFunKEventBusSubsystem::OnWorldBeginPlay(UWorld& InWorld)
@@ -104,9 +109,15 @@ void UFunKEventBusSubsystem::ReplicationControllerReady(AFunKEventBusReplication
 
 void UFunKEventBusSubsystem::ReceiveMessage(const FFunKEventBusMessage& Message)
 {
-	for (TFunction<void(const FFunKEventBusMessage&)>& Handler : Handlers)
+	const FFunKEventBusMessage& event = LastEvents.Add(Message.Type->GetName(), Message);
+
+	TArray<int32> keys;
+	Handlers.GetKeys(keys);
+	
+	for (int32 key : keys)
 	{
-		Handler(Message);
+		FFunKEventBusEventHandler& Handler = Handlers[key];
+		Handler(event);
 	}
 }
 
@@ -180,9 +191,14 @@ void UFunKEventBusSubsystem::DeregisterController(AController* Controller)
 	UpdateControllerStats();
 }
 
-void UFunKEventBusSubsystem::Unregister(int32 index)
+void UFunKEventBusSubsystem::Unregister(int32 key)
 {
-	Handlers.RemoveAt(index);
+	Handlers.Remove(key);
+}
+
+bool UFunKEventBusSubsystem::HasHandler(int32 key)
+{
+	return !!Handlers.Find(key);
 }
 
 void UFunKEventBusSubsystem::SendMessage(const FFunKEventBusMessage& Message)

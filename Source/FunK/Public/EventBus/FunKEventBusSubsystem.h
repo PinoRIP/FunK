@@ -8,6 +8,8 @@
 
 class AFunKEventBusReplicationController;
 
+typedef TFunction<void(const FFunKEventBusMessage& Message)> FFunKEventBusEventHandler; 
+
 USTRUCT()
 struct FFunKEventBusMessage
 {
@@ -15,7 +17,9 @@ struct FFunKEventBusMessage
 
 public:
 	TSharedPtr<void> Instance;
-	UScriptStruct* Type;
+
+	UPROPERTY()
+	UScriptStruct* Type = nullptr;
 	
 	bool NetSerialize(FArchive& Ar, class UPackageMap* Map, bool& bOutSuccess);
 };
@@ -29,27 +33,28 @@ struct TStructOpsTypeTraits<FFunKEventBusMessage> : public TStructOpsTypeTraitsB
 };
 
 USTRUCT()
-struct FEventBusRegistration
+struct FUNK_API FEventBusRegistration
 {
 	GENERATED_BODY()
 
-	FEventBusRegistration() { Index = INDEX_NONE; Subsystem = nullptr; }
-	FEventBusRegistration(int32 index, class UFunKEventBusSubsystem* subsystem)
+	FEventBusRegistration() { Key = INDEX_NONE; Subsystem = nullptr; }
+	FEventBusRegistration(int32 key, class UFunKEventBusSubsystem* subsystem)
 	{
-		Index = index;
+		Key = key;
 		Subsystem = subsystem;
 	}
 
 public:
 	void Unregister() const;
+	bool IsValid() const;
 
 private:
-	int32 Index;
+	int32 Key;
 	TSoftObjectPtr<class UFunKEventBusSubsystem> Subsystem;
 };
 
 USTRUCT()
-struct FReplicationControllerState
+struct FUNK_API FReplicationControllerState
 {
 	GENERATED_BODY()
 
@@ -61,7 +66,7 @@ struct FReplicationControllerState
 };
 
 USTRUCT()
-struct FEventBusControllerEvent
+struct FUNK_API FEventBusControllerEvent
 {
 	GENERATED_BODY()
 
@@ -86,7 +91,13 @@ public:
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 
 	template <typename TStruct>
-	FEventBusRegistration Register(TFunction<void(const TStruct& Struct)> ReceivingLambda);
+	FEventBusRegistration On(TFunction<void(const TStruct& Struct)> ReceivingLambda);
+
+	template <typename TStruct>
+	FEventBusRegistration At(TFunction<void(const TStruct& Struct)> ReceivingLambda);
+
+	template <typename TStruct>
+	bool Has();
 
 	template <typename TStruct>
 	void Raise(const TStruct& eventStruct);
@@ -102,10 +113,18 @@ public:
 private:
 	UPROPERTY()
 	TArray<FReplicationControllerState> ReplicationControllers;
-	TArray<TFunction<void(const FFunKEventBusMessage& Message)>> Handlers;
+	TMap<int32, FFunKEventBusEventHandler> Handlers;
+
+	UPROPERTY()
+	TMap<FString, FFunKEventBusMessage> LastEvents;
 
 	UPROPERTY()
 	AFunKEventBusReplicationController* LocalController = nullptr;
+
+	template <typename TStruct>
+	int32 AddHandler(TFunction<void(const TStruct& Struct)> ReceivingLambda);
+
+	int32 HandlerCounter = 0;
 	
 	void OnConnect(AGameModeBase* GameMode, APlayerController* NewPlayer);
 	void OnDisconnect(AGameModeBase* GameMode, AController* Controller);
@@ -114,7 +133,8 @@ private:
 	void RegisterController(APlayerController* NewPlayer);
 	void DeregisterController(AController* Controller);
 
-	void Unregister(int32 index);
+	void Unregister(int32 key);
+	bool HasHandler(int32 key);
 
 	void SendMessage(const FFunKEventBusMessage& Message);
 
@@ -123,18 +143,31 @@ private:
 };
 
 template <typename TStruct>
-FEventBusRegistration UFunKEventBusSubsystem::Register(TFunction<void(const TStruct& Struct)> ReceivingLambda)
+FEventBusRegistration UFunKEventBusSubsystem::On(TFunction<void(const TStruct& Struct)> ReceivingLambda)
 {
-	const int32 index = Handlers.Add([ReceivingLambda, this](const FFunKEventBusMessage& message)
-	{
-		if(message.Type == TStruct::StaticStruct())
-		{
-			TStruct* castedInstance = static_cast<TStruct*>(message.Instance.Get());
-			ReceivingLambda(*castedInstance);
-		}
-	});
+	const int32 key = AddHandler(ReceivingLambda);
+	return FEventBusRegistration(key, this);
+}
 
-	return FEventBusRegistration(index, this);
+template <typename TStruct>
+FEventBusRegistration UFunKEventBusSubsystem::At(TFunction<void(const TStruct& Struct)> ReceivingLambda)
+{
+	const int32 key = AddHandler(ReceivingLambda);
+
+	const FString structName = TStruct::StaticStruct()->GetName();
+	if(const FFunKEventBusMessage* lastEventMessage = LastEvents.Find(structName))
+	{
+		Handlers[key](*lastEventMessage);
+	}
+	
+	return FEventBusRegistration(key, this);
+}
+
+template <typename TStruct>
+bool UFunKEventBusSubsystem::Has()
+{
+	const FString structName = TStruct::StaticStruct()->GetName();
+	return !!LastEvents.Find(structName);
 }
 
 template <typename TStruct>
@@ -145,4 +178,20 @@ void UFunKEventBusSubsystem::Raise(const TStruct& eventStruct)
 	message.Instance = TSharedPtr<void>(new TStruct(eventStruct));
 
 	SendMessage(message);
+}
+
+template <typename TStruct>
+int32 UFunKEventBusSubsystem::AddHandler(TFunction<void(const TStruct& Struct)> ReceivingLambda)
+{
+	int32 key = this->HandlerCounter++;
+	Handlers.Add(key, [ReceivingLambda, this](const FFunKEventBusMessage& message)
+	{
+		if(message.Type == TStruct::StaticStruct())
+		{
+			TStruct* castedInstance = static_cast<TStruct*>(message.Instance.Get());
+			ReceivingLambda(*castedInstance);
+		}
+	});
+
+	return key;
 }
