@@ -46,8 +46,17 @@ bool UFunKTestRunner::Test(const FFunKTestInstructions& Instructions)
 			return true;
 		}
 
-		if(IsDifferentEnvironment(Instructions))
+		bool isWrongEnvironment = false;
+		const bool isEnvironmentRunning = IsEnvironmentRunning(Instructions, isWrongEnvironment);
+		const bool isDifferentEnvironment = IsDifferentEnvironment(Instructions);
+		if(isDifferentEnvironment || !isEnvironmentRunning || isWrongEnvironment)
 		{
+			if(isWrongEnvironment || (isDifferentEnvironment && isEnvironmentRunning))
+			{
+				GEditor->EndPlayMap();
+				GEditor->EndPlayOnLocalPc();
+			}
+			
 			const EFunKTestRunnerState state = State;
 			UpdateState(EFunKTestRunnerState::WaitingForWorld);
 			if(!StartEnvironment(Instructions))
@@ -67,7 +76,7 @@ bool UFunKTestRunner::Test(const FFunKTestInstructions& Instructions)
 		
 		if(State == EFunKTestRunnerState::WaitingForWorld)
 		{
-			if (CurrentTestWorld && CurrentTestWorld->AreActorsInitialized() )
+			if (CurrentTestWorld.IsValid() && CurrentTestWorld->AreActorsInitialized() )
 			{
 				const AGameStateBase* GameState = CurrentTestWorld->GetGameState();
 				if (GameState && GameState->HasMatchStarted())
@@ -123,7 +132,6 @@ bool UFunKTestRunner::Test(const FFunKTestInstructions& Instructions)
 		return true;
 	}
 
-	RaiseInfoEvent("WAIT");
 	return false;
 }
 
@@ -197,7 +205,7 @@ bool UFunKTestRunner::SetWorld(UWorld* world)
 
 AFunKWorldTestController* UFunKTestRunner::GetCurrentWorldController() const
 {
-	if(!CurrentTestWorld)
+	if(!CurrentTestWorld.IsValid())
 		return nullptr;
 	
 	if(CurrentTestWorld->bIsTearingDown)
@@ -223,7 +231,6 @@ void UFunKTestRunner::GetSinks(TArray<TScriptInterface<IFunKSink>>& outSinks)
 void UFunKTestRunner::UpdateState(EFunKTestRunnerState newState)
 {
 	State = newState;
-	RaiseInfoEvent("UpdateState");
 }
 
 bool UFunKTestRunner::IsStandaloneTest() const
@@ -258,7 +265,39 @@ bool UFunKTestRunner::IsListenServerTest(const FFunKTestInstructions& Instructio
 
 bool UFunKTestRunner::IsDifferentEnvironment(const FFunKTestInstructions& Instructions) const
 {
-	return Instructions.MapTestName != ActiveTestInstructions.MapTestName || Instructions.Params != ActiveTestInstructions.Params;
+	return Instructions.MapObjectPath != ActiveTestInstructions.MapObjectPath || Instructions.MapPackageName != ActiveTestInstructions.MapPackageName || Instructions.Params != ActiveTestInstructions.Params;
+}
+
+bool UFunKTestRunner::IsEnvironmentRunning(const FFunKTestInstructions& Instructions, bool& isWrongEnvironmentRunning)
+{
+	isWrongEnvironmentRunning = false;
+	if(IsRunningTestUnderOneProcess)
+	{
+		const TIndirectArray<FWorldContext> WorldContexts = GEngine->GetWorldContexts();
+		for (auto& Context : WorldContexts)
+		{
+			if (Context.World())
+			{
+				FString WorldPackage = Context.World()->GetOutermost()->GetName();
+
+				if (Context.WorldType == EWorldType::PIE)
+				{
+					isWrongEnvironmentRunning = Instructions.MapPackageName != UWorld::StripPIEPrefixFromPackageName(WorldPackage, Context.World()->StreamingLevelsPrefix);
+					return true;
+				}
+			}
+		}
+
+		return false;
+	}
+	else
+	{
+		const bool isEnvironmentRunning = CurrentTestWorld.IsValid() && !CurrentTestWorld->bIsTearingDown;
+		if(isEnvironmentRunning)
+			isWrongEnvironmentRunning = CurrentTestWorld->GetMapName() != Instructions.MapPackageName;
+
+		return isEnvironmentRunning;
+	}
 }
 
 TSubclassOf<AFunKWorldTestController> UFunKTestRunner::GetWorldControllerClass() const
@@ -299,6 +338,8 @@ bool UFunKTestRunner::StartEnvironment(const FFunKTestInstructions& Instructions
 	params.EditorPlaySettings->NewWindowWidth = 1920;
 	params.GlobalMapOverride = Instructions.MapPackageName;
 	params.AdditionalStandaloneCommandLineParameters = FFunKModule::FunkTestStartParameter;
+	
+	// GEditor->EndPlayMap();
 
 	FProperty* Property = ULevelEditorPlaySettings::StaticClass()->FindPropertyByName(FName("ServerMapNameOverride"));
 	if(Property)
