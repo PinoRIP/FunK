@@ -74,89 +74,81 @@ void FFunKModule::GetTests(bool bEditorOnlyTests, TArray<FString>& OutBeautified
 #endif
 
 		TArray<FAssetData> MapList;
-		FARFilter Filter;
-		Filter.ClassPaths.Add(UWorld::StaticClass()->GetClassPathName());
-		Filter.bRecursiveClasses = true;
-		Filter.bIncludeOnlyOnDiskAssets = true;
-		if (AssetRegistry.GetAssets(Filter, /*out*/ MapList))
+		GetTestMapAsserts(AssetRegistry, MapList);
+		for (const FAssetData& MapAsset : MapList)
 		{
-			for (const FAssetData& MapAsset : MapList)
+			FString MapAssetPath = MapAsset.GetObjectPathString();
+			FString MapPackageName = MapAsset.PackageName.ToString();
+			FString PartialSuiteName = MapPackageName.RightChop(1).Replace(TEXT("/"), TEXT("."));
+			if (MapPackageName.StartsWith(TEXT("/Game/")))
 			{
-				FString MapAssetPath = MapAsset.GetObjectPathString();
-				FString MapPackageName = MapAsset.PackageName.ToString();
-				FString PartialSuiteName = MapPackageName.RightChop(1).Replace(TEXT("/"), TEXT(".")); // use dot syntax
-				if (MapPackageName.StartsWith(TEXT("/Game/")))
-				{
-					PartialSuiteName = PartialSuiteName.RightChop(5); // Remove "/Game/" from the name
-				}
+				// Remove "/Game/" from the name
+				PartialSuiteName = PartialSuiteName.RightChop(5);
+			}
 
-				FString AllTestNames;
-				FAssetDataTagMapSharedView::FFindTagResult MapTestNames = MapAsset.TagsAndValues.FindTag(bEditorOnlyTests ? FunkEditorOnlyTestWorldTag : FunkTestWorldTag);
+			FString AllTestNames;
+			FAssetDataTagMapSharedView::FFindTagResult MapTestNames = MapAsset.TagsAndValues.FindTag(bEditorOnlyTests ? FunkEditorOnlyTestWorldTag : FunkTestWorldTag);
 
-				if (MapTestNames.IsSet())
-				{
-					AllTestNames = MapTestNames.GetValue();
-				}
+			if (MapTestNames.IsSet())
+			{
+				AllTestNames = MapTestNames.GetValue();
+			}
 
 #if WITH_EDITOR
-				// Also append external functional test actors
-				if (ULevel::GetIsLevelUsingExternalActorsFromAsset(MapAsset))
+			if (ULevel::GetIsLevelUsingExternalActorsFromAsset(MapAsset))
+			{
+				const FString LevelExternalActorsPath = ULevel::GetExternalActorsPath(MapPackageName);
+				AssetRegistry.ScanPathsSynchronous({ LevelExternalActorsPath }, /*bForceRescan*/false, /*bIgnoreDenyListScanFilters*/false);
+
+				FARFilter ActorsFilter;
+				ActorsFilter.bRecursivePaths = true;
+				ActorsFilter.bIncludeOnlyOnDiskAssets = true;
+				ActorsFilter.PackagePaths.Add(*LevelExternalActorsPath);
+
+				TArray<FAssetData> ActorList;
+				AssetRegistry.GetAssets(ActorsFilter, ActorList);
+
+				for (const FAssetData& ActorAsset : ActorList)
 				{
-					const FString LevelExternalActorsPath = ULevel::GetExternalActorsPath(MapPackageName);
+					FAssetDataTagMapSharedView::FFindTagResult ActorTestName = ActorAsset.TagsAndValues.FindTag(bEditorOnlyTests ? FunkEditorOnlyTestWorldTag : FunkTestWorldTag);
 
-					// Do a synchronous scan of the level external actors path.			
-					AssetRegistry.ScanPathsSynchronous({ LevelExternalActorsPath }, /*bForceRescan*/false, /*bIgnoreDenyListScanFilters*/false);
-
-					FARFilter ActorsFilter;
-					ActorsFilter.bRecursivePaths = true;
-					ActorsFilter.bIncludeOnlyOnDiskAssets = true;
-					ActorsFilter.PackagePaths.Add(*LevelExternalActorsPath);
-
-					TArray<FAssetData> ActorList;
-					AssetRegistry.GetAssets(ActorsFilter, ActorList);
-
-					for (const FAssetData& ActorAsset : ActorList)
+					if (ActorTestName.IsSet())
 					{
-						FAssetDataTagMapSharedView::FFindTagResult ActorTestName = ActorAsset.TagsAndValues.FindTag(bEditorOnlyTests ? FunkEditorOnlyTestWorldTag : FunkTestWorldTag);
-
-						if (ActorTestName.IsSet())
+						if (!AllTestNames.IsEmpty())
 						{
-							if (!AllTestNames.IsEmpty())
-							{
-								AllTestNames += TEXT(";");
-							}
-
-							AllTestNames += ActorTestName.GetValue();
+							AllTestNames += TEXT(";");
 						}
+
+						AllTestNames += ActorTestName.GetValue();
 					}
 				}
+			}
 #endif
-				if (!AllTestNames.IsEmpty())
+			if (!AllTestNames.IsEmpty())
+			{
+				TArray<FString> MapTests;
+				AllTestNames.ParseIntoArray(MapTests, TEXT(";"), true);
+
+				for (const FString& MapTest : MapTests)
 				{
-					TArray<FString> MapTests;
-					AllTestNames.ParseIntoArray(MapTests, TEXT(";"), true);
+					FString BeautifulTestName;
+					FString TestNameAndParams;
 
-					for (const FString& MapTest : MapTests)
+					if (MapTest.Split(TEXT("|"), &BeautifulTestName, &TestNameAndParams))
 					{
-						FString BeautifulTestName;
-						FString TestNameAndParams;
-
-						if (MapTest.Split(TEXT("|"), &BeautifulTestName, &TestNameAndParams))
+						FString RealTestName;
+						FString Params;
+						
+						if (TestNameAndParams.Split(TEXT(":"), &Params, &RealTestName))
 						{
-							FString RealTestName;
-							FString Params;
-							
-							if (TestNameAndParams.Split(TEXT(":"), &Params, &RealTestName))
-							{
-								TArray<FString> RunOns;
-								Params.ParseIntoArray(RunOns, TEXT("-"), true);
+							TArray<FString> RunOns;
+							Params.ParseIntoArray(RunOns, TEXT("-"), true);
 
-								for (const FString& RunOn : RunOns)
-								{
-									OutBeautifiedNames.Add(RunOn + TEXT(".") + PartialSuiteName + TEXT(".") + *BeautifulTestName + TEXT(" -") + *RunOn);
-									OutTestCommands.Add(MapAssetPath + TEXT(";") + MapPackageName + TEXT(";") + *RealTestName + TEXT(";-") + *RunOn);
-									OutTestMapAssets.AddUnique(MapAssetPath);
-								}
+							for (const FString& RunOn : RunOns)
+							{
+								OutBeautifiedNames.Add(RunOn + TEXT(".") + PartialSuiteName + TEXT(".") + *BeautifulTestName + TEXT(" -") + *RunOn);
+								OutTestCommands.Add(MapAssetPath + TEXT(";") + MapPackageName + TEXT(";") + *RealTestName + TEXT(";-") + *RunOn);
+								OutTestMapAssets.AddUnique(MapAssetPath);
 							}
 						}
 					}
@@ -198,6 +190,59 @@ void FFunKModule::OnWorldGetAssetTags(const UWorld* World, TArray<UObject::FAsse
 		if (!TestNamesEditor.IsEmpty())
 		{
 			OutTags.Add(UObject::FAssetRegistryTag(FunkEditorOnlyTestWorldTag, TestNamesEditor, UObject::FAssetRegistryTag::TT_Hidden));
+		}
+	}
+}
+
+void FFunKModule::GetTestMapAsserts(const IAssetRegistry& AssetRegistry, TArray<FAssetData>& MapList) const
+{
+	const FFunKSettings& settings = GetDefault<UFunKSettingsObject>()->Settings;
+
+	FARFilter Filter;
+	Filter.ClassPaths.Add(UWorld::StaticClass()->GetClassPathName());
+	Filter.bRecursiveClasses = true;
+	Filter.bIncludeOnlyOnDiskAssets = true;
+	
+	TArray<FAssetData> AllMaps;
+	if(!AssetRegistry.GetAssets(Filter, /*out*/ AllMaps))
+		return;
+
+	if(settings.DiscoveryMethod == EFunKTestDiscoveryMethod::Search)
+	{
+		MapList = AllMaps;
+	}
+	else if(settings.DiscoveryMethod == EFunKTestDiscoveryMethod::Prefix)
+	{
+		for (FAssetData& Map : AllMaps)
+		{
+			if(Map.AssetName.ToString().StartsWith(settings.Prefix))
+				MapList.Add(Map);
+		}
+	}
+	else if(settings.DiscoveryMethod == EFunKTestDiscoveryMethod::Worlds)
+	{
+		for (const TSoftObjectPtr<UWorld>& World : settings.Worlds)
+		{
+			for (int i = 0; i < AllMaps.Num(); ++i)
+			{
+				if(World.ToSoftObjectPath() == AllMaps[i].ToSoftObjectPath())
+				{
+					MapList.Add(AllMaps[i]);
+					AllMaps.RemoveAt(i);
+					break;
+				}
+			}
+		}
+	}
+	else if(settings.DiscoveryMethod == EFunKTestDiscoveryMethod::Paths)
+	{
+		for (const FString& Path : settings.Paths)
+		{
+			for (FAssetData& Map : AllMaps)
+			{
+				if(Map.PackageName.ToString().StartsWith(Path))
+					MapList.Add(Map);
+			}
 		}
 	}
 }

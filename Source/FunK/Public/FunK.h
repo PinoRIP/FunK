@@ -6,6 +6,8 @@
 #include "FunKTestRunner.h"
 #include "Modules/ModuleManager.h"
 
+class IAssetRegistry;
+
 class IFunKModuleInterface : public IModuleInterface
 {
 public:
@@ -51,4 +53,6 @@ public:
 
 private:
 	void OnWorldGetAssetTags(const UWorld* World, TArray<UObject::FAssetRegistryTag>& OutTags);
+
+	void GetTestMapAsserts(const IAssetRegistry& AssetRegistry, TArray<FAssetData>& MapList) const;
 };

@@ -9,6 +9,17 @@
 class UFunKTestRunner;
 class AFunKWorldTestController;
 
+UENUM(BlueprintType)
+enum class EFunKTestDiscoveryMethod : uint8
+{
+	Search,
+	Prefix,
+	Worlds,
+	Paths
+};
+
+
+
 USTRUCT(meta=(ShowOnlyInnerProperties))
 struct FFunKSettings
 {
@@ -26,6 +37,18 @@ public:
 	
 	UPROPERTY(config, EditAnywhere, Category = Synchronization)
 	FFunKTimeLimit SyncTimeLimit;
+	
+	UPROPERTY(config, EditAnywhere, Category = "Test discovery")
+	EFunKTestDiscoveryMethod DiscoveryMethod;
+	
+	UPROPERTY(config, EditAnywhere, Category = "Test discovery", meta=(EditCondition = "DiscoveryMethod == EFunKTestDiscoveryMethod::Prefix", EditConditionHides))
+	FString Prefix = FString("FUNK_");
+
+	UPROPERTY(config, EditAnywhere, Category = "Test discovery", meta=(EditCondition = "DiscoveryMethod == EFunKTestDiscoveryMethod::Worlds", EditConditionHides))
+	TArray<TAssetPtr<UWorld>> Worlds;
+	
+	UPROPERTY(config, EditAnywhere, Category = "Test discovery", meta=(EditCondition = "DiscoveryMethod == EFunKTestDiscoveryMethod::Paths", EditConditionHides))
+	TArray<FString> Paths;
 };
 
 /**
