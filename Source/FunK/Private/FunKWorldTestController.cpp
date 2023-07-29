@@ -132,7 +132,7 @@ void AFunKWorldTestController::ServerExecuteAllTests_Implementation(FGuid Execut
 	ExecuteAllTests(this, ExecutionId);
 }
 
-void AFunKWorldTestController::ExecuteTests(const TArray<AFunKFunctionalTest*>& TestToExecute, TScriptInterface<IFunKSink> ReportSink, FGuid executionId)
+void AFunKWorldTestController::ExecuteTests(const TArray<AFunKTestBase*>& TestToExecute, TScriptInterface<IFunKSink> ReportSink, FGuid executionId)
 {
 	if(!CurrentTestExecution)
 	{
@@ -142,12 +142,12 @@ void AFunKWorldTestController::ExecuteTests(const TArray<AFunKFunctionalTest*>& 
 
 void AFunKWorldTestController::ExecuteTestByName(const FString& TestName, TScriptInterface<IFunKSink> ReportSink, FGuid ExecutionId)
 {
-	for (TActorIterator<AFunKFunctionalTest> ActorItr(GetWorld(), AFunKFunctionalTest::StaticClass(), EActorIteratorFlags::AllActors); ActorItr; ++ActorItr)
+	for (TActorIterator<AFunKTestBase> ActorItr(GetWorld(), AFunKTestBase::StaticClass(), EActorIteratorFlags::AllActors); ActorItr; ++ActorItr)
 	{
-		AFunKFunctionalTest* FunctionalTest = *ActorItr;
+		AFunKTestBase* FunctionalTest = *ActorItr;
 		if(TestName == FunctionalTest->GetName())
 		{
-			TArray<AFunKFunctionalTest*> Test;
+			TArray<AFunKTestBase*> Test;
 			Test.Add(FunctionalTest);
 			ExecuteTests(Test, ReportSink, ExecutionId);
 			break;
@@ -157,17 +157,17 @@ void AFunKWorldTestController::ExecuteTestByName(const FString& TestName, TScrip
 
 void AFunKWorldTestController::ExecuteAllTests(TScriptInterface<IFunKSink> ReportSink, FGuid ExecutionId)
 {
-	TArray<AFunKFunctionalTest*> Test;
-	for (TActorIterator<AFunKFunctionalTest> ActorItr(GetWorld(), AFunKFunctionalTest::StaticClass(), EActorIteratorFlags::AllActors); ActorItr; ++ActorItr)
+	TArray<AFunKTestBase*> Test;
+	for (TActorIterator<AFunKTestBase> ActorItr(GetWorld(), AFunKTestBase::StaticClass(), EActorIteratorFlags::AllActors); ActorItr; ++ActorItr)
 	{
-		AFunKFunctionalTest* FunctionalTest = *ActorItr;
+		AFunKTestBase* FunctionalTest = *ActorItr;
 		Test.Add(FunctionalTest);
 	}
 
 	ExecuteTests(Test, ReportSink, ExecutionId);
 }
 
-void AFunKWorldTestController::ClientBeginLocalTestSetup_Implementation(AFunKFunctionalTest* TestToExecute, FFunKTestId ExecutionId)
+void AFunKWorldTestController::ClientBeginLocalTestSetup_Implementation(AFunKTestBase* TestToExecute, FFunKTestID ExecutionId)
 {
 	if(TestToExecute)
 	{
@@ -179,7 +179,7 @@ void AFunKWorldTestController::ClientBeginLocalTestSetup_Implementation(AFunKFun
 	}
 }
 
-void AFunKWorldTestController::BeginLocalTestSetup(AFunKFunctionalTest* TestToExecute, FGuid ExecutionId)
+void AFunKWorldTestController::BeginLocalTestSetup(AFunKTestBase* TestToExecute, FGuid ExecutionId)
 {
 	if(IsLocalTestController())
 	{
@@ -191,7 +191,7 @@ void AFunKWorldTestController::BeginLocalTestSetup(AFunKFunctionalTest* TestToEx
 	}
 }
 
-void AFunKWorldTestController::ClientBeginLocalTestExecution_Implementation(AFunKFunctionalTest* TestToExecute)
+void AFunKWorldTestController::ClientBeginLocalTestExecution_Implementation(AFunKTestBase* TestToExecute)
 {
 	if(TestToExecute)
 	{
@@ -203,7 +203,7 @@ void AFunKWorldTestController::ClientBeginLocalTestExecution_Implementation(AFun
 	}
 }
 
-void AFunKWorldTestController::BeginLocalTestExecution(AFunKFunctionalTest* TestToExecute)
+void AFunKWorldTestController::BeginLocalTestExecution(AFunKTestBase* TestToExecute)
 {
 	if(IsLocalTestController())
 	{
@@ -215,11 +215,11 @@ void AFunKWorldTestController::BeginLocalTestExecution(AFunKFunctionalTest* Test
 	}
 }
 
-void AFunKWorldTestController::ClientCancelLocalTest_Implementation(AFunKFunctionalTest* TestToCancel, EFunKFunctionalTestResult Result)
+void AFunKWorldTestController::ClientFinishLocalTest_Implementation(AFunKTestBase* TestToCancel, EFunKFunctionalTestResult Result, const FString& Message)
 {
 	if(TestToCancel)
 	{
-		CancelLocalTest(TestToCancel, Result);
+		FinishLocalTest(TestToCancel, Result, Message);
 	}
 	else
 	{
@@ -227,15 +227,15 @@ void AFunKWorldTestController::ClientCancelLocalTest_Implementation(AFunKFunctio
 	}
 }
 
-void AFunKWorldTestController::CancelLocalTest(AFunKFunctionalTest* TestToCancel, EFunKFunctionalTestResult Result)
+void AFunKWorldTestController::FinishLocalTest(AFunKTestBase* TestToCancel, EFunKFunctionalTestResult Result, const FString& Message)
 {
 	if(IsLocalTestController())
 	{
-		TestToCancel->FinishTest(Result, "Test Canceled");
+		TestToCancel->FinishTest(Result, Message);
 	}
 	else if(GetNetMode() != NM_Client)
 	{
-		ClientCancelLocalTest(TestToCancel, Result);
+		ClientFinishLocalTest(TestToCancel, Result, Message);
 	}
 }
 

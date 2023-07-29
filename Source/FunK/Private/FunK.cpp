@@ -176,9 +176,9 @@ void FFunKModule::OnWorldGetAssetTags(const UWorld* World, TArray<UObject::FAsse
 	if(IsActive())
 	{
 		FString TestNames, TestNamesEditor;
-		for (TActorIterator<AFunKFunctionalTest> ActorItr(World, AFunKFunctionalTest::StaticClass(), EActorIteratorFlags::AllActors); ActorItr; ++ActorItr)
+		for (TActorIterator<AFunKTestBase> ActorItr(World, AFunKTestBase::StaticClass(), EActorIteratorFlags::AllActors); ActorItr; ++ActorItr)
 		{
-			AFunKFunctionalTest* FunctionalTest = *ActorItr;
+			AFunKTestBase* FunctionalTest = *ActorItr;
 
 			if (!FunctionalTest->IsPackageExternal())
 			{

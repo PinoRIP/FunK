@@ -8,9 +8,10 @@
 #include "FunKWorldTestExecution.generated.h"
 
 class AFunKWorldTestController;
-class AFunKFunctionalTest;
+class AFunKTestBase;
+struct FFunKTimeLimit;
 
-typedef FGuid FFunKTestId;
+typedef FGuid FFunKTestID;
 
 struct FFunKTestExecutionHandle
 {
@@ -30,7 +31,7 @@ public:
 		, FinishedTime(-1)
 	{ }
 	
-	FFunKTestId Id;
+	FFunKTestID Id;
 
 	UPROPERTY()
 	AFunKWorldTestController* Controller;
@@ -58,14 +59,14 @@ class FUNK_API UFunKWorldTestExecution : public UObject, public IFunKSink
 	GENERATED_BODY()
 
 public:
-	void Start(UWorld* world, const TArray<AFunKFunctionalTest*>& testsToExecute, TScriptInterface<IFunKSink> reportSink, FFunKTestId executionId);
+	void Start(UWorld* world, const TArray<AFunKTestBase*>& testsToExecute, TScriptInterface<IFunKSink> reportSink, FFunKTestID executionId);
 	void Update(float DeltaTime);
 
 	bool IsFinished() const;
 
 	AFunKWorldTestController* GetMasterController() const;
 
-	static bool IsExecutionFinishedEvent(const FFunKEvent& raisedEvent, FFunKTestId ExecutionId);
+	static bool IsExecutionFinishedEvent(const FFunKEvent& raisedEvent, FFunKTestID ExecutionId);
 	
 private:
 	UPROPERTY()
@@ -82,19 +83,20 @@ private:
 	FString ThisExecutionId;
 
 	UPROPERTY()
-	TArray<AFunKFunctionalTest*> TestsToExecute;
+	TArray<AFunKTestBase*> TestsToExecute;
 
 	bool IsAllFinished = false;
 
 	void NextTest();
 	void Finish();
 
-	void RunTest(AFunKFunctionalTest* test);
+	void RunTest(AFunKTestBase* test);
 
-	void CheckPreparationsTimeout(struct FFunKTimeLimit& limit, float time, const FString msg);
+	bool HandleTimeout(AFunKTestBase* currentTest, const FFunKTimeLimit* limit, float time);
+	static bool IsTimeout(const FFunKTimeLimit* limit, float time);
 
-	FFunKWorldTestState& RunTestOnController(AFunKFunctionalTest* test, AFunKWorldTestController* controller);
-	AFunKFunctionalTest* GetCurrentTest();
+	FFunKWorldTestState& RunTestOnController(AFunKTestBase* test, AFunKWorldTestController* controller);
+	AFunKTestBase* GetCurrentTest();
 
 	FFunKWorldTestState* GetStateFromEvent(const FFunKEvent& raisedEvent);
 
@@ -110,9 +112,8 @@ public:
 private: //STATS
 	float TotalTime;
 	float PreparationTime;
-	float PreparationNetworkingTime;
 	float ExecutionTime;
-	float FinishedNetworkingTime;
+	float PendingNetworkingTime;
 
 public:
 	static FString FunKTestLifeTimeStartEvent;

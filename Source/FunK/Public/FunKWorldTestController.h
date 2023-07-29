@@ -8,7 +8,7 @@
 #include "Sinks/FunKSink.h"
 #include "FunKWorldTestController.generated.h"
 
-class AFunKFunctionalTest;
+class AFunKTestBase;
 class UFunKTestRunner;
 
 UCLASS()
@@ -83,7 +83,7 @@ private:
 	UPROPERTY()
 	UFunKWorldTestExecution* CurrentTestExecution;
 	
-	void ExecuteTests(const TArray<AFunKFunctionalTest*>& TestToExecute, TScriptInterface<IFunKSink> ReportSink, FGuid executionId);
+	void ExecuteTests(const TArray<AFunKTestBase*>& TestToExecute, TScriptInterface<IFunKSink> ReportSink, FGuid executionId);
 
 	UFUNCTION(Server, Reliable)
 	void ServerExecuteTestByName(const FString& TestName, FGuid ExecutionId);
@@ -94,16 +94,16 @@ private:
 	virtual void ExecuteAllTests(TScriptInterface<IFunKSink> ReportSink, FGuid ExecutionId);
 	
 	UFUNCTION(Client, Reliable)
-	void ClientBeginLocalTestSetup(AFunKFunctionalTest* TestToExecute, FGuid ExecutionId);
-	void BeginLocalTestSetup(AFunKFunctionalTest* TestToExecute, FGuid ExecutionId);
+	void ClientBeginLocalTestSetup(AFunKTestBase* TestToExecute, FGuid ExecutionId);
+	void BeginLocalTestSetup(AFunKTestBase* TestToExecute, FGuid ExecutionId);
 	
 	UFUNCTION(Client, Reliable)
-	void ClientBeginLocalTestExecution(AFunKFunctionalTest* TestToExecute);
-	void BeginLocalTestExecution(AFunKFunctionalTest* TestToExecute);
+	void ClientBeginLocalTestExecution(AFunKTestBase* TestToExecute);
+	void BeginLocalTestExecution(AFunKTestBase* TestToExecute);
 	
 	UFUNCTION(Client, Reliable)
-	void ClientCancelLocalTest(AFunKFunctionalTest* TestToCancel, EFunKFunctionalTestResult Result);
-	void CancelLocalTest(AFunKFunctionalTest* TestToCancel, EFunKFunctionalTestResult Result);
+	void ClientFinishLocalTest(AFunKTestBase* TestToCancel, EFunKFunctionalTestResult Result, const FString& Message);
+	void FinishLocalTest(AFunKTestBase* TestToCancel, EFunKFunctionalTestResult Result, const FString& Message);
 
 	UFUNCTION(Server, Reliable)
 	virtual void ServerSendEvent(EFunKEventType eventType, const FString& Message, const TArray<FString>& Context) const;

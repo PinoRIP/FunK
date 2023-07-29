@@ -70,13 +70,16 @@ public:
 
 	FFunKEvent& AddToContext(const FString& InContext)
 	{
-		Context.Add(InContext);
+		Context.AddUnique(InContext);
 		return *this;
 	}
 
 	FFunKEvent& AddToContext(const TArray<FString>& InContext)
 	{
-		Context.Append(InContext);
+		for (const FString& String : InContext)
+		{
+			AddToContext(String);
+		}
 		return *this;
 	}
 

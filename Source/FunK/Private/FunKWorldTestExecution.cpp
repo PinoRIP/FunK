@@ -13,7 +13,7 @@ FString UFunKWorldTestExecution::FunKTestLifeTimePreparationCompleteEvent = FStr
 FString UFunKWorldTestExecution::FunKTestLifeTimeTestFinishedEvent = FString("FunKTestLifeTimeTestFinishedEvent");
 FString UFunKWorldTestExecution::FunKTestLifeTimeTestExecutionFinishedEvent = FString("FunKTestLifeTimeTestExecutionFinishedEvent");
 
-void UFunKWorldTestExecution::Start(UWorld* world, const TArray<AFunKFunctionalTest*>& testsToExecute, TScriptInterface<IFunKSink> reportSink, FGuid executionId)
+void UFunKWorldTestExecution::Start(UWorld* world, const TArray<AFunKTestBase*>& testsToExecute, TScriptInterface<IFunKSink> reportSink, FGuid executionId)
 {
 	const ENetMode netMode = world->GetNetMode();
 	check(netMode != ENetMode::NM_Client)
@@ -46,25 +46,26 @@ void UFunKWorldTestExecution::Update(float DeltaTime)
 	
 	TotalTime += DeltaTime;
 
-	if(ExecutionTime < 0.f)
+	if(PendingNetworkingTime >= 0.f)
+	{
+		PendingNetworkingTime += DeltaTime;
+		AFunKTestBase* currentTest = GetCurrentTest();
+		if(!currentTest || IsTimeout(currentTest->GetNetworkingTimeLimit(), PendingNetworkingTime))
+		{
+			const FFunKTimeLimit* limit = currentTest->GetNetworkingTimeLimit();
+			RaiseEvent(currentTest->CreateEvent(limit->Result, limit->Message.ToString()));
+			NextTest();
+			return;
+		}
+	}
+	else if(ExecutionTime < 0.f)
 	{
 		PreparationTime += DeltaTime;
-		if(AFunKFunctionalTest* currentTest = GetCurrentTest())
+		if(AFunKTestBase* currentTest = GetCurrentTest())
 		{
-			if(currentTest->PreparationTimeLimit.IsTimeout(PreparationTime))
+			if(HandleTimeout(currentTest, currentTest->GetPreparationTimeLimit(), PreparationTime))
 			{
-				FString missingClients;
-				for(int32 i = 0; i < CurrentExecutions.Num(); i++)
-				{
-					if(!CurrentExecutions[i].IsSetup())
-					{
-						missingClients += " " + CurrentExecutions[i].Controller->GetRoleName();
-					}
-
-					CurrentExecutions[i].Controller->CancelLocalTest(currentTest, currentTest->PreparationTimeLimit.Result);
-				}
-				
-				RaiseEvent(AFunKFunctionalTest::CreateEvent(currentTest->PreparationTimeLimit.Result, currentTest->PreparationTimeLimit.Message.ToString()).AddToContext(ThisExecutionId));
+				PendingNetworkingTime = 0.f;
 				return;
 			}
 		}
@@ -78,22 +79,11 @@ void UFunKWorldTestExecution::Update(float DeltaTime)
 	else
 	{
 		ExecutionTime += DeltaTime;
-		if(AFunKFunctionalTest* currentTest = GetCurrentTest())
+		if(AFunKTestBase* currentTest = GetCurrentTest())
 		{
-			if(currentTest->TimeLimit.IsTimeout(ExecutionTime))
+			if(HandleTimeout(currentTest, currentTest->GetTimeLimit(), ExecutionTime))
 			{
-				FString missingClients;
-				for(int32 i = 0; i < CurrentExecutions.Num(); i++)
-				{
-					if(!CurrentExecutions[i].IsFinished())
-					{
-						missingClients += " " + CurrentExecutions[i].Controller->GetRoleName();
-					}
-
-					CurrentExecutions[i].Controller->CancelLocalTest(currentTest, currentTest->TimeLimit.Result);
-				}
-				
-				RaiseEvent(AFunKFunctionalTest::CreateEvent(currentTest->TimeLimit.Result, currentTest->TimeLimit.Message.ToString()).AddToContext(ThisExecutionId));
+				PendingNetworkingTime = 0.f;
 				return;
 			}
 		}
@@ -106,6 +96,29 @@ void UFunKWorldTestExecution::Update(float DeltaTime)
 	}
 }
 
+bool UFunKWorldTestExecution::HandleTimeout(AFunKTestBase* currentTest, const FFunKTimeLimit* limit, float time)
+{
+	if(IsTimeout(limit, time))
+	{
+		for(int32 i = 0; i < CurrentExecutions.Num(); i++)
+		{
+			if(!CurrentExecutions[i].IsFinished())
+			{
+				CurrentExecutions[i].Controller->FinishLocalTest(currentTest, limit->Result, limit->Message.ToString());
+			}
+		}
+
+		return true;
+	}
+
+	return false;
+}
+
+bool UFunKWorldTestExecution::IsTimeout(const FFunKTimeLimit* limit, float time)
+{
+	return limit && limit->IsTimeout(time);
+}
+
 bool UFunKWorldTestExecution::IsFinished() const
 {
 	return IsAllFinished;
@@ -116,7 +129,7 @@ AFunKWorldTestController* UFunKWorldTestExecution::GetMasterController() const
 	return MasterController;
 }
 
-bool UFunKWorldTestExecution::IsExecutionFinishedEvent(const FFunKEvent& raisedEvent, FFunKTestId ExecutionId)
+bool UFunKWorldTestExecution::IsExecutionFinishedEvent(const FFunKEvent& raisedEvent, FFunKTestID ExecutionId)
 {
 	return true;// raisedEvent.Context.Contains(FunKTestLifeTimeTestExecutionFinishedEvent) && raisedEvent.Context.Contains(ExecutionId);
 }
@@ -127,7 +140,7 @@ void UFunKWorldTestExecution::NextTest()
 	
 	if(IsAllFinished)
 		return;
-	
+
 	CurrentTest++;
 	if(CurrentTest >= TestsToExecute.Num())
 	{
@@ -137,6 +150,7 @@ void UFunKWorldTestExecution::NextTest()
 	
 	PreparationTime = 0.f;
 	ExecutionTime = -1.f;
+	PendingNetworkingTime = -1.f;
 
 	RunTest(GetCurrentTest());
 
@@ -160,7 +174,7 @@ void UFunKWorldTestExecution::Finish()
 	}
 }
 
-void UFunKWorldTestExecution::RunTest(AFunKFunctionalTest* test)
+void UFunKWorldTestExecution::RunTest(AFunKTestBase* test)
 {
 	const ENetMode netMode = MasterController->GetNetMode();
 	if(netMode == NM_Standalone)
@@ -180,7 +194,7 @@ void UFunKWorldTestExecution::RunTest(AFunKFunctionalTest* test)
 	}
 }
 
-FFunKWorldTestState& UFunKWorldTestExecution::RunTestOnController(AFunKFunctionalTest* test, AFunKWorldTestController* controller)
+FFunKWorldTestState& UFunKWorldTestExecution::RunTestOnController(AFunKTestBase* test, AFunKWorldTestController* controller)
 {
 	const FGuid guid = FGuid::NewGuid();
 	FFunKWorldTestState& state = CurrentExecutions.Add_GetRef(FFunKWorldTestState());
@@ -192,7 +206,7 @@ FFunKWorldTestState& UFunKWorldTestExecution::RunTestOnController(AFunKFunctiona
 	return state;
 }
 
-AFunKFunctionalTest* UFunKWorldTestExecution::GetCurrentTest()
+AFunKTestBase* UFunKWorldTestExecution::GetCurrentTest()
 {
 	if(CurrentTest >= TestsToExecute.Num())
 		return nullptr;

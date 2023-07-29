@@ -11,11 +11,14 @@ void UFunKWorldSubsystem::CheckLocalTestController()
 {
 	GetLocalTestController();
 
-	//TODO: Move the get somewhere else...
-	UFunKEngineSubsystem* funk = GEngine->GetEngineSubsystem<UFunKEngineSubsystem>();
-	if(funk && funk->IsRunning())
+	if(GEngine)
 	{
-		funk->CallbackTestWorldBeganPlay(GetWorld());
+		//TODO: Move the get somewhere else...
+		UFunKEngineSubsystem* funk = GEngine->GetEngineSubsystem<UFunKEngineSubsystem>();
+		if(funk && funk->IsRunning())
+		{
+			funk->CallbackTestWorldBeganPlay(GetWorld());
+		}
 	}
 }
 
