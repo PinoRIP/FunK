@@ -179,15 +179,18 @@ void UFunKWorldTestExecution::RunTest(AFunKTestBase* test)
 	const ENetMode netMode = MasterController->GetNetMode();
 	if(netMode == NM_Standalone)
 	{
-		if(test->RunInStandaloneMode)
+		if(test->IsRunningInStandaloneMode())
 			RunTestOnController(test, MasterController);
 	}
-	else if((netMode == NM_DedicatedServer && test->RunInDedicatedServerMode) || (netMode == NM_ListenServer && test->RunInListenServerMode))
+	else
 	{
-		if(test->RunOnServer)
+		const bool executeServer = (netMode == NM_DedicatedServer && test->GetRunOnDedicatedServer()) || (netMode == NM_ListenServer && test->GetRunOnListenServer());
+		const bool executeClients = (netMode == NM_DedicatedServer && test->GetRunOnDedicatedServerClients()) || (netMode == NM_ListenServer && test->GetRunOnListenServerClients());
+		
+		if(executeServer)
 			RunTestOnController(test, MasterController);
 
-		if(test->RunOnClient) for (AFunKWorldTestController* SpawnedController : MasterController->SpawnedController)
+		if(executeClients) for (AFunKWorldTestController* SpawnedController : MasterController->SpawnedController)
 		{
 			RunTestOnController(test, SpawnedController);
 		}

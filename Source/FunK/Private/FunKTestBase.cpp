@@ -38,6 +38,26 @@ bool AFunKTestBase::IsRunningInListenServerMode() const
 	return RunOnListenServer || RunOnListenServerClients;
 }
 
+bool AFunKTestBase::GetRunOnDedicatedServer() const
+{
+	return RunOnDedicatedServer;
+}
+
+bool AFunKTestBase::GetRunOnDedicatedServerClients() const
+{
+	return RunOnDedicatedServerClients;
+}
+
+bool AFunKTestBase::GetRunOnListenServer() const
+{
+	return RunOnListenServer;
+}
+
+bool AFunKTestBase::GetRunOnListenServerClients() const
+{
+	return RunOnListenServerClients;
+}
+
 void AFunKTestBase::BeginTestSetup(AFunKWorldTestController* Controller, FFunKTestID testId)
 {
 	CurrentController = Controller;

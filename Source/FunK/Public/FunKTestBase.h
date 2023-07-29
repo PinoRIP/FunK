@@ -48,6 +48,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category="FunK|Setup")
 	bool IsRunningInListenServerMode() const;
 
+	bool GetRunOnDedicatedServer() const;
+	bool GetRunOnDedicatedServerClients() const;
+	bool GetRunOnListenServer() const;
+	bool GetRunOnListenServerClients() const;
+
 	virtual void BeginTestSetup(AFunKWorldTestController* Controller, FFunKTestID testId);
 	virtual void BeginTestExecution();
 
