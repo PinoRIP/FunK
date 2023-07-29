@@ -31,16 +31,15 @@ void AFunKWorldTestController::BeginPlay()
 	if(GetNetMode() == NM_ListenServer || GetNetMode() == NM_DedicatedServer)
 	{
 		FGameModeEvents::GameModePostLoginEvent.AddUObject(this, &AFunKWorldTestController::OnConnection);
-		auto it = GetWorld()->GetPlayerControllerIterator();
-		for(; it; ++it)
-		{
-			if(it->IsValid() && !it->Get()->IsLocalController())
-			{
-				CreateTestControllerForClient(it->Get());
-			}
-		}
+		//auto it = GetWorld()->GetPlayerControllerIterator();
+		//for(; it; ++it)
+		//{
+		//	if(it->IsValid() && !it->Get()->IsLocalController())
+		//	{
+		//		CreateTestControllerForClient(it->Get());
+		//	}
+		//}
 	}
-	UFunKEngineSubsystem::FunKDebug("AFunKWorldTestController!");
 
 	SetActorTickEnabled(false);
 }
