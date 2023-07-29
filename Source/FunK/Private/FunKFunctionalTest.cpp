@@ -206,8 +206,8 @@ void AFunKFunctionalTest::BuildTestRegistry(FString& append) const
 	{
 		append.Append(GetActorLabel() + TEXT("|") +
 			(RunInStandaloneMode ? FFunKModule::FunkStandaloneParameter : TEXT("")) +
-			(RunInDedicatedServerMode ? FFunKModule::FunkListenParameter : TEXT("")) +
-			(RunInListenServerMode ? FFunKModule::FunkDedicatedParameter : TEXT("")) +
+			(RunInDedicatedServerMode ? FFunKModule::FunkDedicatedParameter : TEXT("")) +
+			(RunInListenServerMode ? FFunKModule::FunkListenParameter : TEXT("")) +
 			":" + GetName()
 		);
 		append.Append(TEXT(";"));
