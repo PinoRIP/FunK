@@ -3,21 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "UObject/Object.h"
-#include "FunKNewProcessCapture.generated.h"
 
 /**
  * 
  */
-USTRUCT()
 struct FFunKNewProcessCapture
 {
-	GENERATED_BODY()
-
 public:
 	FFunKNewProcessCapture() {
-		ProcessID = 0;
-		IsProcessIdSet = false;
+		IsAnyProcessIdSet = false;
 		FEditorDelegates::BeginStandaloneLocalPlay.AddRaw(this, &FFunKNewProcessCapture::Callback);
 	}
 
@@ -26,14 +20,15 @@ public:
 		FEditorDelegates::BeginStandaloneLocalPlay.RemoveAll(this);
 	}
 
-	uint32 GetProcessId() const { return ProcessID; }
-	bool IsValid() const { return IsProcessIdSet; }
+	void GetProcessIds(TArray<uint32>& processIDs) const { processIDs = ProcessIDs; }
+	bool IsValid() const { return IsAnyProcessIdSet; }
 private:
-	uint32 ProcessID;
-	bool IsProcessIdSet;
+	TArray<uint32> ProcessIDs;
+	bool IsAnyProcessIdSet;
 
 	void Callback(uint32 newProcessId)
 	{
-		ProcessID = newProcessId;
+		IsAnyProcessIdSet = true;
+		ProcessIDs.Add(newProcessId);
 	}
 };

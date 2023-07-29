@@ -7,6 +7,8 @@
 #include "FunK.h"
 #include "FunKAutomationEntry.h"
 #include "FunKEngineSubsystem.h"
+#include "FunKFailedPieStartCapture.h"
+#include "FunKNewProcessCapture.h"
 #include "FunKWorldSubsystem.h"
 #include "FunKWorldTestController.h"
 #include "GameFramework/GameStateBase.h"
@@ -46,32 +48,37 @@ bool UFunKTestRunner::Test(const FFunKTestInstructions& Instructions)
 			return true;
 		}
 
-		bool isWrongEnvironment = false;
-		const bool isEnvironmentRunning = IsEnvironmentRunning(Instructions, isWrongEnvironment);
-		const bool isDifferentEnvironment = IsDifferentEnvironment(Instructions);
-		if(isDifferentEnvironment || !isEnvironmentRunning || isWrongEnvironment)
+		if(State == EFunKTestRunnerState::Started)
 		{
-			if(isWrongEnvironment || (isDifferentEnvironment && isEnvironmentRunning))
+			bool isWrongEnvironment = false;
+			const bool isEnvironmentRunning = IsEnvironmentRunning(Instructions, isWrongEnvironment);
+			if(!isEnvironmentRunning || isWrongEnvironment)
 			{
-				GEditor->EndPlayMap();
-				GEditor->EndPlayOnLocalPc();
-			}
+				if(isWrongEnvironment)
+				{
+					if(isEnvironmentRunning)
+						GEditor->EndPlayMap();
+				
+					GEditor->EndPlayOnLocalPc();
+					StartedProcesses.Empty(StartedProcesses.Num());
+				}
 			
-			const EFunKTestRunnerState state = State;
-			UpdateState(EFunKTestRunnerState::WaitingForWorld);
-			if(!StartEnvironment(Instructions))
-			{
-				UpdateState(state);
-				RaiseErrorEvent("Test environment could not be setup", "UFunKTestRunner::StartEnvironment");
-				return true;
-			}
+				const EFunKTestRunnerState state = State;
+				UpdateState(EFunKTestRunnerState::WaitingForWorld);
+				if(!StartEnvironment(Instructions))
+				{
+					UpdateState(state);
+					RaiseErrorEvent("Test environment could not be setup", "UFunKTestRunner::StartEnvironment");
+					return true;
+				}
 
-			ActiveTestInstructions = Instructions;
-		}
-		else
-		{
-			UpdateState(EFunKTestRunnerState::WaitingForWorld);
-			ActiveTestInstructions = Instructions;
+				ActiveTestInstructions = Instructions;
+			}
+			else
+			{
+				UpdateState(EFunKTestRunnerState::WaitingForWorld);
+				ActiveTestInstructions = Instructions;
+			}
 		}
 		
 		if(State == EFunKTestRunnerState::WaitingForWorld)
@@ -271,34 +278,55 @@ bool UFunKTestRunner::IsDifferentEnvironment(const FFunKTestInstructions& Instru
 bool UFunKTestRunner::IsEnvironmentRunning(const FFunKTestInstructions& Instructions, bool& isWrongEnvironmentRunning)
 {
 	isWrongEnvironmentRunning = false;
-	if(IsRunningTestUnderOneProcess)
+
+	const FString currentPieWorldPackageName = GetCurrentPieWorldPackageName();
+	const bool isNoLocalMapRunning = (currentPieWorldPackageName.IsEmpty() || currentPieWorldPackageName.Len() <= 0);
+	const bool isLocalProcessOnly = IsRunningTestUnderOneProcess || IsStandaloneTest(Instructions);
+	if(isNoLocalMapRunning)
 	{
-		const TIndirectArray<FWorldContext> WorldContexts = GEngine->GetWorldContexts();
-		for (auto& Context : WorldContexts)
-		{
-			if (Context.World())
-			{
-				FString WorldPackage = Context.World()->GetOutermost()->GetName();
-
-				if (Context.WorldType == EWorldType::PIE)
-				{
-					isWrongEnvironmentRunning = Instructions.MapPackageName != UWorld::StripPIEPrefixFromPackageName(WorldPackage, Context.World()->StreamingLevelsPrefix);
-					return true;
-				}
-			}
-		}
-
+		isWrongEnvironmentRunning = !isLocalProcessOnly && IsHoldingSubprocesses();
 		return false;
 	}
-	else
-	{
-		check(false);//TODO: Fix this!
-		const bool isEnvironmentRunning = CurrentTestWorld.IsValid() && !CurrentTestWorld->bIsTearingDown;
-		if(isEnvironmentRunning)
-			isWrongEnvironmentRunning = CurrentTestWorld->GetMapName() != Instructions.MapPackageName;
 
-		return isEnvironmentRunning;
+	isWrongEnvironmentRunning = currentPieWorldPackageName != Instructions.MapPackageName || IsDifferentEnvironment(Instructions);
+	if(isWrongEnvironmentRunning || isLocalProcessOnly)
+		return true;
+
+	for (const uint32 StartedProcess : StartedProcesses)
+	{
+		if(!FPlatformProcess::IsApplicationRunning(StartedProcess))
+		{
+			isWrongEnvironmentRunning = true;
+			break;
+		}
 	}
+
+	return true;
+}
+
+FString UFunKTestRunner::GetCurrentPieWorldPackageName()
+{
+	//TODO: do we want to support multiple worlds in parallel?
+	const TIndirectArray<FWorldContext> WorldContexts = GEngine->GetWorldContexts();
+	for (auto& Context : WorldContexts)
+	{
+		if (Context.World())
+		{
+			FString WorldPackage = Context.World()->GetOutermost()->GetName();
+
+			if (Context.WorldType == EWorldType::PIE)
+			{
+				return UWorld::StripPIEPrefixFromPackageName(WorldPackage, Context.World()->StreamingLevelsPrefix);
+			}
+		}
+	}
+
+	return "";
+}
+
+bool UFunKTestRunner::IsHoldingSubprocesses() const
+{
+	return StartedProcesses.Num() > 0;
 }
 
 TSubclassOf<AFunKWorldTestController> UFunKTestRunner::GetWorldControllerClass() const
@@ -308,30 +336,8 @@ TSubclassOf<AFunKWorldTestController> UFunKTestRunner::GetWorldControllerClass()
 
 bool UFunKTestRunner::StartEnvironment(const FFunKTestInstructions& Instructions)
 {
-	struct FFailedGameStartHandler
-	{
-		bool bCanProceed;
-
-		FFailedGameStartHandler()
-		{
-			bCanProceed = true;
-			FEditorDelegates::EndPIE.AddRaw(this, &FFailedGameStartHandler::OnEndPIE);
-		}
-
-		~FFailedGameStartHandler()
-		{
-			FEditorDelegates::EndPIE.RemoveAll(this);
-		}
-
-		bool CanProceed() const { return bCanProceed; }
-
-		void OnEndPIE(const bool bInSimulateInEditor)
-		{
-			bCanProceed = false;
-		}
-	};
-
-	FFailedGameStartHandler FailHandler;
+	FFunKFailedPieStartCapture FailHandler;
+	FFunKNewProcessCapture ProcessStartCapture;
 		
 	FRequestPlaySessionParams params;
 	params.EditorPlaySettings = NewObject<ULevelEditorPlaySettings>();
@@ -350,7 +356,8 @@ bool UFunKTestRunner::StartEnvironment(const FFunKTestInstructions& Instructions
 	
 	//TODO: Maybe one day we want to integrate bAllowOnlineSubsystem...
 
-	if(IsStandaloneTest(Instructions))
+	const bool isStandalone = IsStandaloneTest(Instructions);
+	if(isStandalone)
 	{
 		params.EditorPlaySettings->SetPlayNumberOfClients(1);
 		params.EditorPlaySettings->bLaunchSeparateServer = false;
@@ -385,5 +392,8 @@ bool UFunKTestRunner::StartEnvironment(const FFunKTestInstructions& Instructions
 
 	// Immediately launch the session 
 	GEditor->StartQueuedPlaySessionRequest();
-	return FailHandler.CanProceed();
+	if(!isStandalone && !IsRunningTestUnderOneProcess)
+		ProcessStartCapture.GetProcessIds(StartedProcesses);
+	
+	return FailHandler.CanProceed() && (IsRunningTestUnderOneProcess || isStandalone || (ProcessStartCapture.IsValid() && StartedProcesses.Num() == 2));
 }

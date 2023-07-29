@@ -66,7 +66,7 @@ protected:
 
 	virtual void UpdateState(EFunKTestRunnerState newState);
 
-	bool IsRunningTestUnderOneProcess = true; //TODO: For now the system only works when everything runs under one process... The way to detect that everything runs in sever scenarios fails due to race conditions
+	bool IsRunningTestUnderOneProcess = false;
 
 	bool IsStandaloneTest() const;
 	static bool IsStandaloneTest(const FFunKTestInstructions& Instructions);
@@ -77,7 +77,9 @@ protected:
 	
 	bool IsDifferentEnvironment(const FFunKTestInstructions& Instructions) const;
 	bool IsEnvironmentRunning(const FFunKTestInstructions& Instructions, bool& isWrongEnvironmentRunning);
-
+	FString GetCurrentPieWorldPackageName();
+	bool IsHoldingSubprocesses() const;
+	
 	virtual TSubclassOf<AFunKWorldTestController> GetWorldControllerClass() const;
 	
 private:
@@ -89,6 +91,8 @@ private:
 
 	UPROPERTY()
 	TArray<TScriptInterface<IFunKSink>> Sinks;
+
+	TArray<uint32> StartedProcesses;
 
 	TWeakObjectPtr<UFunKEngineSubsystem> FunKEngineSubsystem;
 	
