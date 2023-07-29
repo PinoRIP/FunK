@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "FunKTestBase.h"
+#include "FunKTypes.h"
 #include "GameFramework/Actor.h"
 #include "FunKActorScenarioTest.generated.h"
 
@@ -34,18 +35,15 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup|Timeout")
 	FFunKTimeLimit AssertTimeLimit;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
-	bool IsAlsoAssertingOnDedicatedServer = true;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
-	bool IsAlsoAssertingOnDedicatedServerClient = true;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
-	bool IsAlsoAssertingOnListenServer = true;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
-	bool IsAlsoAssertingOnListenServerClient = true;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (Bitmask, BitmaskEnum = "/Script/FunK.EFunKTestLocationTarget"), Category="FunK|Setup")
+	int32 AlsoArrangeOn = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (Bitmask, BitmaskEnum = "/Script/FunK.EFunKTestLocationTarget"), Category="FunK|Setup")
+	int32 AlsoActOn = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (Bitmask, BitmaskEnum = "/Script/FunK.EFunKTestLocationTarget"), Category="FunK|Setup")
+	int32 AlsoAssertOn = 0;
 
 	virtual void SetupStages(FFunKStagesSetup& stages) override final;
 
@@ -81,6 +79,11 @@ protected:
 	AActor* GetAcquireActorByComponent(UFunKActorScenarioComponent* Component);
 
 	bool IsSkippingClient2() const;
+
+	bool IsArrangeAlsoOn(EFunKTestLocationTarget alsoOnTarget) const;
+	bool IsActAlsoOn(EFunKTestLocationTarget alsoOnTarget) const;
+	bool IsAssertAlsoOn(EFunKTestLocationTarget alsoOnTarget) const;
+	bool IsAlsoOn(int32 state, EFunKTestLocationTarget alsoOnTarget) const;
 	
 private:
 	UPROPERTY( replicated )

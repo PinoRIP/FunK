@@ -24,6 +24,8 @@ AFunKActorScenarioTest::AFunKActorScenarioTest()
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
+
+	AlsoAssertOn = static_cast<int32>(EFunKTestLocationTarget::DedicatedServer | EFunKTestLocationTarget::ListenServer | EFunKTestLocationTarget::DedicatedServerClient | EFunKTestLocationTarget::ListenServerClient);
 }
 
 void AFunKActorScenarioTest::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -45,7 +47,14 @@ void AFunKActorScenarioTest::OnBeginStage(const FName& StageName)
 	{
 		if(IsSkippingClient2())
 		{
-			Super::FinishStage();
+			if(HasMoreScenarios())
+			{
+				Super::FinishStage();
+			}
+			else
+			{
+				FinishStage(EFunKTestResult::Succeeded, "");
+			}
 			return;
 		}
 		
@@ -271,11 +280,44 @@ void AFunKActorScenarioTest::OnStageScenarioChanged(const FName& StageName, cons
 bool AFunKActorScenarioTest::IsSkippingClient2() const
 {
 	const ENetMode netMode = GetNetMode();
-	return netMode == NM_Client &&
-		CurrentStageScenario != FunKTestActorScenarioStageExtensionDedicatedServerClientToClient &&
-			CurrentStageScenario != FunKTestActorScenarioStageExtensionListenServerClientToClient &&
-				!((GetCurrentController()->GetIsServerDedicated() ? IsAlsoAssertingOnDedicatedServerClient : IsAlsoAssertingOnListenServerClient) &&
-					GetStageName().ToString().Contains("Assert"));
+	if(netMode != NM_Client || CurrentStageScenario == FunKTestActorScenarioStageExtensionDedicatedServerClientToClient && CurrentStageScenario == FunKTestActorScenarioStageExtensionListenServerClientToClient)
+		return false;
+
+	const bool isDedicated = GetCurrentController()->GetIsServerDedicated();
+	const FString StageName = GetStageName().ToString();
+
+	if (StageName.Contains("Arrange") && isDedicated ? IsArrangeAlsoOn(EFunKTestLocationTarget::DedicatedServerClient) : IsArrangeAlsoOn(EFunKTestLocationTarget::ListenServerClient))
+		return false;
+
+	if (StageName.Contains("Act") && isDedicated ? IsActAlsoOn(EFunKTestLocationTarget::DedicatedServerClient) : IsActAlsoOn(EFunKTestLocationTarget::ListenServerClient))
+		return false;
+
+	if (StageName.Contains("Assert") && isDedicated ? IsAssertAlsoOn(EFunKTestLocationTarget::DedicatedServerClient) : IsAssertAlsoOn(EFunKTestLocationTarget::ListenServerClient))
+		return false;
+
+	return true;
+}
+
+bool AFunKActorScenarioTest::IsArrangeAlsoOn(EFunKTestLocationTarget alsoOnTarget) const
+{
+	
+	return IsAlsoOn(AlsoArrangeOn, alsoOnTarget);
+}
+
+bool AFunKActorScenarioTest::IsActAlsoOn(EFunKTestLocationTarget alsoOnTarget) const
+{
+	return IsAlsoOn(AlsoActOn, alsoOnTarget);
+}
+
+bool AFunKActorScenarioTest::IsAssertAlsoOn(EFunKTestLocationTarget alsoOnTarget) const
+{
+	return IsAlsoOn(AlsoAssertOn, alsoOnTarget);
+}
+
+bool AFunKActorScenarioTest::IsAlsoOn(int32 state, EFunKTestLocationTarget alsoOnTarget) const
+{
+	const int32 alsoOnTargetAs32 = static_cast<int32>(alsoOnTarget);
+	return (alsoOnTargetAs32 & state) == alsoOnTargetAs32;
 }
 
 void AFunKActorScenarioTest::FinishStage(EFunKTestResult TestResult, const FString& Message)
@@ -318,14 +360,16 @@ void AFunKActorScenarioTest::ErrorFallbackStage()
 
 void AFunKActorScenarioTest::SetupStages(FFunKStagesSetup& stages, TArray<UFunKActorScenarioComponent*>& actorScenarioComponents)
 {
-	int32 standaloneCount = 0, dedicatedServerCount = 0, dedicatedServerClientCount = 0, listenServerCount = 0, listenServerClientCount = 0, dedicatedServerClientOppositionCount = 0, listenServerClientOppositionCount = 0;;
+	int32 standaloneCount = 0, dedicatedServerCount = 0, dedicatedServerClientCount = 0, listenServerCount = 0, listenServerClientCount = 0, dedicatedServerOpposition = 0, dedicatedServerClientOppositionCount = 0,  listenServerOpposition = 0, listenServerClientOppositionCount = 0;;
 	for (const UFunKActorScenarioComponent* ActorScenarioComponent : actorScenarioComponents)
 	{
 		standaloneCount = standaloneCount + (ActorScenarioComponent->IsStandaloneRelevant ? 1 : 0);
 
 		if(ActorScenarioComponent->IsOppositionActor)
 		{
+			dedicatedServerOpposition = dedicatedServerOpposition + (ActorScenarioComponent->IsDedicatedServerClientRelevant ? 1 : 0);
 			dedicatedServerClientOppositionCount = dedicatedServerClientOppositionCount + (ActorScenarioComponent->IsDedicatedServerClientRelevant ? 1 : 0);
+			listenServerOpposition = listenServerOpposition + (ActorScenarioComponent->IsDedicatedServerClientRelevant ? 1 : 0);
 			listenServerClientOppositionCount = listenServerClientOppositionCount + (ActorScenarioComponent->IsListenServerClientRelevant ? 1 : 0);
 		}
 		else
@@ -346,7 +390,7 @@ void AFunKActorScenarioTest::SetupStages(FFunKStagesSetup& stages, TArray<UFunKA
 	
 	if (dedicatedServerClientCount > 0)
 	{
-		AddScenarioStages(stages, FunKTestActorScenarioStageExtensionDedicatedServerClientToServer, false, true, true, false, false);
+		AddScenarioStages(stages, FunKTestActorScenarioStageExtensionDedicatedServerClientToServer, false, dedicatedServerOpposition > 0, true, false, false);
 		AddScenarioStages(stages, FunKTestActorScenarioStageExtensionDedicatedServerClientToClient, false, dedicatedServerClientOppositionCount > 0, dedicatedServerClientOppositionCount > 0, false, false);
 	}
 
@@ -357,7 +401,7 @@ void AFunKActorScenarioTest::SetupStages(FFunKStagesSetup& stages, TArray<UFunKA
 	
 	if (listenServerClientCount > 0)
 	{
-		AddScenarioStages(stages, FunKTestActorScenarioStageExtensionListenServerClientToServer, false, false, false, true, true);
+		AddScenarioStages(stages, FunKTestActorScenarioStageExtensionListenServerClientToServer, false, false, false, listenServerOpposition > 0, true);
 		AddScenarioStages(stages, FunKTestActorScenarioStageExtensionListenServerClientToClient, false, false, false, listenServerClientOppositionCount > 0, listenServerClientOppositionCount > 0);
 	}
 }
@@ -371,37 +415,37 @@ void AFunKActorScenarioTest::AddScenarioStages(FFunKStagesSetup& stages, const F
 			.WithTickDelegate<AFunKActorScenarioTest>(&AFunKActorScenarioTest::CheckArrangeScenarioFinish)
 			.UpdateTimeLimit(ArrangeScenarioTimeLimit)
 			.SetRunOnStandalone(standalone)
-			.SetRunOnDedicatedServer(dedicated)
+			.SetRunOnDedicatedServer(dedicated || (!dedicated && dedicatedClient))
 			.SetRunOnDedicatedServerClient(dedicatedClient)
-			.SetRunOnListenServer(listen)
+			.SetRunOnListenServer(listen || (!dedicated && listenClient))
 			.SetRunOnListenServerClient(listenClient);
 
 		stages
 			.AddNamedLatentStage<AFunKActorScenarioTest>(FName("Arrange for " + name), &AFunKActorScenarioTest::InvokeArrange)
 			.UpdateTimeLimit(ArrangeTimeLimit)
 			.SetRunOnStandalone(standalone)
-			.SetRunOnDedicatedServer(dedicated)
-			.SetRunOnDedicatedServerClient(dedicatedClient)
-			.SetRunOnListenServer(listen)
-			.SetRunOnListenServerClient(listenClient);
+			.SetRunOnDedicatedServer(dedicated || (dedicatedClient && IsArrangeAlsoOn(EFunKTestLocationTarget::DedicatedServer)))
+			.SetRunOnDedicatedServerClient(dedicatedClient || (dedicated && IsArrangeAlsoOn(EFunKTestLocationTarget::DedicatedServerClient)))
+			.SetRunOnListenServer(listen || (listenClient && IsArrangeAlsoOn(EFunKTestLocationTarget::ListenServer)))
+			.SetRunOnListenServerClient(listenClient || (listen && IsArrangeAlsoOn(EFunKTestLocationTarget::ListenServerClient)));
 
 		stages
 			.AddNamedLatentStage<AFunKActorScenarioTest>(FName("Act for " + name), &AFunKActorScenarioTest::Act)
 			.UpdateTimeLimit(ActTimeLimit)
 			.SetRunOnStandalone(standalone)
-			.SetRunOnDedicatedServer(dedicated)
-			.SetRunOnDedicatedServerClient(dedicatedClient)
-			.SetRunOnListenServer(listen)
-			.SetRunOnListenServerClient(listenClient);
+			.SetRunOnDedicatedServer(dedicated || (dedicatedClient && IsArrangeAlsoOn(EFunKTestLocationTarget::DedicatedServer)))
+			.SetRunOnDedicatedServerClient(dedicatedClient || (dedicated && IsArrangeAlsoOn(EFunKTestLocationTarget::DedicatedServerClient)))
+			.SetRunOnListenServer(listen || (listenClient && IsArrangeAlsoOn(EFunKTestLocationTarget::ListenServer)))
+			.SetRunOnListenServerClient(listenClient || (listen && IsArrangeAlsoOn(EFunKTestLocationTarget::ListenServerClient)));
 
 		stages
 			.AddNamedLatentStage<AFunKActorScenarioTest>(FName("Assert for " + name), &AFunKActorScenarioTest::InvokeAssert)
 			.UpdateTimeLimit(AssertTimeLimit)
 			.SetRunOnStandalone(standalone)
-			.SetRunOnDedicatedServer(dedicated || (dedicatedClient && IsAlsoAssertingOnDedicatedServer))
-			.SetRunOnDedicatedServerClient(dedicatedClient || (dedicated && IsAlsoAssertingOnDedicatedServerClient))
-			.SetRunOnListenServer(listen || (listenClient && IsAlsoAssertingOnListenServer))
-			.SetRunOnListenServerClient(listenClient || (listen && IsAlsoAssertingOnListenServerClient));
+			.SetRunOnDedicatedServer(dedicated || (dedicatedClient && IsArrangeAlsoOn(EFunKTestLocationTarget::DedicatedServer)))
+			.SetRunOnDedicatedServerClient(dedicatedClient || (dedicated && IsArrangeAlsoOn(EFunKTestLocationTarget::DedicatedServerClient)))
+			.SetRunOnListenServer(listen || (listenClient && IsArrangeAlsoOn(EFunKTestLocationTarget::ListenServer)))
+			.SetRunOnListenServerClient(listenClient || (listen && IsArrangeAlsoOn(EFunKTestLocationTarget::ListenServerClient)));
 	}
 }
 
