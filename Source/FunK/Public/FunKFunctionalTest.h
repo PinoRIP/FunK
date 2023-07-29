@@ -15,7 +15,7 @@ struct FFunKTimeLimit
 
 	/** Test's time limit. '0' means no limit */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
-	float Time = 0.f;
+	float Time = 20.f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	FText Message;
@@ -87,6 +87,9 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category="FunK")
 	bool IsStarted() const;
+
+	UFUNCTION(BlueprintCallable, Category="FunK")
+	bool IsFinished() const;
 
 	EFunKFunctionalTestResult GetTestResult() const;
 	

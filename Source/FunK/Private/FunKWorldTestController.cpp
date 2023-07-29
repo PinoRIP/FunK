@@ -220,7 +220,7 @@ void AFunKWorldTestController::ExecuteAllTests(TScriptInterface<IFunKSink> repor
 
 bool AFunKWorldTestController::IsFinished() const
 {
-	return !!ReportSink;
+	return !CurrentTest || (CurrentTest->IsStarted() && CurrentTest->IsFinished());
 }
 
 void AFunKWorldTestController::RaiseInfoEvent(const FString& Message, const FString& Context) const
@@ -240,7 +240,7 @@ void AFunKWorldTestController::RaiseErrorEvent(const FString& Message, const FSt
 
 void AFunKWorldTestController::RaiseEvent(const FFunKEvent& raisedEvent) const
 {
-	if(!ReportSink)
+	if(ReportSink)
 	{
 		ReportSink->RaiseEvent(raisedEvent);
 	}
