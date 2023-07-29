@@ -132,6 +132,7 @@ private:
 	void OnFinish(const FFunKTestFinishedEvent& Event);
 	void NextStage(int32 InTestRunID, int32 InSeed);
 	void Finish(EFunKTestResult TestResult, FString Message);
+	int32 GetNextStageIndex() const;
 	
 	void SetupStages();
 	FFunKStage* GetCurrentStageMutable();

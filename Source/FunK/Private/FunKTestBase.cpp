@@ -299,12 +299,6 @@ void AFunKTestBase::OnBeginStage(const FFunKTestStageEvent& Event)
 		FinishStage(EFunKStageResult::Error, "Test has no stage " + FString::FromInt(Event.StageIndex));
 		return;
 	}
-
-	if(Event.StageIndex != CurrentStageIndex + 1)
-	{
-		FinishStage(EFunKStageResult::Error, "Test cant skip stages! " + FString::FromInt(CurrentStageIndex) + " - " + FString::FromInt(Event.StageIndex));
-		return;
-	}
 	
 	if(!IsRunning())
 	{
@@ -389,7 +383,7 @@ void AFunKTestBase::OnFinish(const FFunKTestFinishedEvent& Event)
 
 void AFunKTestBase::NextStage(int32 InTestRunID, int32 InSeed)
 {
-	const int32 NextStageIndex = CurrentStageIndex + 1;
+	const int32 NextStageIndex = GetNextStageIndex();
 	if(!IsValidStageIndex(NextStageIndex))
 	{
 		Finish(EFunKTestResult::Succeeded, "");
@@ -420,6 +414,33 @@ void AFunKTestBase::Finish(EFunKTestResult TestResult, FString Message)
 	{
 		OnFinish(Event);
 	});
+}
+
+int32 AFunKTestBase::GetNextStageIndex() const
+{
+	const ENetMode NetMode = GetNetMode();
+
+	bool IsStandalone = NetMode == NM_Standalone;
+	bool IsDedicatedServer = NetMode == NM_DedicatedServer;
+	bool IsListenServer = NetMode == NM_ListenServer;
+	if(NetMode == NM_Client)
+	{
+		IsDedicatedServer = GetWorldSubsystem()->IsServerDedicated();
+		IsListenServer = !IsDedicatedServer;
+	}
+	
+	const TArray<FFunKStage>& stages = GetStages()->Stages;
+	for (int i = CurrentStageIndex + 1; i < stages.Num(); ++i)
+	{
+		if(
+			stages[i].IsOnStandalone && IsStandalone ||
+			((stages[i].IsOnDedicatedServer || stages[i].IsOnDedicatedServerClient) && IsDedicatedServer) ||
+			((stages[i].IsOnListenServer || stages[i].IsOnListenServerClient) && IsListenServer)
+		)
+			return i;
+	}
+	
+	return INDEX_NONE;
 }
 
 void AFunKTestBase::SetupStages()
@@ -473,6 +494,9 @@ void AFunKTestBase::Tick(float DeltaTime)
 	CurrentStageExecutionTime += DeltaTime;
 
 	GEngine->DelayGarbageCollection();
+
+	if(IsLocalStageFinished)
+		return;
 
 	if(IsCurrentStageTickDelegateSetup) if(const FFunKStage* CurrentStage = GetCurrentStageMutable())
 	{

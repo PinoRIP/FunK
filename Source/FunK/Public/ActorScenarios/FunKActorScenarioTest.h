@@ -18,7 +18,7 @@ public:
 	
 	virtual void GetLifetimeReplicatedProps( TArray< FLifetimeProperty > & OutLifetimeProps ) const override;
 
-	virtual void OnBeginStage(const FName& StageName); // override;
+	virtual void OnBeginStage() override;
 	virtual void OnFinish(const FString& Message) override;
 
 	virtual void Tick(float DeltaTime) override;
@@ -46,6 +46,7 @@ protected:
 	int32 AlsoAssertOn = 0;
 
 	virtual void SetupStages(FFunKStagesSetup& stages) override final;
+	virtual bool IsExecutingStage(const FFunKStage& stage) const override;
 
 	void InvokeAssume();
 
@@ -82,12 +83,12 @@ protected:
 	UFUNCTION(BlueprintCallable, Category="FunK")
 	AActor* GetAcquireActorByComponent(UFunKActorScenarioComponent* Component);
 
-	bool IsSkippingClient2() const;
+	bool IsSkippingClient2(const FFunKStage& stage) const;
 
 	bool IsArrangeAlsoOn(EFunKTestLocationTarget alsoOnTarget) const;
 	bool IsActAlsoOn(EFunKTestLocationTarget alsoOnTarget) const;
 	bool IsAssertAlsoOn(EFunKTestLocationTarget alsoOnTarget) const;
-	bool IsAlsoOn(int32 state, EFunKTestLocationTarget alsoOnTarget) const;
+	static bool IsAlsoOn(int32 state, EFunKTestLocationTarget alsoOnTarget);
 	
 private:
 	UPROPERTY( replicated )
@@ -99,9 +100,10 @@ private:
 	void ErrorFallbackStage();
 	void SetupStages(FFunKStagesSetup& stages, TArray<UFunKActorScenarioComponent*>& actorScenarioComponents);
 	void AddScenarioStages(FFunKStagesSetup& stages, const FString& name, bool standalone, bool dedicated, bool dedicatedClient, bool listen, bool listenClient);
+	void AssignOwner(AActor* Actor, AActor* NewOwner);
 
 	void GetActorScenarioComponents(TArray<UFunKActorScenarioComponent*>& ActorScenarioComponents);
-	FORCEINLINE FString ParseStageScenario(const FString& StageName);
+	FORCEINLINE FString ParseStageScenario(const FString& StageName) const;
 
 	static FString FunKTestActorScenarioStageExtensionStandalone;
 	static FString FunKTestActorScenarioStageExtensionDedicatedServerClientToServer;
