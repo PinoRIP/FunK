@@ -62,7 +62,7 @@ bool UFunKTestRunner::Update()
 		
 		UpdateState(environmentState == EFunKEnvironmentWorldState::IsRunning ? EFunKTestRunnerState::Ready : EFunKTestRunnerState::EnvironmentSetup);
 
-		if(State == EFunKTestRunnerState::Started)
+		/*if(State == EFunKTestRunnerState::Started)
 		{
 			bool isWrongEnvironment = false;
 			const bool isEnvironmentRunning = IsEnvironmentRunning(Instructions, isWrongEnvironment);
@@ -116,7 +116,7 @@ bool UFunKTestRunner::Update()
 					UpdateState(EFunKTestRunnerState::Ready);
 				}
 			}
-		}
+		}*/
 		
 		if(State == EFunKTestRunnerState::Ready)
 		{
@@ -127,11 +127,11 @@ bool UFunKTestRunner::Update()
 			
 			if(ActiveTestInstructions.MapTestName.Len() > 0)
 			{
-				GetCurrentWorldController()->ExecuteTestByName(ActiveTestInstructions.MapTestName, this);
+				GetCurrentWorldController()->ExecuteTestByName(ActiveTestInstructions.MapTestName);
 			}
 			else
 			{
-				GetCurrentWorldController()->ExecuteAllTests(this);
+				GetCurrentWorldController()->ExecuteAllTests();
 			}
 			
 			UpdateState(EFunKTestRunnerState::ExecutingTest);
@@ -202,7 +202,8 @@ bool UFunKTestRunner::IsRunning() const
 
 bool UFunKTestRunner::IsWaitingForMap() const
 {
-	return State == EFunKTestRunnerState::WaitingForWorld;
+	return false;
+	//return State == EFunKTestRunnerState::WaitingForWorld;
 }
 
 UFunKEngineSubsystem* UFunKTestRunner::GetSubsystem() const
@@ -220,8 +221,8 @@ bool UFunKTestRunner::SetWorld(UWorld* world)
 	if(!world)
 		return false;
 	
-	if(State != EFunKTestRunnerState::WaitingForWorld && Type <= EFunKTestRunnerType::LocalInProc)
-		return false;
+	//if(State != EFunKTestRunnerState::WaitingForWorld && Type <= EFunKTestRunnerType::LocalInProc)
+	//	return false;
 
 	if(world == CurrentTestWorld)
 		return false;
@@ -241,14 +242,14 @@ AFunKWorldTestController* UFunKTestRunner::GetCurrentWorldController() const
 	return CurrentTestWorld->GetSubsystem<UFunKWorldSubsystem>()->GetLocalTestController();
 }
 
-void UFunKTestRunner::GetSinks(TArray<TScriptInterface<IFunKSink>>& outSinks)
-{
-	outSinks.Add(NewObject<UFunKLogSink>(this, UFunKLogSink::StaticClass()));
-	if(UFunKAutomationSink::IsAvailable())
-	{
-		outSinks.Add(NewObject<UFunKAutomationSink>(this, UFunKAutomationSink::StaticClass()));
-	}
-}
+//void UFunKTestRunner::GetSinks(TArray<TScriptInterface<IFunKSink>>& outSinks)
+//{
+//	outSinks.Add(NewObject<UFunKLogSink>(this, UFunKLogSink::StaticClass()));
+//	if(UFunKAutomationSink::IsAvailable())
+//	{
+//		outSinks.Add(NewObject<UFunKAutomationSink>(this, UFunKAutomationSink::StaticClass()));
+//	}
+//}
 
 void UFunKTestRunner::UpdateState(EFunKTestRunnerState newState)
 {
@@ -308,14 +309,14 @@ bool UFunKTestRunner::IsEnvironmentRunning(const FFunKTestInstructions& Instruct
 	if(isWrongEnvironmentRunning || isLocalProcessOnly)
 		return true;
 
-	for (const uint32 StartedProcess : StartedProcesses)
-	{
-		if(!FPlatformProcess::IsApplicationRunning(StartedProcess))
-		{
-			isWrongEnvironmentRunning = true;
-			break;
-		}
-	}
+	//for (const uint32 StartedProcess : StartedProcesses)
+	//{
+	//	if(!FPlatformProcess::IsApplicationRunning(StartedProcess))
+	//	{
+	//		isWrongEnvironmentRunning = true;
+	//		break;
+	//	}
+	//}
 
 	return true;
 }
@@ -342,7 +343,8 @@ FString UFunKTestRunner::GetCurrentPieWorldPackageName()
 
 bool UFunKTestRunner::IsHoldingSubprocesses() const
 {
-	return StartedProcesses.Num() > 0;
+	return false;
+	//return StartedProcesses.Num() > 0;
 }
 
 bool UFunKTestRunner::StartEnvironment(const FFunKTestInstructions& Instructions)
@@ -415,10 +417,10 @@ bool UFunKTestRunner::StartEnvironment(const FFunKTestInstructions& Instructions
 
 	// Immediately launch the session 
 	GEditor->StartQueuedPlaySessionRequest();
-	if(!isStandalone && !settings.RunTestUnderOneProcess)
-		ProcessStartCapture.GetProcessIds(StartedProcesses);
+	//if(!isStandalone && !settings.RunTestUnderOneProcess)
+	//	ProcessStartCapture.GetProcessIds(StartedProcesses);
 	
-	return FailHandler.CanProceed() && (settings.RunTestUnderOneProcess || isStandalone || (ProcessStartCapture.IsValid() && StartedProcesses.Num() == 2));
+	return FailHandler.CanProceed() && (settings.RunTestUnderOneProcess || isStandalone); // || (ProcessStartCapture.IsValid() && StartedProcesses.Num() == 2));
 }
 
 void UFunKTestRunner::SetFpsSettings(ULevelEditorPlaySettings* playSettings, const FFunKSettings& funkSettings, bool isDedicated)

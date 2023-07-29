@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Events/FunKEvent.h"
 #include "FunKWorldTestController.generated.h"
 
 class AFunKTestBase;
@@ -30,8 +31,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	virtual void ExecuteTestByName(FString TestName, TScriptInterface<IFunKSink> ReportSink);
-	virtual void ExecuteAllTests(TScriptInterface<IFunKSink> ReportSink);
+	virtual void ExecuteTestByName(FString TestName);
+	virtual void ExecuteAllTests();
 
 	virtual bool IsFinished() const;
 	
@@ -42,15 +43,15 @@ private:
 	UPROPERTY()
 	UFunKWorldTestExecution* CurrentTestExecution;
 	
-	void ExecuteTests(const TArray<AFunKTestBase*>& TestToExecute, TScriptInterface<IFunKSink> ReportSink, FGuid TestRunID);
+	void ExecuteTests(const TArray<AFunKTestBase*>& TestToExecute, FGuid TestRunID);
 
 	UFUNCTION(Server, Reliable)
 	void ServerExecuteTestByName(const FString& TestName, FGuid TestRunID);
 	UFUNCTION(Server, Reliable)
 	void ServerExecuteAllTests(FGuid TestRunID);
 	
-	virtual void ExecuteTestByName(const FString& TestName, TScriptInterface<IFunKSink> ReportSink, FGuid TestRunID);
-	virtual void ExecuteAllTests(TScriptInterface<IFunKSink> ReportSink, FGuid TestRunID);
+	virtual void ExecuteTestByName(const FString& TestName, FGuid TestRunID);
+	virtual void ExecuteAllTests(FGuid TestRunID);
 	
 	UFUNCTION(Client, Reliable)
 	void ClientBeginLocalTest(AFunKTestBase* TestToBegin, FGuid TestRunID, int32 Seed);

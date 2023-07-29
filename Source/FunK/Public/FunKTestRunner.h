@@ -6,7 +6,6 @@
 #include "FunKTestInstructions.h"
 #include "FunKTestRunnerType.h"
 #include "EventBus/FunKEventBusRegistrationContainer.h"
-#include "EventBus/FunKEventBusSubsystem.h"
 #include "UObject/Object.h"
 #include "FunKTestRunner.generated.h"
 

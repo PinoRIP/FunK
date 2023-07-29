@@ -12,11 +12,11 @@ UFunKWorldSubsystem* UFunKBlueprintFunctionLibrary::GetFunKWorldSubsystem(UObjec
 	return WorldContext->GetWorld()->GetSubsystem<UFunKWorldSubsystem>();
 }
 
-int32 UFunKBlueprintFunctionLibrary::GetRoleNumber(UObject* WorldContext)
+int32 UFunKBlueprintFunctionLibrary::GetPeerIndex(UObject* WorldContext)
 {
 	if(const UFunKWorldSubsystem* Subsystem = GetFunKWorldSubsystem(WorldContext))
 	{
-		return Subsystem->GetRoleNum();
+		return Subsystem->GetPeerIndex();
 	}
 
 	return INDEX_NONE;
@@ -57,7 +57,7 @@ void UFunKBlueprintFunctionLibrary::SwitchClients(UObject* WorldContext, EFunKCl
 	}
 	else if (netMode == EFunKNetMode::Client)
 	{
-		const int32 number = GetRoleNumber(WorldContext);
+		const int32 number = GetPeerIndex(WorldContext);
 		if (number == 1)
 			Branches = EFunKClient::First;
 		else if (number == 2)

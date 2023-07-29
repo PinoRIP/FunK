@@ -49,7 +49,7 @@ void AFunKFunctionalTest::InvokeAssume()
 {
 	if(!Assume())
 	{
-		FinishStage(EFunKTestResult::Skipped, "Assumption not met");
+		// FinishStage(EFunKTestResult::Skipped, "Assumption not met");
 	}
 }
 

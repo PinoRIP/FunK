@@ -22,7 +22,7 @@ public:
 	static UFunKWorldSubsystem* GetFunKWorldSubsystem(UObject* WorldContext);
 	
 	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
-	static int32 GetRoleNumber(UObject* WorldContext);
+	static int32 GetPeerIndex(UObject* WorldContext);
 
 	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
 	static EFunKNetMode GetNetMode(UObject* WorldContext);

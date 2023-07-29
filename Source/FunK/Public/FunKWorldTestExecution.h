@@ -47,7 +47,7 @@ class FUNK_API UFunKWorldTestExecution : public UObject, public FTickableGameObj
 	GENERATED_BODY()
 
 public:
-	void Start(const UWorld* world, const TArray<AFunKTestBase*>& testsToExecute, TScriptInterface<IFunKSink> reportSink, FGuid executionId);
+	// void Start(const UWorld* world, const TArray<AFunKTestBase*>& testsToExecute, TScriptInterface<IFunKSink> reportSink, FGuid executionId);
 
 	AFunKWorldTestController* GetMasterController() const;
 

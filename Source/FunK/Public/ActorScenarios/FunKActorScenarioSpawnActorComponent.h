@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "FunKActorScenarioComponent.h"
-#include "Components/ActorComponent.h"
 #include "FunKActorScenarioSpawnActorComponent.generated.h"
 
 

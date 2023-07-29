@@ -55,7 +55,7 @@ void AFunKActorScenarioTest::OnBeginStage(const FName& StageName)
 			if(IsLastStage())
 			{
 				// Client 2 is being executed because the TestBase doesn't differentiate between Client_1 & Client_2 (working as designed). If the test it self doesn't need this anymore this is basically a success...
-				FinishStage(EFunKTestResult::Succeeded, "");
+				//FinishStage(EFunKTestResult::Succeeded, "");
 			}
 			else
 			{
@@ -64,11 +64,11 @@ void AFunKActorScenarioTest::OnBeginStage(const FName& StageName)
 			return;
 		}
 		
-		Super::OnBeginStage(StageName);
+		//Super::OnBeginStage(StageName);
 	}
 	else
 	{
-		FinishStage(EFunKTestResult::Skipped, "Skipping stage!");
+		//FinishStage(EFunKTestResult::Skipped, "Skipping stage!");
 	}
 }
 
@@ -109,7 +109,7 @@ void AFunKActorScenarioTest::InvokeAssume()
 {
 	if(!Assume())
 	{
-		FinishStage(EFunKTestResult::Skipped, "Assumption not met");
+		//FinishStage(EFunKTestResult::Skipped, "Assumption not met");
 	}
 }
 
@@ -133,7 +133,7 @@ void AFunKActorScenarioTest::ArrangeScenario()
 	const FFunKStage* stage = GetCurrentStage();
 	if(!stage)
 	{
-		FinishStage(EFunKTestResult::Error, "Missing stage config");
+		//FinishStage(EFunKTestResult::Error, "Missing stage config");
 	}
 
 	if(NetMode != NM_Client)
@@ -148,41 +148,41 @@ void AFunKActorScenarioTest::ArrangeScenario()
 			{
 				check(actor->GetIsReplicated());
 				
-				if(ActorScenarioComponent->IsOppositionActor)
-				{
-					if(StageName.Contains(FunKTestActorScenarioStageExtensionDedicatedServerClientToServer))
-						actor->SetOwner(GetCurrentController());
-					else if(StageName.Contains(FunKTestActorScenarioStageExtensionDedicatedServerServerToClient))
-						actor->SetOwner(GetCurrentController()->GetSpawnedController()[0]->GetOwner());
-					else if(StageName.Contains(FunKTestActorScenarioStageExtensionDedicatedServerClientToClient))
-						actor->SetOwner(GetCurrentController()->GetSpawnedController()[1]->GetOwner());
-					else if(StageName.Contains(FunKTestActorScenarioStageExtensionListenServerClientToServer))
-						actor->SetOwner(GetCurrentController());
-					else if(StageName.Contains(FunKTestActorScenarioStageExtensionListenServerServerToClient))
-						actor->SetOwner(GetCurrentController()->GetSpawnedController()[0]->GetOwner());
-					else if(StageName.Contains(FunKTestActorScenarioStageExtensionListenServerClientToClient))
-						actor->SetOwner(GetCurrentController()->GetSpawnedController()[1]->GetOwner());
-				}
-				else
-				{
-					if(StageName.Contains(FunKTestActorScenarioStageExtensionDedicatedServerClientToServer))
-						actor->SetOwner(GetCurrentController()->GetSpawnedController()[0]->GetOwner());
-					else if(StageName.Contains(FunKTestActorScenarioStageExtensionDedicatedServerServerToClient))
-						actor->SetOwner(GetCurrentController());
-					else if(StageName.Contains(FunKTestActorScenarioStageExtensionDedicatedServerClientToClient))
-						actor->SetOwner(GetCurrentController()->GetSpawnedController()[0]->GetOwner());
-					else if(StageName.Contains(FunKTestActorScenarioStageExtensionListenServerClientToServer))
-						actor->SetOwner(GetCurrentController()->GetSpawnedController()[0]->GetOwner());
-					else if(StageName.Contains(FunKTestActorScenarioStageExtensionListenServerServerToClient))
-						actor->SetOwner(GetCurrentController());
-					else if(StageName.Contains(FunKTestActorScenarioStageExtensionListenServerClientToClient))
-						actor->SetOwner(GetCurrentController()->GetSpawnedController()[0]->GetOwner());
-				}
+				//if(ActorScenarioComponent->IsOppositionActor)
+				//{
+				//	if(StageName.Contains(FunKTestActorScenarioStageExtensionDedicatedServerClientToServer))
+				//		actor->SetOwner(GetCurrentController());
+				//	else if(StageName.Contains(FunKTestActorScenarioStageExtensionDedicatedServerServerToClient))
+				//		actor->SetOwner(GetCurrentController()->GetSpawnedController()[0]->GetOwner());
+				//	else if(StageName.Contains(FunKTestActorScenarioStageExtensionDedicatedServerClientToClient))
+				//		actor->SetOwner(GetCurrentController()->GetSpawnedController()[1]->GetOwner());
+				//	else if(StageName.Contains(FunKTestActorScenarioStageExtensionListenServerClientToServer))
+				//		actor->SetOwner(GetCurrentController());
+				//	else if(StageName.Contains(FunKTestActorScenarioStageExtensionListenServerServerToClient))
+				//		actor->SetOwner(GetCurrentController()->GetSpawnedController()[0]->GetOwner());
+				//	else if(StageName.Contains(FunKTestActorScenarioStageExtensionListenServerClientToClient))
+				//		actor->SetOwner(GetCurrentController()->GetSpawnedController()[1]->GetOwner());
+				//}
+				//else
+				//{
+				//	if(StageName.Contains(FunKTestActorScenarioStageExtensionDedicatedServerClientToServer))
+				//		actor->SetOwner(GetCurrentController()->GetSpawnedController()[0]->GetOwner());
+				//	else if(StageName.Contains(FunKTestActorScenarioStageExtensionDedicatedServerServerToClient))
+				//		actor->SetOwner(GetCurrentController());
+				//	else if(StageName.Contains(FunKTestActorScenarioStageExtensionDedicatedServerClientToClient))
+				//		actor->SetOwner(GetCurrentController()->GetSpawnedController()[0]->GetOwner());
+				//	else if(StageName.Contains(FunKTestActorScenarioStageExtensionListenServerClientToServer))
+				//		actor->SetOwner(GetCurrentController()->GetSpawnedController()[0]->GetOwner());
+				//	else if(StageName.Contains(FunKTestActorScenarioStageExtensionListenServerServerToClient))
+				//		actor->SetOwner(GetCurrentController());
+				//	else if(StageName.Contains(FunKTestActorScenarioStageExtensionListenServerClientToClient))
+				//		actor->SetOwner(GetCurrentController()->GetSpawnedController()[0]->GetOwner());
+				//}
 
 				actor->ForceNetUpdate();
 
 				actor->bAlwaysRelevant = true;
-				actor->SetAutonomousProxy(actor->GetOwner() != GetCurrentController());
+				//actor->SetAutonomousProxy(actor->GetOwner() != GetCurrentController());
 			}
 			
 			AcquiredActors.Add(actor);
@@ -209,7 +209,7 @@ void AFunKActorScenarioTest::CheckArrangeScenarioFinish(float DeltaTime)
 		if(IsLastStage())
 		{
 			// ArrangeScenario ist just for setup. If the test it self doesn't need this anymore this is basically a success...
-			FinishStage(EFunKTestResult::Succeeded, "");
+			//FinishStage(EFunKTestResult::Succeeded, "");
 		}
 		else
 		{
@@ -322,18 +322,18 @@ bool AFunKActorScenarioTest::IsSkippingClient2() const
 	if(StageName.Contains("ArrangeScenario"))
 		return false;
 
-	const AFunKWorldTestController* currentController = GetCurrentController();
-	const bool isDedicated = currentController->GetIsServerDedicated();
-	const bool isClient2 = currentController->GetControllerNumber() == 2;
+	//const AFunKWorldTestController* currentController = GetCurrentController();
+	//const bool isDedicated = currentController->GetIsServerDedicated();
+	//const bool isClient2 = currentController->GetControllerNumber() == 2;
 
-	if (StageName.Contains("Arrange") && isDedicated ? IsArrangeAlsoOn(EFunKTestLocationTarget::DedicatedServerClient) : IsArrangeAlsoOn(EFunKTestLocationTarget::ListenServerClient))
-		return isClient2;
-
-	if (StageName.Contains("Act") && isDedicated ? IsActAlsoOn(EFunKTestLocationTarget::DedicatedServerClient) : IsActAlsoOn(EFunKTestLocationTarget::ListenServerClient))
-		return isClient2;
-
-	if (StageName.Contains("Assert") && isDedicated ? IsAssertAlsoOn(EFunKTestLocationTarget::DedicatedServerClient) : IsAssertAlsoOn(EFunKTestLocationTarget::ListenServerClient))
-		return isClient2;
+	//if (StageName.Contains("Arrange") && isDedicated ? IsArrangeAlsoOn(EFunKTestLocationTarget::DedicatedServerClient) : IsArrangeAlsoOn(EFunKTestLocationTarget::ListenServerClient))
+	//	return isClient2;
+//
+	//if (StageName.Contains("Act") && isDedicated ? IsActAlsoOn(EFunKTestLocationTarget::DedicatedServerClient) : IsActAlsoOn(EFunKTestLocationTarget::ListenServerClient))
+	//	return isClient2;
+//
+	//if (StageName.Contains("Assert") && isDedicated ? IsAssertAlsoOn(EFunKTestLocationTarget::DedicatedServerClient) : IsAssertAlsoOn(EFunKTestLocationTarget::ListenServerClient))
+	//	return isClient2;
 
 	return true;
 }
@@ -360,19 +360,19 @@ bool AFunKActorScenarioTest::IsAlsoOn(int32 state, EFunKTestLocationTarget alsoO
 	return (alsoOnTargetAs32 & state) == alsoOnTargetAs32;
 }
 
-void AFunKActorScenarioTest::FinishStage(EFunKTestResult TestResult, const FString& Message)
-{
-	if(!IsCurrentStageScenarioFinished)
-		IsCurrentStageScenarioFinished = TestResult != EFunKTestResult::None;
-
-	if(IsCurrentStageScenarioFinished && HasMoreScenarios())
-	{
-		RaiseEvent(CreateEvent(TestResult, "Actor scenario stages finished: " + Message).AddToContext(GetStageName().ToString()));
-		TestResult = EFunKTestResult::None;
-	}
-	
-	Super::FinishStage(TestResult, Message);
-}
+//void AFunKActorScenarioTest::FinishStage(EFunKTestResult TestResult, const FString& Message)
+//{
+//	if(!IsCurrentStageScenarioFinished)
+//		IsCurrentStageScenarioFinished = TestResult != EFunKTestResult::None;
+//
+//	if(IsCurrentStageScenarioFinished && HasMoreScenarios())
+//	{
+//		//RaiseEvent(CreateEvent(TestResult, "Actor scenario stages finished: " + Message).AddToContext(GetStageName().ToString()));
+//		TestResult = EFunKTestResult::None;
+//	}
+//	
+//	Super::FinishStage(TestResult, Message);
+//}
 
 AActor* AFunKActorScenarioTest::GetAcquireActorByComponent(UFunKActorScenarioComponent* Component)
 {
@@ -390,7 +390,7 @@ AActor* AFunKActorScenarioTest::GetAcquireActorByComponent(UFunKActorScenarioCom
 
 void AFunKActorScenarioTest::ErrorFallbackStage()
 {
-	FinishStage(EFunKTestResult::Error, "Actor scenario needs actor scenario components!");
+	//FinishStage(EFunKTestResult::Error, "Actor scenario needs actor scenario components!");
 }
 
 void AFunKActorScenarioTest::SetupStages(FFunKStagesSetup& stages, TArray<UFunKActorScenarioComponent*>& actorScenarioComponents)

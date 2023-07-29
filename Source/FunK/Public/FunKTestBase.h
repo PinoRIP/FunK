@@ -4,10 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "FunKTestResult.h"
-#include "FunKTestRunID.h"
+#include "EventBus/FunKEventBusRegistrationContainer.h"
+#include "EventBus/FunKEventBusSubsystem.h"
 #include "Stages/FunKStages.h"
+#include "Events/FunKEvent.h"
+#include "Events/Internal/FunKTestFinishedEvent.h"
+#include "Events/Internal/FunKTestStageFinishedEvent.h"
+#include "Events/Internal/FunKTestStageEvent.h"
+#include "Util/FunKAnonymousBitmask.h"
+
 #include "FunKTestBase.generated.h"
 
+class UFunKEventBusSubsystem;
 class UFunKWorldSubsystem;
 struct FFunKStagesSetup;
 class AFunKWorldTestController;
@@ -45,13 +53,12 @@ public:
 	bool IsRunOnListenServerClients() const;
 
 	virtual void BeginTest(FGuid InTestRunID, int32 InSeed);
-	virtual void BeginTestStage(int32 StageIndex);
 
 	FORCEINLINE FName GetStageName() const;
 	
 	virtual void FinishStage();
 	UFUNCTION(BlueprintCallable, Category="FunK")
-	virtual void FinishStage(EFunKTestResult TestResult, const FString& Message);
+	virtual void FinishStage(EFunKStageResult TestResult, const FString& Message);
 
 	FORCEINLINE FFunKEvent CreateEvent(EFunKTestResult testResult, const FString& Message) const;
 
@@ -67,11 +74,9 @@ public:
 	EFunKTestResult GetTestResult() const;
 	
 	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const;
-	
-	virtual void PostLoad() override;
-	virtual void PostActorCreated() override;
 
-	int32 GetCurrentSeed() const;
+	UFUNCTION(BlueprintCallable, Category="FunK")
+	int32 GetSeed() const;
 
 	bool IsBpEventImplemented(const FName& Name) const;
 
@@ -86,8 +91,8 @@ protected:
 	bool IsEnabled = true;
 	
 	virtual void OnBegin();
-	virtual void OnBeginStage(const FName& StageName);
-	virtual void OnFinishStage(const FName& StageName);
+	virtual void OnBeginStage();
+	virtual void OnFinishStage(EFunKStageResult StageResult, FString Message);
 	virtual void OnFinish(const FString& Message);
 
 	virtual bool IsLastStage();
@@ -106,6 +111,8 @@ protected:
 	int32 GetCurrentStageIndex() const { return CurrentStageIndex; }
 
 	UFunKWorldSubsystem* GetWorldSubsystem() const;
+
+	UFunKEventBusSubsystem* GetEventBusSubsystem() const;
 	
 private:
 	int32 Seed;
@@ -113,11 +120,18 @@ private:
 	FGuid TestRunID;
 	FFunKStages Stages;
 	EFunKTestResult Result = EFunKTestResult::None;
+	FFunKAnonymousBitmask PeerBitMask;
+
+	FFunKEventBusRegistration BeginRegistration;
+	FFunKEventBusRegistrationContainer RunningRegistrations;
 	
 	bool IsCurrentStageTickDelegateSetup = false;
-
-	UPROPERTY()
-	AFunKWorldTestController* CurrentController;
+	void OnBeginStage(const FFunKTestStageEvent& Event);
+	void UpdateStageState(const FFunKTestStageEvent& Event);
+	void OnBeginFirstStage(const FFunKTestStageEvent& Event);
+	void OnFinishStage(const FFunKTestStageFinishedEvent& Event);
+	void OnFinish(const FFunKTestFinishedEvent& Event);
+	void NextStage(FGuid InTestRunID, int32 InSeed);
 	
 	void SetupStages();
 	FFunKStage* GetCurrentStageMutable();
@@ -130,6 +144,9 @@ public:
 	const FFunKStages* GetStages() const;
 
 	void BuildTestRegistry(FString& append) const;
+	
+	virtual void PostLoad() override;
+	virtual void PostActorCreated() override;
 		
 #if WITH_EDITOR
 	virtual void GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const override;

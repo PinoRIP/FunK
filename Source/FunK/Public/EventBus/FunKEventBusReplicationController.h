@@ -8,6 +8,16 @@
 
 struct FFunKEventBusMessage;
 
+USTRUCT()
+struct FFunKCallbackProxyState
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY()
+	TArray<AFunKEventBusReplicationController*> Controllers;
+};
+
 UCLASS()
 class FUNK_API AFunKEventBusReplicationController : public AActor
 {
@@ -21,7 +31,7 @@ public:
 
 	int32 GetActiveController() const { return ActiveController; }
 	int32 GetControllerNumber() const { return ControllerNumber; }
-	int32 GetIsServerDedicated() const { return IsServerDedicated; }
+	bool GetIsServerDedicated() const { return IsServerDedicated; }
 	
 protected:
 	bool IsControllerLocallyReady() const;
@@ -38,10 +48,20 @@ protected:
 	void ClientSendMessage(const FFunKEventBusMessage& message);
 
 	UFUNCTION(Server, Reliable)
+	void ServerEventCallback(FGuid callbackId);
+
+	UFUNCTION(Client, Reliable)
+	void ClientEventCallback(FGuid callbackId);
+
+	UFUNCTION(Server, Reliable)
 	void ServerControllerReady();
 
 	virtual void OnRep_Owner() override;
 
+	void NotifyReplicationControllerRemoved(AFunKEventBusReplicationController* ReplicationController);
+
+	bool ReportProxiedCallbackResponse(AFunKEventBusReplicationController* ReplicationController, FGuid callbackId);
+	
 private:
 	UPROPERTY( replicated )
 	int32 ActiveController;
@@ -51,6 +71,9 @@ private:
 	
 	UPROPERTY( replicated )
 	bool IsServerDedicated = false;
+
+	UPROPERTY()
+	TMap<FGuid, FFunKCallbackProxyState> ProxiedCallbacks;
 
 	bool IsControllerReadinessSend = false;
 

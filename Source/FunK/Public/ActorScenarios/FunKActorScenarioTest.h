@@ -18,7 +18,7 @@ public:
 	
 	virtual void GetLifetimeReplicatedProps( TArray< FLifetimeProperty > & OutLifetimeProps ) const override;
 
-	virtual void OnBeginStage(const FName& StageName) override;
+	virtual void OnBeginStage(const FName& StageName); // override;
 	virtual void OnFinish(const FString& Message) override;
 
 	virtual void Tick(float DeltaTime) override;
@@ -77,7 +77,7 @@ protected:
 	bool HasMoreScenarios() const;
 	virtual void OnStageScenarioChanged(const FName& StageName, const FString& NewStageScenario);
 
-	virtual void FinishStage(EFunKTestResult TestResult, const FString& Message) override;
+	// virtual void FinishStage(EFunKTestResult TestResult, const FString& Message) override;
 
 	UFUNCTION(BlueprintCallable, Category="FunK")
 	AActor* GetAcquireActorByComponent(UFunKActorScenarioComponent* Component);

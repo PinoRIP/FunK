@@ -6,7 +6,8 @@
 #include "FunKTestInstructions.h"
 #include "Misc/AutomationTest.h"
 #include "UObject/Object.h"
-#include "FunKAutomationLatentWaitForTestRunCommand.generated.h"
+
+class UFunKEngineSubsystem;
 
 DEFINE_LATENT_AUTOMATION_COMMAND_TWO_PARAMETER(FFunKAutomationLatentWaitForTestRunCommand, TWeakObjectPtr<UFunKEngineSubsystem>, EngineSubsystem, FFunKTestInstructions, TestInstructions);
 

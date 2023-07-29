@@ -25,7 +25,8 @@ public:
 
 	virtual void Deinitialize() override;
 
-	int32 GetRoleNum() const;
+	int32 GetPeerIndex() const;
+	int32 GetPeerCount() const;
 	bool IsServerDedicated() const;
 	
 private:

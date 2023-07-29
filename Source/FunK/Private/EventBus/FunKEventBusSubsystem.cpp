@@ -7,6 +7,7 @@
 
 bool FFunKEventBusMessage::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess)
 {
+	Ar << CallbackId;
 	Ar << Type;
 
 	if (Type)
@@ -126,6 +127,41 @@ void UFunKEventBusSubsystem::ReceiveMessage(const FFunKEventBusMessage& Message)
 	}
 }
 
+void UFunKEventBusSubsystem::CheckCallback(FGuid callbackId, AFunKEventBusReplicationController* FromController)
+{
+	if(!callbackId.IsValid()) return;
+	FFunKEventCallbackState* callbackState = Callbacks.Find(callbackId);
+	if(!callbackState) return;
+
+	if(FromController)
+	{
+		callbackState->DispatchedControllers.Remove(FromController);
+	}
+
+	if(callbackState->DispatchedControllers.Num() == 0)
+	{
+		callbackState->Function();
+		Callbacks.Remove(callbackId);
+	}
+}
+
+int32 UFunKEventBusSubsystem::GetReplicationControllerCount() const
+{
+	if(GetWorld()->GetNetMode() < NM_Client)
+		return ReplicationControllers.Num();
+
+	return GetLocalController()->GetActiveController();
+}
+
+void UFunKEventBusSubsystem::GetReplicationControllers(TArray<AFunKEventBusReplicationController*>& Array)
+{
+	Array.Empty(ReplicationControllers.Num());
+	for (FReplicationControllerState& ReplicationController : ReplicationControllers)
+	{
+		Array.Add(ReplicationController.Reference);
+	}
+}
+
 void UFunKEventBusSubsystem::OnConnect(AGameModeBase* GameMode, APlayerController* NewPlayer)
 {
 	RegisterController(NewPlayer);
@@ -186,10 +222,18 @@ void UFunKEventBusSubsystem::DeregisterController(AController* Controller)
 {
 	for (int i = 0; i < ReplicationControllers.Num(); ++i)
 	{
-		FReplicationControllerState& ReplicationController = ReplicationControllers[i];
-		if(ReplicationController.Reference->GetOwner() == Controller)
+		FReplicationControllerState& ReplicationControllerToRemove = ReplicationControllers[i];
+		if(ReplicationControllerToRemove.Reference->GetOwner() == Controller)
 		{
-			ReplicationController.Reference->GetWorld()->RemoveActor(ReplicationController.Reference, false);
+			for (FReplicationControllerState& ReplicationControllerToNotify : ReplicationControllers)
+			{
+				if(ReplicationControllerToNotify.Reference != ReplicationControllerToRemove.Reference)
+				{
+					ReplicationControllerToNotify.Reference->NotifyReplicationControllerRemoved(ReplicationControllerToRemove.Reference);
+				}
+			}
+			
+			ReplicationControllerToRemove.Reference->GetWorld()->RemoveActor(ReplicationControllerToRemove.Reference, false);
 			ReplicationControllers.RemoveAt(i);
 			break;
 		}
@@ -208,21 +252,43 @@ bool UFunKEventBusSubsystem::HasHandler(int32 key)
 	return !!Handlers.Find(key);
 }
 
-void UFunKEventBusSubsystem::SendMessage(const FFunKEventBusMessage& Message)
+void UFunKEventBusSubsystem::SendMessage(FFunKEventBusMessage& Message, TOptional<TFunction<void()>>& Callback)
 {
+	FFunKEventCallbackState* CallbackState = nullptr;
+	if(Callback.IsSet())
+	{
+		FGuid id = FGuid::NewGuid();
+		CallbackState = &Callbacks.Emplace(id);
+		CallbackState->Id = id;
+		CallbackState->Function = Callback.GetValue();
+
+		Message.CallbackId = id;
+	}
+	
 	auto netMode = GetWorld()->GetNetMode();
 	if(netMode == NM_Client)
 	{
 		if(LocalController)
+		{
 			LocalController->ServerSendMessage(Message);
+
+			if(CallbackState)
+				CallbackState->DispatchedControllers.Add(LocalController);
+		}
 	}
 	else if(netMode != NM_Standalone)
 	{
 		for (FReplicationControllerState& ReplicationController : ReplicationControllers)
 		{
 			ReplicationController.Reference->ClientSendMessage(Message);
+
+			if(CallbackState)
+				CallbackState->DispatchedControllers.Add(ReplicationController.Reference);
 		}
 	}
 
 	ReceiveMessage(Message);
+
+	if(CallbackState)
+		CheckCallback(CallbackState->Id, nullptr);
 }

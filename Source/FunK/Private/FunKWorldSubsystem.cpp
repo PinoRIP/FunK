@@ -51,12 +51,12 @@ void UFunKWorldSubsystem::Deinitialize()
 	Super::Deinitialize();
 }
 
-int32 UFunKWorldSubsystem::GetRoleNum() const
+int32 UFunKWorldSubsystem::GetPeerIndex() const
 {
 	UWorld* world = GetWorld();
 	auto netMode = world->GetNetMode();
 
-	if(netMode > NM_Client) return 0;
+	if(netMode < NM_Client) return 0;
 
 	const UFunKEventBusSubsystem* funkEventSubsystem = world->GetSubsystem<UFunKEventBusSubsystem>();
 	if(!funkEventSubsystem) return INDEX_NONE;
@@ -67,12 +67,24 @@ int32 UFunKWorldSubsystem::GetRoleNum() const
 	return funkEventController->GetControllerNumber();
 }
 
+int32 UFunKWorldSubsystem::GetPeerCount() const
+{
+	UWorld* world = GetWorld();
+	auto netMode = world->GetNetMode();
+	if(netMode == NM_Standalone) return 1;
+
+	const UFunKEventBusSubsystem* funkEventSubsystem = world->GetSubsystem<UFunKEventBusSubsystem>();
+	if(!funkEventSubsystem) return 1;
+
+	return funkEventSubsystem->GetReplicationControllerCount() + 1;
+}
+
 bool UFunKWorldSubsystem::IsServerDedicated() const
 {
 	UWorld* world = GetWorld();
 	auto netMode = world->GetNetMode();
 
-	if(netMode > NM_Client) return netMode == NM_DedicatedServer;
+	if(netMode < NM_Client) return netMode == NM_DedicatedServer;
 
 	const UFunKEventBusSubsystem* funkEventSubsystem = world->GetSubsystem<UFunKEventBusSubsystem>();
 	if(!funkEventSubsystem) return false;

@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Interface.h"
+#include "FunKTestInstructions.h"
 #include "FunKEnvironmentHandler.generated.h"
 
 class UFunKEventBusSubsystem;

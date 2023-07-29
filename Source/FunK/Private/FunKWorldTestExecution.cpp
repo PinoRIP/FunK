@@ -14,31 +14,31 @@ FString UFunKWorldTestExecution::FunKTestLifeTimeFinishStageEvent = FString("Fun
 FString UFunKWorldTestExecution::FunKTestLifeTimeFinishEvent = FString("FunKTestLifeTimeFinishEvent");
 FString UFunKWorldTestExecution::FunKTestLifeTimeAllTestExecutionsFinishedEvent = FString("FunKTestLifeTimeAllTestExecutionsFinishedEvent");
 
-void UFunKWorldTestExecution::Start(const UWorld* world, const TArray<AFunKTestBase*>& testsToExecute, TScriptInterface<IFunKSink> reportSink, FGuid executionId)
-{
-	const ENetMode netMode = world->GetNetMode();
-	check(netMode != ENetMode::NM_Client)
-	
-	MasterController = world->GetSubsystem<UFunKWorldSubsystem>()->GetLocalTestController();
-	check(!MasterController->CurrentTestExecution)
-	
-	TestsToExecute = testsToExecute;
-	ReportSink = reportSink;
-	ThisExecutionID = executionId.ToString();
-
-	MasterController->CurrentTestExecution = this;
-	for (AFunKWorldTestController* SpawnedController : MasterController->SpawnedController)
-	{
-		SpawnedController->CurrentTestExecution = this;
-	}
-	
-	Settings = GetDefault<UFunKSettingsObject>();
-
-	TotalTime = 0.f;
-	IsAnyStarted = true;
-	IsAllFinished = false;
-	NextTest();
-}
+//void UFunKWorldTestExecution::Start(const UWorld* world, const TArray<AFunKTestBase*>& testsToExecute, TScriptInterface<IFunKSink> reportSink, FGuid executionId)
+//{
+//	const ENetMode netMode = world->GetNetMode();
+//	check(netMode != ENetMode::NM_Client)
+//	
+//	MasterController = world->GetSubsystem<UFunKWorldSubsystem>()->GetLocalTestController();
+//	check(!MasterController->CurrentTestExecution)
+//	
+//	TestsToExecute = testsToExecute;
+//	ReportSink = reportSink;
+//	ThisExecutionID = executionId.ToString();
+//
+//	MasterController->CurrentTestExecution = this;
+//	for (AFunKWorldTestController* SpawnedController : MasterController->SpawnedController)
+//	{
+//		SpawnedController->CurrentTestExecution = this;
+//	}
+//	
+//	Settings = GetDefault<UFunKSettingsObject>();
+//
+//	TotalTime = 0.f;
+//	IsAnyStarted = true;
+//	IsAllFinished = false;
+//	NextTest();
+//}
 
 bool UFunKWorldTestExecution::IsTimeout(const FFunKTimeLimit* limit, float time)
 {
@@ -94,7 +94,7 @@ void UFunKWorldTestExecution::Finish()
 	IsAllFinished = true;
 	IsAnyStarted = false;
 	
-	RaiseEvent(FFunKEvent::Info("Test execution finished", FunKTestLifeTimeAllTestExecutionsFinishedEvent).AddToContext(ThisExecutionID));
+	// RaiseEvent(FFunKEvent::Info("Test execution finished", FunKTestLifeTimeAllTestExecutionsFinishedEvent).AddToContext(ThisExecutionID));
 	CurrentExecutions.Empty();
 	ThisExecutionID.Empty();
 	Settings = nullptr;
@@ -102,11 +102,11 @@ void UFunKWorldTestExecution::Finish()
 	if(MasterController->CurrentTestExecution == this)
 		MasterController->CurrentTestExecution = nullptr;
 	
-	for (AFunKWorldTestController* SpawnedController : MasterController->SpawnedController)
-	{
-		if(SpawnedController->CurrentTestExecution == this)
-			SpawnedController->CurrentTestExecution = nullptr;
-	}
+	// for (AFunKWorldTestController* SpawnedController : MasterController->SpawnedController)
+	// {
+	// 	if(SpawnedController->CurrentTestExecution == this)
+	// 		SpawnedController->CurrentTestExecution = nullptr;
+	// }
 }
 
 void UFunKWorldTestExecution::StartSync()
@@ -219,10 +219,10 @@ void UFunKWorldTestExecution::RunTest(AFunKTestBase* test)
 		if(executeServer)
 			RunTestOnController(test, MasterController, netMode, seed);
 
-		if(executeClients) for (AFunKWorldTestController* SpawnedController : MasterController->SpawnedController)
-		{
-			RunTestOnController(test, SpawnedController, ENetMode::NM_Client, seed);
-		}
+		// if(executeClients) for (AFunKWorldTestController* SpawnedController : MasterController->SpawnedController)
+		// {
+		// 	RunTestOnController(test, SpawnedController, ENetMode::NM_Client, seed);
+		// }
 	}
 }
 
@@ -294,7 +294,7 @@ void UFunKWorldTestExecution::OnTestFinished(FFunKTestExecutionState* State)
 
 void UFunKWorldTestExecution::OnTestFinished()
 {
-	RaiseEvent(FFunKEvent::Info("Finished Test acknowledged", GetCurrentTest()->GetName()).AddToContext(ThisExecutionID));
+	//RaiseEvent(FFunKEvent::Info("Finished Test acknowledged", GetCurrentTest()->GetName()).AddToContext(ThisExecutionID));
 	NextTestAsync();
 }
 
@@ -302,7 +302,7 @@ void UFunKWorldTestExecution::OnTestExecutionCanceled(const FString& ReasonMessa
 {
 	const AFunKTestBase* currentTest = GetCurrentTest();
 	
-	RaiseEvent(FFunKEvent::Error("Canceled Test: " + ReasonMessage, currentTest ? GetCurrentTest()->GetName() : "Missing Test").AddToContext(ThisExecutionID));
+	//RaiseEvent(FFunKEvent::Error("Canceled Test: " + ReasonMessage, currentTest ? GetCurrentTest()->GetName() : "Missing Test").AddToContext(ThisExecutionID));
 	NextTest();
 }
 
@@ -310,8 +310,8 @@ FFunKTestExecutionState* UFunKWorldTestExecution::GetStateFromEvent(const FFunKE
 {
 	for(int32 i = 0; i < CurrentExecutions.Num(); i++)
 	{
-		if(raisedEvent.Context.Contains(CurrentExecutions[i].Id.ToString()))
-			return &CurrentExecutions[i];
+		//if(raisedEvent.Context.Contains(CurrentExecutions[i].Id.ToString()))
+		//	return &CurrentExecutions[i];
 	}
 	
 	return nullptr;
@@ -319,18 +319,18 @@ FFunKTestExecutionState* UFunKWorldTestExecution::GetStateFromEvent(const FFunKE
 
 void UFunKWorldTestExecution::RaiseEvent(const FFunKEvent& raisedEvent) const
 {
-	ReportSink->RaiseEvent(raisedEvent);
-	
-	if(raisedEvent.Context.Contains(FunKTestLifeTimeFinishStageEvent))
-	{
-		UFunKWorldTestExecution* mutableThis = const_cast<UFunKWorldTestExecution*>(this);
-		mutableThis->OnTestStageFinished(raisedEvent);
-	}
-	else if(raisedEvent.Context.Contains(FunKTestLifeTimeFinishEvent))
-	{
-		UFunKWorldTestExecution* mutableThis = const_cast<UFunKWorldTestExecution*>(this);
-		mutableThis->OnTestFinished(raisedEvent);
-	}
+	//ReportSink->RaiseEvent(raisedEvent);
+	//
+	//if(raisedEvent.Context.Contains(FunKTestLifeTimeFinishStageEvent))
+	//{
+	//	UFunKWorldTestExecution* mutableThis = const_cast<UFunKWorldTestExecution*>(this);
+	//	mutableThis->OnTestStageFinished(raisedEvent);
+	//}
+	//else if(raisedEvent.Context.Contains(FunKTestLifeTimeFinishEvent))
+	//{
+	//	UFunKWorldTestExecution* mutableThis = const_cast<UFunKWorldTestExecution*>(this);
+	//	mutableThis->OnTestFinished(raisedEvent);
+	//}
 }
 
 void UFunKWorldTestExecution::Tick(float DeltaTime)
@@ -367,7 +367,7 @@ void UFunKWorldTestExecution::Tick(float DeltaTime)
 			const FFunKTimeLimit* limit = &Settings->Settings.SyncTimeLimit;
 			if(IsTimeout(limit, PendingSyncTime))
 			{
-				RaiseEvent(currentTest->CreateEvent(limit->Result, limit->Message.ToString()));
+				//RaiseEvent(currentTest->CreateEvent(limit->Result, limit->Message.ToString()));
 				NextTest();
 				return;
 			}
