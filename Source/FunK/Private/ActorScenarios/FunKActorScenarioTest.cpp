@@ -26,6 +26,11 @@ AFunKActorScenarioTest::AFunKActorScenarioTest()
 	bReplicates = true;
 
 	AlsoAssertOn = static_cast<int32>(EFunKTestLocationTarget::DedicatedServer | EFunKTestLocationTarget::ListenServer | EFunKTestLocationTarget::DedicatedServerClient | EFunKTestLocationTarget::ListenServerClient);
+
+	ArrangeScenarioTimeLimit.Message = FText::FromString("Arrange scenario time limit reached!");
+	ArrangeTimeLimit.Message = FText::FromString("Arrange time limit reached!");
+	ActTimeLimit.Message = FText::FromString("Act time limit reached!");
+	AssertTimeLimit.Message = FText::FromString("Assert time limit reached!");
 }
 
 void AFunKActorScenarioTest::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -139,8 +144,8 @@ void AFunKActorScenarioTest::ArrangeScenario()
 			AActor* actor = ActorScenarioComponent->AcquireActor();
 
 			if(NetMode != NM_Standalone)
-			{		
-				actor->SetReplicates(true);
+			{
+				check(actor->GetIsReplicated());
 				
 				if(ActorScenarioComponent->IsOppositionActor)
 				{
@@ -173,8 +178,10 @@ void AFunKActorScenarioTest::ArrangeScenario()
 						actor->SetOwner(GetCurrentController()->GetSpawnedController()[0]->GetOwner());
 				}
 
-				if(ActorScenarioComponent->IsAutonomousProxy)
-					actor->SetAutonomousProxy(true);
+				actor->ForceNetUpdate();
+
+				actor->bAlwaysRelevant = true;
+				actor->SetAutonomousProxy(actor->GetOwner() != GetCurrentController());
 			}
 			
 			AcquiredActors.Add(actor);
@@ -191,6 +198,13 @@ void AFunKActorScenarioTest::CheckArrangeScenarioFinish(float DeltaTime)
 
 	if(AcquiredActors.Num() == ActorScenarioComponents.Num())
 	{
+		for (int i = 0; i < AcquiredActors.Num(); ++i)
+		{
+			const AActor* AcquiredActor = AcquiredActors[i];
+			if(!AcquiredActor->HasActorBegunPlay())
+				return;
+		}
+		
 		Super::FinishStage();
 	}
 }
@@ -299,12 +313,15 @@ bool AFunKActorScenarioTest::IsSkippingClient2() const
 	const ENetMode netMode = GetNetMode();
 	if(netMode != NM_Client || CurrentStageScenario == FunKTestActorScenarioStageExtensionDedicatedServerClientToClient || CurrentStageScenario == FunKTestActorScenarioStageExtensionListenServerClientToClient)
 		return false;
+	
+	const FString StageName = GetStageName().ToString();
+
+	if(StageName.Contains("ArrangeScenario"))
+		return false;
 
 	const AFunKWorldTestController* currentController = GetCurrentController();
-	
 	const bool isDedicated = currentController->GetIsServerDedicated();
 	const bool isClient2 = currentController->GetControllerNumber() == 2;
-	const FString StageName = GetStageName().ToString();
 
 	if (StageName.Contains("Arrange") && isDedicated ? IsArrangeAlsoOn(EFunKTestLocationTarget::DedicatedServerClient) : IsArrangeAlsoOn(EFunKTestLocationTarget::ListenServerClient))
 		return isClient2;
@@ -431,9 +448,9 @@ void AFunKActorScenarioTest::AddScenarioStages(FFunKStagesSetup& stages, const F
 			.UpdateTimeLimit(ArrangeScenarioTimeLimit)
 			.SetRunOnStandalone(standalone)
 			.SetRunOnDedicatedServer(dedicated || (!dedicated && dedicatedClient))
-			.SetRunOnDedicatedServerClient(dedicatedClient)
-			.SetRunOnListenServer(listen || (!dedicated && listenClient))
-			.SetRunOnListenServerClient(listenClient);
+			.SetRunOnDedicatedServerClient(dedicatedClient || (!dedicatedClient && dedicated))
+			.SetRunOnListenServer(listen || (!listen && listenClient))
+			.SetRunOnListenServerClient(listenClient || (!listenClient && listen));
 
 		stages
 			.AddNamedLatentStage<AFunKActorScenarioTest>(FName("Arrange for " + name), &AFunKActorScenarioTest::Arrange)

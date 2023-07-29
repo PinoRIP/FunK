@@ -8,6 +8,7 @@
 #include "FunKSettingsObject.h"
 #include "FunKWorldSubsystem.h"
 #include "FunKWorldTestController.h"
+#include "Editor/EditorPerformanceSettings.h"
 #include "GameFramework/GameStateBase.h"
 #include "Sinks/FunKAutomationSink.h"
 #include "Sinks/FunKLogSink.h"
@@ -331,11 +332,17 @@ bool UFunKTestRunner::StartEnvironment(const FFunKTestInstructions& Instructions
 {
 	FFunKFailedPieStartCapture FailHandler;
 	FFunKNewProcessCapture ProcessStartCapture;
+
+	UEditorPerformanceSettings* Settings = GetMutableDefault<UEditorPerformanceSettings>();
+	Settings->bThrottleCPUWhenNotForeground = false;
+	Settings->bMonitorEditorPerformance = false;
+	Settings->PostEditChange();
 		
 	FRequestPlaySessionParams params;
 	params.EditorPlaySettings = NewObject<ULevelEditorPlaySettings>();
 	params.EditorPlaySettings->NewWindowHeight = 1080;
 	params.EditorPlaySettings->NewWindowWidth = 1920;
+	
 	params.GlobalMapOverride = Instructions.MapPackageName;
 	params.AdditionalStandaloneCommandLineParameters = FFunKModule::FunkTestStartParameter;
 	
