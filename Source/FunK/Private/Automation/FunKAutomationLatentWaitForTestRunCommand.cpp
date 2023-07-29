@@ -2,8 +2,7 @@
 
 
 #include "Automation/FunKAutomationLatentWaitForTestRunCommand.h"
-
-#include "FunKEngineSubsystem.h"
+#include "Automation/FunKEngineSubsystem.h"
 #include "Automation/FunKAutomationEntry.h"
 
 bool FFunKAutomationLatentWaitForTestRunCommand::Update()

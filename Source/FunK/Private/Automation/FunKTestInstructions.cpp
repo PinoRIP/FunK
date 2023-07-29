@@ -1,8 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "FunKTestInstructions.h"
-
+#include "Automation/FunKTestInstructions.h"
 #include "FunK.h"
 
 bool FFunKTestInstructions::IsStandaloneTest() const

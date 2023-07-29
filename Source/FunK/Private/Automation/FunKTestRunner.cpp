@@ -1,19 +1,13 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
-#include "FunKTestRunner.h"
+#include "Automation/FunKTestRunner.h"
 #include "FileHelpers.h"
-#include "FunK.h"
-#include "FunKEngineSubsystem.h"
-#include "Captures/FunKFailedPieStartCapture.h"
-#include "Captures/FunKNewProcessCapture.h"
-#include "FunKSettingsObject.h"
+#include "Automation/FunKEngineSubsystem.h"
 #include "FunKWorldSubsystem.h"
 #include "FunKWorldTestController.h"
-#include "Editor/EditorPerformanceSettings.h"
-#include "Environment/FunKEditorEnvironmentHandler.h"
+#include "Automation/FunKEditorEnvironmentHandler.h"
 #include "Events/FunKEvent.h"
 #include "GameFramework/GameStateBase.h"
 #include "Misc/AutomationTest.h"
-#include "UObject/UnrealTypePrivate.h"
 
 class UFunKSettingsObject;
 

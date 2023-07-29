@@ -1,10 +1,10 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
-#include "FunKEngineSubsystem.h"
+#include "Automation/FunKEngineSubsystem.h"
 #include "FunK.h"
 #include "FunKLogging.h"
 #include "FunKSettingsObject.h"
-#include "FunKTestRunner.h"
+#include "Automation/FunKTestRunner.h"
 
 UFunKTestRunner* UFunKEngineSubsystem::StartTestRunner()
 {

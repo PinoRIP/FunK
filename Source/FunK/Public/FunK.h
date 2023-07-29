@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FunKTestRunner.h"
+#include "Automation/FunKTestRunner.h"
 #include "Modules/ModuleManager.h"
 
 class IAssetRegistry;

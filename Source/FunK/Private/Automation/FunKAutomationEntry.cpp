@@ -2,9 +2,8 @@
 
 #include "Automation/FunKAutomationEntry.h"
 #include "CoreMinimal.h"
-#include "Editor.h"
 #include "FunK.h"
-#include "FunKEngineSubsystem.h"
+#include "Automation/FunKEngineSubsystem.h"
 #include "Automation/FunKAutomationLatentTestRunCommand.h"
 #include "Automation/FunKAutomationLatentWaitForTestRunCommand.h"
 
