@@ -204,8 +204,23 @@ void AFunKActorScenarioTest::CheckArrangeScenarioFinish(float DeltaTime)
 			if(!AcquiredActor || !AcquiredActor->HasActorBegunPlay())
 				return;
 		}
-		
-		Super::FinishStage();
+
+		const ENetMode NetMode = GetNetMode();
+		if(NetMode == NM_DedicatedServer || NetMode == NM_ListenServer)
+		{
+			if(HasMoreScenarios())
+			{
+				Super::FinishStage();
+			}
+			else
+			{
+				FinishStage(EFunKTestResult::Succeeded, "");
+			}
+		}
+		else
+		{
+			Super::FinishStage();
+		}		
 	}
 }
 
