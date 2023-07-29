@@ -10,7 +10,7 @@ bool FFunKAutomationLatentWaitForTestRunCommand::Update()
 {
 	if(EngineSubsystem.IsValid())
 	{
-		if(!EngineSubsystem->IsRunning()) return false;
+		if(EngineSubsystem->IsRunning()) return false;
 		FFunKAutomationEntry::StartTest(EngineSubsystem.Get(), TestInstructions);
 	}
 

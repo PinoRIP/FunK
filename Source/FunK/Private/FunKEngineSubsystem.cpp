@@ -21,6 +21,11 @@ UFunKTestRunner* UFunKEngineSubsystem::GetTestRunner() const
 	return ActiveTestRun;
 }
 
+bool UFunKEngineSubsystem::HasTestRunner() const
+{
+	return !!ActiveTestRun;
+}
+
 void UFunKEngineSubsystem::EndTestRun()
 {
 	if(ActiveTestRun && ActiveTestRun->IsRunning())
@@ -46,12 +51,6 @@ void UFunKEngineSubsystem::Deinitialize()
 bool UFunKEngineSubsystem::IsRunning() const
 {
 	return ActiveTestRun && ActiveTestRun->IsRunning();
-}
-
-void UFunKEngineSubsystem::CallbackTestWorldBeganPlay(UWorld* world) const
-{
-	if(ActiveTestRun)
-		ActiveTestRun->SetWorld(world);
 }
 
 bool UFunKEngineSubsystem::IsSeparateTestingProcess()

@@ -2,7 +2,6 @@
 
 
 #include "ActorScenarios/FunKActorScenarioTest.h"
-#include "FunKWorldTestController.h"
 #include "ActorScenarios/FunKActorScenarioComponent.h"
 #include "Engine/ActorChannel.h"
 #include "Net/UnrealNetwork.h"
@@ -395,6 +394,8 @@ void AFunKActorScenarioTest::ErrorFallbackStage()
 
 void AFunKActorScenarioTest::SetupStages(FFunKStagesSetup& stages, TArray<UFunKActorScenarioComponent*>& actorScenarioComponents)
 {
+	return;
+	
 	int32 standaloneCount = 0, dedicatedServerCount = 0, dedicatedServerClientCount = 0, listenServerCount = 0, listenServerClientCount = 0, dedicatedServerOpposition = 0, dedicatedServerClientOppositionCount = 0,  listenServerOpposition = 0, listenServerClientOppositionCount = 0;;
 	for (const UFunKActorScenarioComponent* ActorScenarioComponent : actorScenarioComponents)
 	{

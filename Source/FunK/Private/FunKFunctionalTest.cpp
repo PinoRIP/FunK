@@ -49,7 +49,7 @@ void AFunKFunctionalTest::InvokeAssume()
 {
 	if(!Assume())
 	{
-		// FinishStage(EFunKTestResult::Skipped, "Assumption not met");
+		FinishStage(EFunKStageResult::Skipped, "Assumption not met");
 	}
 }
 
@@ -93,10 +93,6 @@ void AFunKFunctionalTest::BpArrangeTick_Implementation(float DeltaTime)
 void AFunKFunctionalTest::Act()
 {
 	BpAct();
-}
-
-void AFunKFunctionalTest::BpAct_Implementation()
-{
 }
 
 void AFunKFunctionalTest::BpActTick_Implementation(float DeltaTime)

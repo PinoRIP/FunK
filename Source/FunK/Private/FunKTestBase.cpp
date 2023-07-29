@@ -7,6 +7,7 @@
 #include "FunKWorldTestController.h"
 #include "FunKWorldTestExecution.h"
 #include "Events/FunKEvent.h"
+#include "Events/FunKTestLifeTimeContext.h"
 #include "Events/Internal/FunKTestFinishedEvent.h"
 #include "Events/Internal/FunKTestStageEvent.h"
 #include "Events/Internal/FunKTestStageFinishedEvent.h"
@@ -19,7 +20,10 @@ struct FFunKTestFinishedEvent;
 AFunKTestBase::AFunKTestBase()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	bAlwaysRelevant = true;
 	bReplicates = true;
+
+	RootComponent = CreateDefaultSubobject<USceneComponent>("Root");
 }
 
 bool AFunKTestBase::IsStandaloneModeTest() const
@@ -57,7 +61,7 @@ bool AFunKTestBase::IsRunOnListenServerClients() const
 	return Stages.OnListenServerClientCount > 0;
 }
 
-void AFunKTestBase::BeginTest(FGuid InTestRunID, int32 InSeed)
+void AFunKTestBase::BeginTest(int32 InTestRunID, int32 InSeed)
 {
 	if(IsRunning()) return;
 	
@@ -69,20 +73,43 @@ void AFunKTestBase::BeginTest(FGuid InTestRunID, int32 InSeed)
 			OnFinishStage(Event);
 		}
 	}));
+
+	GetEventBusSubsystem()->Raise<FFunKEvent>(FFunKEvent::Info("Start Test", GetName()).AddToContext(FunKTestLifeTimeContext::BeginTest).AddToContext(InTestRunID));
 	
 	NextStage(InTestRunID, InSeed);
 }
 
+void AFunKTestBase::FinishTest(const FString& Reason)
+{
+	FinishTest(EFunKTestResult::Invalid, Reason);
+}
+
+void AFunKTestBase::FinishTest(EFunKTestResult InResult, const FString& Reason)
+{
+	if(!IsRunning()) return;
+
+	Finish(InResult, Reason.Len() > 0 ? Reason  : "Test was manually finished");
+}
+
 void AFunKTestBase::OnFinishStage(const FFunKTestStageFinishedEvent& Event)
 {
-	if(Event.StageIndex != CurrentStageIndex) return;
-	if(Event.TestRunID != TestRunID) return;
+	if (Event.StageIndex != CurrentStageIndex) return;
+	if (Event.TestRunID != TestRunID) return;
+	if (IsLocalFinish) return;
+	
+	if (Event.Result != EFunKStageResult::Succeeded)
+	{
+		GetEventBusSubsystem()->Raise<FFunKEvent>(FFunKEvent::Info("Finish Stage", GetStageName().ToString()).AddToContext(FunKTestLifeTimeContext::FinishStage).AddToContext(LexToString(Event.Result)).AddToContext(TestRunID));
+		Finish(StageToTestResult(Event.Result), Event.Message);
+		return;
+	}
 
 	PeerBitMask.Set(Event.PeerIndex);
-	if(PeerBitMask.IsSet())
+	if (PeerBitMask.IsSet())
 	{
+		GetEventBusSubsystem()->Raise<FFunKEvent>(FFunKEvent::Info("Finish Stage", GetStageName().ToString()).AddToContext(FunKTestLifeTimeContext::FinishStage).AddToContext(TestRunID));
 		PeerBitMask.ClearAll();
-		NextStage(Event.TestRunID, GetSeed());
+		NextStage(TestRunID, GetSeed());
 	}
 }
 
@@ -99,39 +126,25 @@ void AFunKTestBase::FinishStage()
 	FinishStage(EFunKStageResult::Succeeded, "");
 }
 
-void AFunKTestBase::FinishStage(EFunKStageResult TestResult, const FString& Message)
+void AFunKTestBase::FinishStage(EFunKStageResult StageResult, const FString& Message)
 {
+	if(Result != EFunKTestResult::None) return;
+	
+	IsLocalStageFinished = true;
+	
 	FString ResultMessage = Message;
-	if (TestResult == EFunKStageResult::None)
+	if (StageResult == EFunKStageResult::None)
 	{
-		TestResult = EFunKStageResult::Error;
+		StageResult = EFunKStageResult::Error;
 		ResultMessage = "None is an invalid stage result! " + ResultMessage;
 	}
 
-	OnFinishStage(TestResult, Message);
-
-	CurrentStageIndex = INDEX_NONE;
-}
-
-FFunKEvent AFunKTestBase::CreateEvent(EFunKTestResult testResult, const FString& Message) const
-{
-	const FString EventMessage = testResult == EFunKTestResult::Succeeded
-         ? FString::Printf(TEXT("Test Finished: %s"), *Message)
-         : testResult == EFunKTestResult::Skipped
-         ? FString::Printf(TEXT("Test Skipped: %s"), *Message)
-         : FString::Printf(TEXT("TestResult=%s. %s"), *LexToString(testResult), *Message);
-
-	return FFunKEvent(testResult == EFunKTestResult::Succeeded || testResult == EFunKTestResult::Skipped ? EFunKEventType::Info : EFunKEventType::Error, EventMessage, GetName());
+	OnFinishStage(StageResult, Message);
 }
 
 bool AFunKTestBase::IsRunning() const
 {
-	return TestRunID.IsValid();
-}
-
-bool AFunKTestBase::IsStageRunning() const
-{
-	return CurrentStageIndex > INDEX_NONE;
+	return TestRunID != 0;
 }
 
 bool AFunKTestBase::IsFinished() const
@@ -159,25 +172,6 @@ void AFunKTestBase::BuildTestRegistry(FString& append) const
 	}
 }
 
-void AFunKTestBase::RaiseEvent(const FFunKEvent& raisedEvent) const
-{
-	// if(CurrentController)
-	// {
-	// 	FFunKEvent Event(raisedEvent);
-	// 	
-	// 	Event.AddToContext(TestRunID.ToString()).AddToContext(GetName()).AddToContext(FString::FromInt(GetWorldSubsystem()->GetPeerIndex()));
-	// 	if(const FFunKStage* CurrentStage = GetCurrentStage())
-	// 		Event.AddToContext(CurrentStage->Name.ToString());
-	// 	
-	// 	CurrentController->RaiseEvent(Event);
-	// }
-	// else
-	// {
-	// 	const FString Type = raisedEvent.Type == EFunKEventType::Info ? "Info" : raisedEvent.Type == EFunKEventType::Warning ? "Warning" : "Error";
-	// 	UE_LOG(FunKLog, Error, TEXT("Event could not be raised - %s: %s - %s"), *Type, *raisedEvent.Message, *raisedEvent.GetContext())
-	// }
-}
-
 void AFunKTestBase::PostLoad()
 {
 	Super::PostLoad();
@@ -197,7 +191,6 @@ int32 AFunKTestBase::GetSeed() const
 
 void AFunKTestBase::OnBegin()
 {
-	RaiseEvent(FFunKEvent::Info("Begin Test " + GetName(), UFunKWorldTestExecution::FunKTestLifeTimeBeginEvent));
 }
 
 void AFunKTestBase::OnBeginStage()
@@ -214,7 +207,7 @@ void AFunKTestBase::OnBeginStage()
 void AFunKTestBase::OnFinishStage(EFunKStageResult StageResult, FString Message)
 {
 	FFunKTestStageFinishedEvent Event;
-	Event.StageIndex = CurrentStageIndex;
+	Event.StageIndex = GetCurrentStageIndex();
 	Event.Result = StageResult;
 	Event.Message = Message;
 	Event.PeerIndex = GetWorldSubsystem()->GetPeerIndex();
@@ -230,7 +223,6 @@ void AFunKTestBase::OnFinish(const FString& Message)
 
 bool AFunKTestBase::IsLastStage()
 {
-	ENetMode netMode = GetNetMode();
 	const int32 index = GetCurrentStageIndex() + 1;
 	if(!IsValidStageIndex(index))
 		return true;
@@ -258,7 +250,7 @@ void AFunKTestBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
 	if(IsRunning() && !IsFinished())
 	{
-		// FinishStage(EFunKTestResult::Invalid, TEXT("Test was aborted"));
+		FinishStage(EFunKStageResult::Error, TEXT("Test was aborted"));
 	}
 	
 	Super::EndPlay(EndPlayReason);
@@ -320,17 +312,25 @@ void AFunKTestBase::OnBeginStage(const FFunKTestStageEvent& Event)
 	}
 	else if(TestRunID != Event.TestRunID)
 	{
-		FinishStage(EFunKStageResult::Error, "Test is running under different test id: " + TestRunID.ToString() + " - " + Event.TestRunID.ToString());
+		FinishStage(EFunKStageResult::Error, "Test is running under different test id: " + FString::FromInt(TestRunID) + " - " + FString::FromInt(Event.TestRunID));
 		return;
 	}
 
 	UpdateStageState(Event);
-	IsCurrentStageTickDelegateSetup = IsStageTickDelegateBound(Event.StageIndex);
+
+	const FFunKStage* CurrentStage = GetCurrentStageMutable();
+	if(!CurrentStage || !IsExecutingStage(*CurrentStage))
+	{
+		FinishStage();
+		return;
+	}
+	
+	IsCurrentStageTickDelegateSetup = CurrentStage->TickDelegate.IsBound();
 	OnBeginStage();
 
-	if(const FFunKStage* CurrentStage = GetCurrentStageMutable()) if(!CurrentStage->IsLatent)
+	if(!CurrentStage->IsLatent && !IsLocalStageFinished)
 	{
-		FinishStage(EFunKStageResult::Succeeded, "");
+		FinishStage();
 	}
 }
 
@@ -338,6 +338,8 @@ void AFunKTestBase::UpdateStageState(const FFunKTestStageEvent& Event)
 {
 	Seed = Event.Seed;
 	CurrentStageIndex = Event.StageIndex;
+	IsLocalStageFinished = false;
+	CurrentStageExecutionTime = 0;
 }
 
 void AFunKTestBase::OnBeginFirstStage(const FFunKTestStageEvent& Event)
@@ -345,10 +347,10 @@ void AFunKTestBase::OnBeginFirstStage(const FFunKTestStageEvent& Event)
 	SetActorTickEnabled(true);
 	TestRunID = Event.TestRunID;
 	Result = EFunKTestResult::None;
-
+	
 	RunningRegistrations.Add(GetEventBusSubsystem()->On<FFunKTestFinishedEvent>([this](const FFunKTestFinishedEvent& FinishedEvent)
 	{
-		if(FinishedEvent.Test == this)
+		if(FinishedEvent.Test == this && !IsLocalFinish)
 		{
 			OnFinish(FinishedEvent);
 		}
@@ -366,19 +368,58 @@ void AFunKTestBase::OnFinish(const FFunKTestFinishedEvent& Event)
 	OnFinish(Event.Message);
 	GEngine->ForceGarbageCollection();
 
+	if(IsLocalFinish)
+	{
+		const FString EventMessage = Event.Result == EFunKTestResult::Succeeded
+			 ? FString::Printf(TEXT("Test Finished: %s"), *Event.Message)
+			 : Event.Result == EFunKTestResult::Skipped
+			 ? FString::Printf(TEXT("Test Skipped: %s"), *Event.Message)
+			 : FString::Printf(TEXT("TestResult=%s. %s"), *LexToString(Event.Result), *Event.Message);
+		
+		GetEventBusSubsystem()->Raise<FFunKEvent>(FFunKEvent(Event.Result == EFunKTestResult::Succeeded || Event.Result == EFunKTestResult::Skipped ? EFunKEventType::Info : EFunKEventType::Error, EventMessage, GetName()).AddToContext(FunKTestLifeTimeContext::FinishTest).AddToContext(LexToString(Event.Result)).AddToContext(TestRunID));
+	}
+
 	RunningRegistrations.Unregister();
 	CurrentStageIndex = INDEX_NONE;
-	TestRunID = FGuid();
+	TestRunID = 0;
 	Seed = 0;
+	IsLocalFinish = false;
+	IsLocalStageFinished = false;
 }
 
-void AFunKTestBase::NextStage(FGuid InTestRunID, int32 InSeed)
+void AFunKTestBase::NextStage(int32 InTestRunID, int32 InSeed)
 {
-	FFunKTestStageEvent TestStageEvent;
+	const int32 NextStageIndex = CurrentStageIndex + 1;
+	if(!IsValidStageIndex(NextStageIndex))
+	{
+		Finish(EFunKTestResult::Succeeded, "");
+		return;
+	}
 	
+	FFunKTestStageEvent TestStageEvent;
 	TestStageEvent.Seed = InSeed;
 	TestStageEvent.TestRunID = InTestRunID;
+	TestStageEvent.StageIndex = NextStageIndex;
+	TestStageEvent.Test = this;
+
+	GetEventBusSubsystem()->Raise<FFunKEvent>(FFunKEvent::Info("Start Stage", GetStage(NextStageIndex)->Name.ToString()).AddToContext(FunKTestLifeTimeContext::BeginStage).AddToContext(InTestRunID));
 	GetEventBusSubsystem()->Raise(TestStageEvent);
+}
+
+void AFunKTestBase::Finish(EFunKTestResult TestResult, FString Message)
+{
+	IsLocalFinish = true;
+	
+	FFunKTestFinishedEvent Event;
+	Event.TestRunID = TestRunID;
+	Event.Test = this;
+	Event.Result = TestResult;
+	Event.Message = Message;
+
+	GetEventBusSubsystem()->Raise(Event, [this, Event]()
+	{
+		OnFinish(Event);
+	});
 }
 
 void AFunKTestBase::SetupStages()
@@ -428,6 +469,8 @@ void AFunKTestBase::Tick(float DeltaTime)
 {
 	if(IsFinished())
 		return;
+
+	CurrentStageExecutionTime += DeltaTime;
 
 	GEngine->DelayGarbageCollection();
 

@@ -7,6 +7,8 @@
 #include "FunKTestInstructions.h"
 #include "FunKEnvironmentHandler.generated.h"
 
+class AFunKWorldTestController;
+class UFunKWorldSubsystem;
 class UFunKEventBusSubsystem;
 
 UENUM()
@@ -38,4 +40,6 @@ public:
 	virtual UWorld* GetWorld() = 0;
 
 	UFunKEventBusSubsystem* GetEventBus();
+	UFunKWorldSubsystem* GetWorldSubsystem();
+	AFunKWorldTestController* GetTestController();
 };

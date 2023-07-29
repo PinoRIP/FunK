@@ -2,3 +2,13 @@
 
 
 #include "Events/FunKEvent.h"
+
+bool FFunKEvent::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess)
+{
+	Ar << Type;
+	Ar << Message;
+	Ar << Context;
+
+	bOutSuccess = true;
+	return true;
+}

@@ -4,13 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
-#include "FunKWorldTestExecution.generated.h"
+// #include "FunKWorldTestExecution.generated.h"
 
 class AFunKWorldTestController;
 class AFunKTestBase;
 class UFunKSettingsObject;
 struct FFunKTimeLimit;
 
+/*
 USTRUCT()
 struct FFunKTestExecutionState
 {
@@ -26,7 +27,7 @@ public:
 		, Controller(nullptr)
 	{ }
 	
-	FGuid Id;
+	int32 Id;
 
 	int32 LastStartedStage;
 	int32 LastFinishedStage;
@@ -38,9 +39,6 @@ public:
 	AFunKWorldTestController* Controller;
 };
 
-/**
- * 
- */
 UCLASS()
 class FUNK_API UFunKWorldTestExecution : public UObject, public FTickableGameObject
 {
@@ -125,3 +123,4 @@ public:
 	static FString FunKTestLifeTimeFinishEvent;
 	static FString FunKTestLifeTimeAllTestExecutionsFinishedEvent;
 };
+*/

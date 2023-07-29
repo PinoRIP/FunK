@@ -15,7 +15,7 @@ struct FFunKTestFinishedEvent
 
 public:
 	UPROPERTY()
-	FGuid TestRunID;
+	int32 TestRunID;
 
 	UPROPERTY()
 	AFunKTestBase* Test = nullptr;

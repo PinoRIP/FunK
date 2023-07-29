@@ -26,6 +26,7 @@ bool FFunKEventBusMessage::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bO
 		}
 		else
 		{
+			//TODO: Make this work in all cases. FGuid is not supported...
 			// This won't work since FStructProperty::NetSerializeItem is deprecrated.
 			//	1) we have to manually crawl through the topmost struct's fields since we don't have a FStructProperty for it (just the UScriptProperty)
 			//	2) if there are any UStructProperties in the topmost struct's fields, we will assert in FStructProperty::NetSerializeItem.
@@ -39,7 +40,7 @@ bool FFunKEventBusMessage::NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bO
 				}
 
 				void* PropertyData = It->ContainerPtrToValuePtr<void*>(ptr);
-
+				
 				It->NetSerializeItem(Ar, Map, PropertyData);
 			}
 		}
@@ -119,11 +120,12 @@ void UFunKEventBusSubsystem::ReceiveMessage(const FFunKEventBusMessage& Message)
 
 	TArray<int32> keys;
 	Handlers.GetKeys(keys);
-	
-	for (int32 key : keys)
+
+	for (int i = keys.Num() - 1; i >= 0; --i)
 	{
-		FFunKEventBusEventHandler& Handler = Handlers[key];
-		Handler(event);
+		TFunction<void(const FFunKEventBusMessage&)>* HandlerPtr = Handlers.Find(keys[i]);
+		if(!HandlerPtr) continue;
+		(*HandlerPtr)(event);
 	}
 }
 
@@ -149,6 +151,23 @@ int32 UFunKEventBusSubsystem::GetReplicationControllerCount() const
 {
 	if(GetWorld()->GetNetMode() < NM_Client)
 		return ReplicationControllers.Num();
+
+	return GetLocalController()->GetControllerNumber();
+}
+
+int32 UFunKEventBusSubsystem::GetReadyReplicationControllerCount() const
+{
+	if(GetWorld()->GetNetMode() < NM_Client)
+	{
+		int32 counter = 0;
+		for (const FReplicationControllerState& ReplicationController : ReplicationControllers)
+		{
+			if(ReplicationController.IsReady)
+				counter++;
+		}
+
+		return counter;
+	}
 
 	return GetLocalController()->GetActiveController();
 }

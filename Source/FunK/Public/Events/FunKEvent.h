@@ -71,6 +71,11 @@ public:
 		return FString::Join(Context, TEXT(" | "));
 	}
 
+	FFunKEvent& AddToContext(int32 InContext)
+	{
+		return AddToContext(FString::FromInt(InContext));
+	}
+
 	FFunKEvent& AddToContext(const FString& InContext)
 	{
 		Context.AddUnique(InContext);
@@ -100,4 +105,14 @@ public:
 	{
 		return FFunKEvent(EFunKEventType::Error, Message, Context);
 	}
+
+	bool NetSerialize(FArchive& Ar, class UPackageMap* Map, bool& bOutSuccess);
+};
+template<>
+struct TStructOpsTypeTraits<FFunKEvent> : public TStructOpsTypeTraitsBase2<FFunKEvent>
+{
+	enum
+	{
+		WithNetSerializer = true
+	};
 };

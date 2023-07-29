@@ -129,6 +129,7 @@ public:
 	AFunKEventBusReplicationController* GetLocalController() const { return LocalController; }
 
 	int32 GetReplicationControllerCount() const;
+	int32 GetReadyReplicationControllerCount() const;
 
 	void GetReplicationControllers(TArray<AFunKEventBusReplicationController*>& Array);
 	

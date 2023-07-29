@@ -10,45 +10,12 @@
 
 AFunKWorldTestController* UFunKWorldSubsystem::GetLocalTestController()
 {
-	if(!LocalTestController && GetWorld()->GetNetMode() != NM_Client)
+	if(!LocalTestController)
 	{
 		LocalTestController = NewTestController();
 	}
 	
 	return LocalTestController;
-}
-
-void UFunKWorldSubsystem::SetLocalTestController(AFunKWorldTestController* localTestController)
-{
-	if(!LocalTestController && GetWorld()->GetNetMode() == NM_Client)
-	{
-		LocalTestController = localTestController;
-	}
-}
-
-bool UFunKWorldSubsystem::HasLocalTestController() const
-{
-	return !!LocalTestController;
-}
-
-void UFunKWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
-{
-	Super::OnWorldBeginPlay(InWorld);
-
-	if(GEngine)
-	{
-		UFunKEngineSubsystem* funk = GEngine->GetEngineSubsystem<UFunKEngineSubsystem>();
-		if(funk && funk->IsRunning())
-		{
-			funk->CallbackTestWorldBeganPlay(GetWorld());
-		}
-	}
-}
-
-void UFunKWorldSubsystem::Deinitialize()
-{
-	Registration.Unregister();
-	Super::Deinitialize();
 }
 
 int32 UFunKWorldSubsystem::GetPeerIndex() const

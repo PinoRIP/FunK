@@ -5,6 +5,7 @@
 #include "EngineUtils.h"
 #include "FunKFunctionalTest.h"
 #include "FunKLogging.h"
+#include "FunKSettingsObject.h"
 #include "FunKTestRunner.h"
 #include "FunKWorldSubsystem.h"
 #include "FunKWorldTestExecution.h"
@@ -23,323 +24,116 @@ AFunKWorldTestController::AFunKWorldTestController()
 void AFunKWorldTestController::BeginPlay()
 {
 	Super::BeginPlay();
-
-	//const ENetMode netMode = GetNetMode();
-	//if(netMode == NM_Client)
-	//{
-	//	CheckControllerReady();
-	//}
-	//else
-	//{
-	//	OnControllerReady();
-	//	IsServerDedicated = GetNetMode() == NM_DedicatedServer;
-	//}
-	
 	SetActorTickEnabled(false);
+	Settings = GetDefault<UFunKSettingsObject>();
 }
 
-//void AFunKWorldTestController::CreateTestControllerForClient(APlayerController* NewPlayer)
-//{
-//	if(GetOwner() == NewPlayer)
-//		return;
-//
-//	for (const AFunKWorldTestController* Controller : SpawnedController)
-//	{
-//		if(Controller->GetOwner() == NewPlayer)
-//			return;
-//	}
-//	
-//	AFunKWorldTestController* NewController = GetWorld()->SpawnActor<AFunKWorldTestController>(GetClass());
-//	NewController->SetOwner(NewPlayer);
-//	SpawnedController.Add(NewController);
-//	NewController->ControllerNumber = SpawnedController.Num();
-//}
-
-void AFunKWorldTestController::BeginDestroy()
+void AFunKWorldTestController::Tick(float DeltaTime)
 {
-	Super::BeginDestroy();
-	FGameModeEvents::GameModePostLoginEvent.RemoveAll(this);
-}
+	Super::Tick(DeltaTime);
 
-//void AFunKWorldTestController::OnRep_Owner()
-//{
-//	Super::OnRep_Owner();
-//
-//	if(GetNetMode() == NM_Client && GetOwner() == GetWorld()->GetFirstPlayerController())
-//	{
-//		if(UFunKWorldSubsystem* funk = GetWorld()->GetSubsystem<UFunKWorldSubsystem>())
-//		{
-//			funk->SetLocalTestController(this);
-//			CheckControllerReady();
-//		}
-//	}
-//}
-
-//void AFunKWorldTestController::OnControllerReady()
-//{
-//	ActiveController++;
-//	for (AFunKWorldTestController* Controller : SpawnedController)
-//	{
-//		Controller->ActiveController = ActiveController;
-//	}
-//}
-
-//void AFunKWorldTestController::SetupLocalTestController()
-//{
-//	const ENetMode netMode = GetNetMode();
-//	if(netMode == NM_ListenServer || netMode == NM_DedicatedServer)
-//	{
-//		FGameModeEvents::GameModePostLoginEvent.AddUObject(this, &AFunKWorldTestController::OnConnection);
-//	}
-//}
-
-//bool AFunKWorldTestController::IsControllerLocallyReady() const
-//{
-//	return HasActorBegunPlay() && GetWorld()->GetSubsystem<UFunKWorldSubsystem>()->HasLocalTestController() && (GetNetMode() != NM_Client || GetOwner() == GetWorld()->GetFirstPlayerController());
-//}
-
-//void AFunKWorldTestController::CheckControllerReady()
-//{
-//	if(IsControllerLocallyReady() && !IsControllerReadinessSend)
-//	{
-//		IsControllerReadinessSend = true;
-//		ServerControllerReady();
-//	}
-//}
-
-//void AFunKWorldTestController::OnConnection(AGameModeBase* GameMode, APlayerController* NewPlayer)
-//{
-//	CreateTestControllerForClient(NewPlayer);
-//}
-
-void AFunKWorldTestController::ServerExecuteTestByName_Implementation(const FString& TestName, const FGuid TestRunID)
-{
-	ExecuteTestByName(TestName, TestRunID);
-}
-
-void AFunKWorldTestController::ServerExecuteAllTests_Implementation(FGuid TestRunID)
-{
-	ExecuteAllTests(TestRunID);
-}
-
-void AFunKWorldTestController::ExecuteTests(const TArray<AFunKTestBase*>& TestToExecute, const FGuid TestRunID)
-{
-	if(!CurrentTestExecution)
+	if(!CurrentTest && Next())
 	{
-		//NewObject<UFunKWorldTestExecution>()->Start(GetWorld(), TestToExecute, ReportSink, TestRunID);
+		CurrentTest->BeginTest(TestRunID, Seed);
+	}
+
+	if(!CurrentTest)
+		return;
+	
+	if(!CurrentTest->IsRunning() && CurrentTest->IsFinished())
+	{
+		CurrentTest = nullptr;
+	}
+	else if(!IsWaitingForTimeout)
+	{
+		const FFunKStage* stage = CurrentTest->GetCurrentStage();
+		if(stage && !stage->TimeLimit.IsLimitless() && stage->TimeLimit.IsTimeout(CurrentTest->GetCurrentStageExecutionTime()))
+		{
+			CurrentTest->FinishTest(stage->TimeLimit.Result, stage->TimeLimit.Message.ToString());
+			IsWaitingForTimeout = true;
+		}
+	}
+	else if(Settings)
+	{
+		CurrentTestStageWaitingTime += DeltaTime;
+		if(Settings->Settings.SyncTimeLimit.IsTimeout(CurrentTestStageWaitingTime))
+		{
+			GetWorld()->GetSubsystem<UFunKEventBusSubsystem>()->Raise(FFunKEvent::Error("Reached Timeout error in test!", CurrentTest->GetName()));
+			CurrentTest = nullptr;
+		}
+	}
+	else
+	{
+		CurrentTest = nullptr;
 	}
 }
 
-void AFunKWorldTestController::ExecuteTestByName(const FString& TestName, const FGuid TestRunID)
+void AFunKWorldTestController::ExecuteTestByName(FString TestName)
 {
+	Tests.Empty(1);
+	
 	for (TActorIterator<AFunKTestBase> ActorItr(GetWorld(), AFunKTestBase::StaticClass(), EActorIteratorFlags::AllActors); ActorItr; ++ActorItr)
 	{
 		AFunKTestBase* FunctionalTest = *ActorItr;
 		if(TestName == FunctionalTest->GetName())
 		{
-			TArray<AFunKTestBase*> Test;
-			Test.Add(FunctionalTest);
-			ExecuteTests(Test, TestRunID);
+			Tests.Add(FunctionalTest);
+			ExecuteTests();
 			break;
 		}
 	}
 }
 
-void AFunKWorldTestController::ExecuteAllTests(const FGuid TestRunID)
+void AFunKWorldTestController::ExecuteAllTests()
 {
-	TArray<AFunKTestBase*> Test;
+	Tests.Empty();
+	
 	for (TActorIterator<AFunKTestBase> ActorItr(GetWorld(), AFunKTestBase::StaticClass(), EActorIteratorFlags::AllActors); ActorItr; ++ActorItr)
 	{
 		AFunKTestBase* FunctionalTest = *ActorItr;
-		Test.Add(FunctionalTest);
+		Tests.Add(FunctionalTest);
 	}
 
-	ExecuteTests(Test, TestRunID);
-}
-
-void AFunKWorldTestController::ClientBeginLocalTest_Implementation(AFunKTestBase* TestToBegin, FGuid TestRunID, int32 Seed)
-{
-	if(TestToBegin)
-	{
-		BeginLocalTest(TestToBegin, TestRunID, Seed);
-	}
-	else
-	{
-		//RaiseEvent(FFunKEvent::Error("Could not invoke test actor!", "AFunKWorldTestController::ClientExecuteTest_Implementation").AddToContext(TestRunID.ToString()));
-	}
-}
-
-void AFunKWorldTestController::BeginLocalTest(AFunKTestBase* TestToBegin, FGuid TestRunID, int32 Seed)
-{
-	//if(IsLocalTestController())
-	//{
-	//	TestToBegin->BeginTest(this, TestRunID, Seed);
-	//}
-	//else if(GetNetMode() != NM_Client)
-	//{
-	//	ClientBeginLocalTest(TestToBegin, TestRunID, Seed);
-	//}
-}
-
-void AFunKWorldTestController::ClientBeginLocalTestStage_Implementation(AFunKTestBase* TestToExecute, int32 StageIndex)
-{
-	if(TestToExecute)
-	{
-		BeginLocalTestStage(TestToExecute, StageIndex);
-	}
-	else
-	{
-		//RaiseEvent(FFunKEvent::Error("TestToExecute could not be found!"));
-	}
-}
-
-void AFunKWorldTestController::BeginLocalTestStage(AFunKTestBase* TestToExecute, int32 StageIndex)
-{
-	//if(IsLocalTestController())
-	//{
-	//	TestToExecute->BeginTestStage(StageIndex);
-	//}
-	//else if(GetNetMode() != NM_Client)
-	//{
-	//	ClientBeginLocalTestStage(TestToExecute, StageIndex);
-	//}
-}
-
-void AFunKWorldTestController::ClientFinishLocalTest_Implementation(AFunKTestBase* TestToCancel, EFunKTestResult Result, const FString& Message)
-{
-	//if(TestToCancel)
-	//{
-	//	FinishLocalTest(TestToCancel, Result, Message);
-	//}
-	//else
-	//{
-	//	RaiseEvent(FFunKEvent::Error("TestToCancel could not be found!"));
-	//}
-}
-
-void AFunKWorldTestController::FinishLocalTest(AFunKTestBase* TestToCancel, EFunKTestResult Result, const FString& Message)
-{
-	//if(IsLocalTestController())
-	//{
-	//	TestToCancel->FinishStage(Result, Message);
-	//}
-	//else if(GetNetMode() != NM_Client)
-	//{
-	//	ClientFinishLocalTest(TestToCancel, Result, Message);
-	//}
-}
-
-void AFunKWorldTestController::ServerSendEvent_Implementation(EFunKEventType eventType, const FString& Message, const TArray<FString>& Context) const
-{
-	//CurrentTestExecution->RaiseEvent(FFunKEvent(eventType, Message, Context));
-}
-
-void AFunKWorldTestController::ClientSendEvent_Implementation(EFunKEventType eventType, const FString& Message, const TArray<FString>& Context) const
-{
-	//if(LocalReportSink)
-	//{
-	//	LocalReportSink->RaiseEvent(FFunKEvent(eventType, Message, Context));
-	//	if(Context.Contains(UFunKWorldTestExecution::FunKTestLifeTimeAllTestExecutionsFinishedEvent) && Context.Contains(RemoteTestRunID))
-	//	{
-	//		//TODO: This not cool... FixThis
-	//		AFunKWorldTestController* mutableThis = const_cast<AFunKWorldTestController*>(this);
-	//		mutableThis->RemoteTestRunID = "";
-	//	}
-	//}
-}
-
-//void AFunKWorldTestController::ServerControllerReady_Implementation() const
-//{
-//	if(UFunKWorldSubsystem* funkWorldSubsystem = GetWorld()->GetSubsystem<UFunKWorldSubsystem>())
-//	{
-//		funkWorldSubsystem->GetLocalTestController()->OnControllerReady();
-//	}
-//	else
-//	{
-//		UE_LOG(FunKLog, Error, TEXT("FunKWorldSubsystem not found..."));
-//	}
-//}
-
-// Called every frame
-void AFunKWorldTestController::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-}
-
-void AFunKWorldTestController::ExecuteTestByName(FString TestName)
-{
-	const ENetMode netMode = GetNetMode();
-	const FGuid TestRunID = FGuid::NewGuid();
-	
-	if(netMode == NM_Client)
-	{
-		//LocalReportSink = InReportSink;
-		RemoteTestRunID = TestRunID.ToString();
-		ServerExecuteTestByName(TestName, TestRunID);
-	}
-	else
-		ExecuteTestByName(TestName, TestRunID);
-}
-
-void AFunKWorldTestController::ExecuteAllTests()
-{
-	const ENetMode NetMode = GetNetMode();
-	const FGuid TestRunID = FGuid::NewGuid();
-	
-	if(NetMode == NM_Client)
-	{
-		//LocalReportSink = InReportSink;
-		RemoteTestRunID = TestRunID.ToString();
-		ServerExecuteAllTests(TestRunID);
-	}
-	else
-		ExecuteAllTests(TestRunID);
+	ExecuteTests();
 }
 
 bool AFunKWorldTestController::IsFinished() const
 {
-	return CurrentTestExecution
-		? CurrentTestExecution->IsFinished()
-		: RemoteTestRunID.IsEmpty();
+	return TestRunID == 0;
 }
 
-void AFunKWorldTestController::RaiseEvent(const FFunKEvent& RaisedEvent) const
+void AFunKWorldTestController::ExecuteTests()
 {
-	const ENetMode netMode = GetNetMode();
-	//if(IsLocalTestController())
-	//{
-	//	if(netMode == NM_Client)
-	//		ServerSendEvent(RaisedEvent.Type, RaisedEvent.Message, RaisedEvent.Context);
-	//	else
-	//	{
-	//		if(CurrentTestExecution)
-	//		{
-	//			CurrentTestExecution->RaiseEvent(RaisedEvent);
-	//		}
-	//		else
-	//		{
-	//			UE_LOG(FunKLog, Error, TEXT("Failed to RaiseEvent due to a missing test execution: %s - %s - %s"), *GetRoleName(), *RaisedEvent.Message, *RaisedEvent.GetContext());
-	//		}
-	//	}
-	//}
-	//else if(netMode == NM_DedicatedServer || netMode == NM_ListenServer)
-	//{
-	//	ClientSendEvent(RaisedEvent.Type, RaisedEvent.Message, RaisedEvent.Context);
-	//}
-	//else
-	//{
-	//	UE_LOG(FunKLog, Error, TEXT("World test controller can only act as sinks when they are the local test controller"));
-	//}
+	TestRunID = FMath::Rand();
+	if(TestRunID == 0) TestRunID = 1;
+	
+	Seed = FMath::Rand();
+	
+	SetActorTickEnabled(true);
 }
 
-//FString AFunKWorldTestController::GetRoleName() const
-//{
-//	const ENetMode netMode = GetNetMode();
-//	if(netMode == NM_Standalone)
-//		return "Standalone";
-//
-//	if(ControllerNumber == INDEX_NONE)
-//		return "Server";
-//	
-//	return "Client_" + FString::FromInt(ControllerNumber);
-//}
+bool AFunKWorldTestController::Next()
+{
+	if(Tests.Num() <= 0)
+	{
+		End();
+		return false;
+	}
+
+	IsWaitingForTimeout = false;
+	CurrentTestStageWaitingTime = 0;
+	const int32 last = Tests.Num() - 1;
+	AFunKTestBase* NextTest = Tests[last];
+	if(NextTest->IsRunning()) return false;
+	
+	CurrentTest = NextTest;
+	Tests.RemoveAt(last);
+	
+	return true;
+}
+
+void AFunKWorldTestController::End()
+{
+	TestRunID = 0;
+	SetActorTickEnabled(false);
+}

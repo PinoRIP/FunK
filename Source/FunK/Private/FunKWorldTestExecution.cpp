@@ -7,7 +7,7 @@
 #include "FunKWorldSubsystem.h"
 #include "FunKWorldTestController.h"
 
-
+/*
 FString UFunKWorldTestExecution::FunKTestLifeTimeBeginEvent = FString("FunKTestLifeTimeBeginEvent");
 FString UFunKWorldTestExecution::FunKTestLifeTimeBeginStageEvent = FString("FunKTestLifeTimeBeginStageEvent");
 FString UFunKWorldTestExecution::FunKTestLifeTimeFinishStageEvent = FString("FunKTestLifeTimeFinishStageEvent");
@@ -99,8 +99,8 @@ void UFunKWorldTestExecution::Finish()
 	ThisExecutionID.Empty();
 	Settings = nullptr;
 
-	if(MasterController->CurrentTestExecution == this)
-		MasterController->CurrentTestExecution = nullptr;
+	//if(MasterController->CurrentTestExecution == this)
+	//	MasterController->CurrentTestExecution = nullptr;
 	
 	// for (AFunKWorldTestController* SpawnedController : MasterController->SpawnedController)
 	// {
@@ -181,7 +181,7 @@ void UFunKWorldTestExecution::NextStage()
 			isAnyStageStarted = true;
 
 			state.LastStartedStage = CurrentStageIndex;
-			state.Controller->BeginLocalTestStage(test, CurrentStageIndex);
+			//state.Controller->BeginLocalTestStage(test, CurrentStageIndex);
 			
 			if(stage.IsLatent)
 				PendingStageTime = 0.f;
@@ -228,13 +228,13 @@ void UFunKWorldTestExecution::RunTest(AFunKTestBase* test)
 
 void UFunKWorldTestExecution::RunTestOnController(AFunKTestBase* test, AFunKWorldTestController* controller, const ENetMode netMode, int32 Seed)
 {
-	const FGuid guid = FGuid::NewGuid();
+	const int32 id = FMath::RandRange(0, 6400000);
 	FFunKTestExecutionState& state = CurrentExecutions.Add_GetRef(FFunKTestExecutionState());
 	state.Controller = controller;
-	state.Id = guid;
+	state.Id = id;
 	state.NetMode = netMode;
 	
-	controller->BeginLocalTest(test, guid, Seed);
+	//controller->BeginLocalTest(test, guid, Seed);
 }
 
 AFunKTestBase* UFunKWorldTestExecution::GetCurrentTest()
@@ -390,7 +390,7 @@ void UFunKWorldTestExecution::Tick(float DeltaTime)
 				{
 					if(!CurrentExecutions[i].IsExecutionFinished)
 					{
-						CurrentExecutions[i].Controller->FinishLocalTest(currentTest, currentStageTimeLimit.Result, currentStageTimeLimit.Message.ToString());
+						//CurrentExecutions[i].Controller->FinishLocalTest(currentTest, currentStageTimeLimit.Result, currentStageTimeLimit.Message.ToString());
 					}
 				}
 				
@@ -430,3 +430,4 @@ bool UFunKWorldTestExecution::IsTickable() const
 {
 	return !IsFinished() && IsAnyStarted;
 }
+*/

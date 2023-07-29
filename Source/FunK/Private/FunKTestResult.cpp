@@ -19,7 +19,20 @@ FString LexToString(const EFunKStageResult TestResult)
 	case EFunKStageResult::None: return FString("None");
 	case EFunKStageResult::Error: return FString("Error");
 	case EFunKStageResult::Failed: return FString("Failed");
+	case EFunKStageResult::Skipped: return FString("Skipped");
 	case EFunKStageResult::Succeeded: return FString("Succeeded");
 	default: return FString("Unhandled EFunKStageResult Enum!");
+	}
+}
+
+EFunKTestResult StageToTestResult(const EFunKStageResult TestResult)
+{
+	switch (TestResult) {
+	case EFunKStageResult::None: return EFunKTestResult::Error;
+	case EFunKStageResult::Error: return EFunKTestResult::Error;
+	case EFunKStageResult::Failed: return EFunKTestResult::Failed;
+	case EFunKStageResult::Skipped: return EFunKTestResult::Skipped;
+	case EFunKStageResult::Succeeded: return EFunKTestResult::Succeeded;
+	default: return EFunKTestResult::Error;
 	}
 }

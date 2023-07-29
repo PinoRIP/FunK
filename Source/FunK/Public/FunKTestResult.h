@@ -18,11 +18,14 @@ FString FUNK_API LexToString(const EFunKTestResult TestResult);
 UENUM(BlueprintType)
 enum class EFunKStageResult : uint8
 {
-	None UMETA(Hidden),
 	Error,
 	Failed,
+	Skipped,
 	Succeeded,
+	None UMETA(Hidden),
 };
 
 /* Return a readable string of the provided EFunctionalTestResult enum */
 FString FUNK_API LexToString(const EFunKStageResult TestResult);
+
+EFunKTestResult FUNK_API StageToTestResult(const EFunKStageResult TestResult);

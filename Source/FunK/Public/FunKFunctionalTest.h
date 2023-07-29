@@ -57,7 +57,7 @@ protected:
 	void BpArrangeTick(float DeltaTime);
 	
 	virtual void Act();
-	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="Act")
+	UFUNCTION(BlueprintImplementableEvent, Category="FunK", DisplayName="Act")
 	void BpAct();
 	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="ActTick")
 	void BpActTick(float DeltaTime);

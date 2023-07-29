@@ -40,11 +40,20 @@ EFunKEnvironmentWorldState UFunKEditorEnvironmentHandler::UpdateWorldState(const
 	}
 	else
 	{
-		if(!World) World = GetCurrentPieWorldContext()->World();
-		WaitsForWorld = !(World && World->HasBegunPlay());
+		if(WaitsForWorld)
+		{
+			if(!World) World = GetCurrentPieWorldContext()->World();
+            WaitsForWorld = !(World && World->HasBegunPlay());
+			WaitsForControllers = !WaitsForWorld;
+		}
+
+		if(WaitsForControllers)
+		{
+			WaitsForControllers = GetEventBus()->GetReadyReplicationControllerCount() != GetTargetReplicationControllerCount(Instructions);
+		}
 	}
 	
-	return WaitsForWorld
+	return WaitsForWorld || WaitsForControllers
 		? EFunKEnvironmentWorldState::IsStarting
 		: EFunKEnvironmentWorldState::IsRunning;
 }
@@ -216,4 +225,11 @@ void UFunKEditorEnvironmentHandler::SetFpsSettings(ULevelEditorPlaySettings* pla
 
 	playSettings->ClientFixedFPS.Add(client1);
 	playSettings->ClientFixedFPS.Add(client2);
+}
+
+int32 UFunKEditorEnvironmentHandler::GetTargetReplicationControllerCount(const FFunKTestInstructions& Instructions)
+{
+	return Instructions.IsListenServerTest() || Instructions.IsDedicatedServerTest()
+		? 2
+		: 0;
 }

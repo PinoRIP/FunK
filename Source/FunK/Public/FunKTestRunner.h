@@ -50,29 +50,13 @@ public:
 	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const;
 
 	bool IsRunning() const;
-	bool IsWaitingForMap() const;
 	EFunKTestRunnerType GetType() const { return Type; }
 	UFunKEngineSubsystem* GetSubsystem() const;
-	const FString& GetParameter();
-
-	bool SetWorld(UWorld* world);
 
 	AFunKWorldTestController* GetCurrentWorldController() const;
 	
 protected:
 	virtual void UpdateState(EFunKTestRunnerState newState);
-
-	bool IsStandaloneTest() const;
-	static bool IsStandaloneTest(const FFunKTestInstructions& Instructions);
-	bool IsDedicatedServerTest() const;
-	static bool IsDedicatedServerTest(const FFunKTestInstructions& Instructions);
-	bool IsListenServerTest() const;
-	static bool IsListenServerTest(const FFunKTestInstructions& Instructions);
-	
-	bool IsDifferentEnvironment(const FFunKTestInstructions& Instructions) const;
-	bool IsEnvironmentRunning(const FFunKTestInstructions& Instructions, bool& isWrongEnvironmentRunning);
-	FString GetCurrentPieWorldPackageName();
-	bool IsHoldingSubprocesses() const;
 	
 private:
 	EFunKTestRunnerType Type = EFunKTestRunnerType::None;
@@ -81,12 +65,6 @@ private:
 
 	UPROPERTY()
 	TScriptInterface<IFunKEnvironmentHandler> EnvironmentHandler;
-	
-	TWeakObjectPtr<UWorld> CurrentTestWorld = nullptr;
 	FFunKEventBusRegistrationContainer EventBusRegistration;
-
 	TWeakObjectPtr<UFunKEngineSubsystem> FunKEngineSubsystem;
-	
-	virtual bool StartEnvironment(const FFunKTestInstructions& Instructions);
-	static void SetFpsSettings(class ULevelEditorPlaySettings* playSettings, const struct FFunKSettings& funkSettings, bool isDedicated);
 };

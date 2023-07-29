@@ -14,7 +14,7 @@ struct FFunKTestStageEvent
 
 public:
 	UPROPERTY()
-	FGuid TestRunID;
+	int32 TestRunID;
 
 	UPROPERTY()
 	int32 Seed = 0;

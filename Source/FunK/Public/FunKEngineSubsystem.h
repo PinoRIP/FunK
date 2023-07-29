@@ -24,6 +24,8 @@ public:
 	UFunKTestRunner* ConnectTestRunner(bool isRemote);
 
 	UFunKTestRunner* GetTestRunner() const;
+
+	bool HasTestRunner() const;
 	
 	void EndTestRun();
 
@@ -32,8 +34,6 @@ public:
 	virtual void Deinitialize() override;
 
 	bool IsRunning() const;
-
-	void CallbackTestWorldBeganPlay(UWorld* world) const;
 
 	static bool IsSeparateTestingProcess();
 

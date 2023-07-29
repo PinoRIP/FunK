@@ -24,7 +24,10 @@ void FFunKAutomationEntry::ParseTestMapInfo(const FString& Parameters, FString& 
 
 void FFunKAutomationEntry::StartTest(UFunKEngineSubsystem* EngineSubsystem, const FFunKTestInstructions& TestInstructions)
 {
-	UFunKTestRunner* TestRunner = EngineSubsystem->StartTestRunner();
+	UFunKTestRunner* TestRunner = EngineSubsystem->HasTestRunner()
+		? EngineSubsystem->GetTestRunner()
+		: EngineSubsystem->StartTestRunner();
+	
 	TestRunner->Start(TestInstructions);
 	ADD_LATENT_AUTOMATION_COMMAND(FFunKAutomationLatentTestRunCommand(TestRunner))
 }
@@ -48,7 +51,7 @@ bool FFunKAutomationEntryRuntime::RunTest(const FString& Parameters)
 	ParseTestMapInfo(Parameters, MapObjectPath, MapPackageName, MapTestName, Params);
 	FFunKTestInstructions Instructions(MapObjectPath, MapPackageName, MapTestName, Params);
 		
-	if(EngineSubsystem->IsRunning())
+	if(!EngineSubsystem->IsRunning())
 	{
 		StartTest(EngineSubsystem, Instructions);
 		return true;

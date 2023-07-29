@@ -25,6 +25,7 @@ private:
 	TArray<uint32> StartedProcesses;
 	FFunKEventBusRegistration EventBusRegistration;
 	bool WaitsForWorld = false;
+	bool WaitsForControllers = false;
 	
 	UPROPERTY()
 	UWorld* World;
@@ -36,4 +37,6 @@ private:
 
 	virtual bool StartEnvironment(const FFunKTestInstructions& Instructions);
 	static void SetFpsSettings(class ULevelEditorPlaySettings* playSettings, const struct FFunKSettings& funkSettings, bool isDedicated);
+
+	static int32 GetTargetReplicationControllerCount(const FFunKTestInstructions& Instructions);
 };

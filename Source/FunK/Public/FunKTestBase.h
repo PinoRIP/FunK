@@ -52,28 +52,25 @@ public:
 	UFUNCTION(BlueprintCallable, Category="FunK|Setup")
 	bool IsRunOnListenServerClients() const;
 
-	virtual void BeginTest(FGuid InTestRunID, int32 InSeed);
+	virtual void BeginTest(int32 InTestRunID, int32 InSeed);
+	virtual void FinishTest(const FString& Reason = "");
+	virtual void FinishTest(EFunKTestResult InResult, const FString& Reason = "");
 
 	FORCEINLINE FName GetStageName() const;
+	const FFunKStage* GetCurrentStage() const;
+	int32 GetCurrentStageExecutionTime() const { return CurrentStageExecutionTime; }
 	
 	virtual void FinishStage();
 	UFUNCTION(BlueprintCallable, Category="FunK")
-	virtual void FinishStage(EFunKStageResult TestResult, const FString& Message);
-
-	FORCEINLINE FFunKEvent CreateEvent(EFunKTestResult testResult, const FString& Message) const;
+	virtual void FinishStage(EFunKStageResult StageResult, const FString& Message);
 
 	UFUNCTION(BlueprintCallable, Category="FunK")
 	bool IsRunning() const;
 
 	UFUNCTION(BlueprintCallable, Category="FunK")
-	bool IsStageRunning() const;
-
-	UFUNCTION(BlueprintCallable, Category="FunK")
 	bool IsFinished() const;
 
 	EFunKTestResult GetTestResult() const;
-	
-	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const;
 
 	UFUNCTION(BlueprintCallable, Category="FunK")
 	int32 GetSeed() const;
@@ -103,7 +100,6 @@ protected:
 
 	virtual void SetupStages(FFunKStagesSetup& stages);
 
-	const FFunKStage* GetCurrentStage() const;
 	const FFunKStage* GetStage(int32 StageIndex) const;
 
 	bool IsStageTickDelegateBound(int32 StageIndex);
@@ -117,10 +113,13 @@ protected:
 private:
 	int32 Seed;
 	int32 CurrentStageIndex = INDEX_NONE;
-	FGuid TestRunID;
+	int32 TestRunID;
 	FFunKStages Stages;
 	EFunKTestResult Result = EFunKTestResult::None;
 	FFunKAnonymousBitmask PeerBitMask;
+	bool IsLocalFinish = false;
+	bool IsLocalStageFinished = false;
+	float CurrentStageExecutionTime = 0;
 
 	FFunKEventBusRegistration BeginRegistration;
 	FFunKEventBusRegistrationContainer RunningRegistrations;
@@ -131,7 +130,8 @@ private:
 	void OnBeginFirstStage(const FFunKTestStageEvent& Event);
 	void OnFinishStage(const FFunKTestStageFinishedEvent& Event);
 	void OnFinish(const FFunKTestFinishedEvent& Event);
-	void NextStage(FGuid InTestRunID, int32 InSeed);
+	void NextStage(int32 InTestRunID, int32 InSeed);
+	void Finish(EFunKTestResult TestResult, FString Message);
 	
 	void SetupStages();
 	FFunKStage* GetCurrentStageMutable();
