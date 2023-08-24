@@ -17,9 +17,9 @@ public:
 	// Sets default values for this component's properties
 	UFunKActorScenarioComponent();
 
-	virtual AActor* AcquireActor(FFunKActorScenario& Scenario);
-	virtual bool VerifyActor(AActor* Actor, FFunKActorScenario& Scenario);
-	virtual void ReleaseActor(AActor* Actor, FFunKActorScenario& Scenario);
+	virtual AActor* AcquireActor(const FFunKActorScenario& Scenario);
+	virtual bool VerifyActor(AActor* Actor, const FFunKActorScenario& Scenario);
+	virtual void ReleaseActor(AActor* Actor, const FFunKActorScenario& Scenario);
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK")
 	bool IsOppositionActor = false;

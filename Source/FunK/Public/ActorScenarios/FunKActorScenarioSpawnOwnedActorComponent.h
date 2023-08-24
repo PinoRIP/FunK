@@ -17,8 +17,12 @@ public:
 	// Sets default values for this component's properties
 	UFunKActorScenarioSpawnOwnedActorComponent();
 
-	virtual AActor* AcquireActor(FFunKActorScenario& Scenario) override;
-	virtual void AssignOwner(AActor* Actor, FFunKActorScenario& Scenario);
+	virtual AActor* AcquireActor(const FFunKActorScenario& Scenario) override;
+	virtual void AssignOwner(AActor* Actor, const FFunKActorScenario& Scenario);
 	virtual void AssignOwner(AActor* Actor, APlayerController* PlayerController);
-	virtual bool VerifyActor(AActor* Actor, FFunKActorScenario& Scenario) override;
+	virtual bool VerifyActor(AActor* Actor, const FFunKActorScenario& Scenario) override;
+	virtual void ReleaseActor(AActor* Actor, const FFunKActorScenario& Scenario) override;
+
+protected:
+	APlayerController* GetController(const FFunKActorScenario& Scenario) const;
 };

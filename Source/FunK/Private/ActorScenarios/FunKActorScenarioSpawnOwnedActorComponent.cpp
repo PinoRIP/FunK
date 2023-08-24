@@ -16,14 +16,14 @@ UFunKActorScenarioSpawnOwnedActorComponent::UFunKActorScenarioSpawnOwnedActorCom
 	// ...
 }
 
-AActor* UFunKActorScenarioSpawnOwnedActorComponent::AcquireActor(FFunKActorScenario& Scenario)
+AActor* UFunKActorScenarioSpawnOwnedActorComponent::AcquireActor(const FFunKActorScenario& Scenario)
 {
 	AActor* actor = Super::AcquireActor(Scenario);
 	AssignOwner(actor, Scenario);
 	return actor;
 }
 
-void UFunKActorScenarioSpawnOwnedActorComponent::AssignOwner(AActor* Actor, FFunKActorScenario& Scenario)
+void UFunKActorScenarioSpawnOwnedActorComponent::AssignOwner(AActor* Actor, const FFunKActorScenario& Scenario)
 {
 	auto NetMode = GetNetMode();
 
@@ -32,31 +32,8 @@ void UFunKActorScenarioSpawnOwnedActorComponent::AssignOwner(AActor* Actor, FFun
 		return;
 
 	check(Actor->GetIsReplicated());
-
-	const EFunKTestLocationTarget ActorLocationTarget = IsOppositionActor
-		? Scenario.GetTo()
-		: Scenario.GetFrom();
-
-	// No explicit owner if the dedicated server should take ownership
-	if(ActorLocationTarget == EFunKTestLocationTarget::DedicatedServer)
-		return;
-
-	auto It = GetWorld()->GetPlayerControllerIterator();
-	if(ActorLocationTarget == EFunKTestLocationTarget::ListenServer)
-	{
-		AssignOwner(Actor, It->Get());
-		return;
-	}
-
-	// Only client to client scenarios should be left now. Skip the listen sever controller so that the iterator behaves the same for dedicated & listen servers.
-	if(NetMode == NM_ListenServer)
-		++It;
-
-	// The opposition in client to client is client 2
-	if(IsOppositionActor)
-		++It;
-
-	AssignOwner(Actor, It->Get());
+	
+	AssignOwner(Actor, GetController(Scenario));
 }
 
 void UFunKActorScenarioSpawnOwnedActorComponent::AssignOwner(AActor* Actor, APlayerController* PlayerController)
@@ -78,7 +55,7 @@ void UFunKActorScenarioSpawnOwnedActorComponent::AssignOwner(AActor* Actor, APla
 	Actor->ForceNetUpdate();
 }
 
-bool UFunKActorScenarioSpawnOwnedActorComponent::VerifyActor(AActor* Actor, FFunKActorScenario& Scenario)
+bool UFunKActorScenarioSpawnOwnedActorComponent::VerifyActor(AActor* Actor, const FFunKActorScenario& Scenario)
 {
 	if(!Super::VerifyActor(Actor, Scenario))
 		return false;
@@ -103,4 +80,44 @@ bool UFunKActorScenarioSpawnOwnedActorComponent::VerifyActor(AActor* Actor, FFun
 	}
 
 	return Actor->GetOwner() != nullptr;
+}
+
+void UFunKActorScenarioSpawnOwnedActorComponent::ReleaseActor(AActor* Actor, const FFunKActorScenario& Scenario)
+{
+	APlayerController* Controller = GetController(Scenario);
+
+	if(Controller && Controller->GetPawn() == Actor)
+	{
+		Controller->UnPossess();
+	}
+	
+	Super::ReleaseActor(Actor, Scenario);
+}
+
+APlayerController* UFunKActorScenarioSpawnOwnedActorComponent::GetController(const FFunKActorScenario& Scenario) const
+{
+	const EFunKTestLocationTarget ActorLocationTarget = IsOppositionActor
+		? Scenario.GetTo()
+		: Scenario.GetFrom();
+
+	// No explicit owner if the dedicated server should take ownership
+	if(ActorLocationTarget == EFunKTestLocationTarget::DedicatedServer)
+		return nullptr;
+
+	auto It = GetWorld()->GetPlayerControllerIterator();
+	if(ActorLocationTarget == EFunKTestLocationTarget::ListenServer)
+	{
+		return It->Get();
+	}
+
+	const ENetMode NetMode = GetNetMode();
+	// Only client to client scenarios should be left now. Skip the listen sever controller so that the iterator behaves the same for dedicated & listen servers.
+	if(NetMode == NM_ListenServer)
+		++It;
+
+	// The opposition in client to client is client 2
+	if(IsOppositionActor)
+		++It;
+
+	return It->Get();
 }
