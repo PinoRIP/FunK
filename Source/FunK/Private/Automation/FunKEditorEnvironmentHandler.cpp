@@ -76,6 +76,13 @@ bool UFunKEditorEnvironmentHandler::IsEnvironmentRunning(const FFunKTestInstruct
 		return false;
 	}
 
+	const ENetMode NetMode = GetCurrentPieWorldContext()->World()->GetNetMode();
+	if(NetMode == NM_Client || (NetMode == NM_Standalone && !Instructions.IsStandaloneTest()) || (NetMode == NM_ListenServer && !Instructions.IsListenServerTest()) || (NetMode == NM_DedicatedServer && !Instructions.IsDedicatedServerTest()))
+	{
+		isWrongEnvironmentRunning = true;
+		return true;
+	}
+
 	isWrongEnvironmentRunning = currentPieWorldPackageName != Instructions.MapPackageName;
 	if(isWrongEnvironmentRunning || isLocalProcessOnly)
 		return true;
