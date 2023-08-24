@@ -19,6 +19,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK")
 	TSubclassOf<AActor> TypeOfActorToSpawn;
 
-	virtual AActor* AcquireActor() override;
-	virtual void ReleaseActor(AActor* Actor) override;
+	virtual AActor* AcquireActor(FFunKActorScenario& Scenario) override;
+	virtual bool VerifyActor(AActor* Actor, FFunKActorScenario& Scenario) override;
+	virtual void ReleaseActor(AActor* Actor, FFunKActorScenario& Scenario) override;
 };

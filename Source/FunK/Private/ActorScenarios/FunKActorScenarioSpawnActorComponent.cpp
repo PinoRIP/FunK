@@ -9,12 +9,19 @@ UFunKActorScenarioSpawnActorComponent::UFunKActorScenarioSpawnActorComponent()
 {
 }
 
-AActor* UFunKActorScenarioSpawnActorComponent::AcquireActor()
+AActor* UFunKActorScenarioSpawnActorComponent::AcquireActor(FFunKActorScenario& Scenario)
 {
-	return GetWorld()->SpawnActor(TypeOfActorToSpawn);
+	AActor* Actor = GetWorld()->SpawnActor(TypeOfActorToSpawn);
+	Actor->bAlwaysRelevant = true;
+	return Actor;
 }
 
-void UFunKActorScenarioSpawnActorComponent::ReleaseActor(AActor* Actor)
+bool UFunKActorScenarioSpawnActorComponent::VerifyActor(AActor* Actor, FFunKActorScenario& Scenario)
+{
+	return Super::VerifyActor(Actor, Scenario) && Actor->HasActorBegunPlay();
+}
+
+void UFunKActorScenarioSpawnActorComponent::ReleaseActor(AActor* Actor, FFunKActorScenario& Scenario)
 {
 	GetWorld()->DestroyActor(Actor);
 }

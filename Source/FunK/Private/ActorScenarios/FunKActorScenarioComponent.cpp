@@ -9,11 +9,16 @@ UFunKActorScenarioComponent::UFunKActorScenarioComponent()
 {
 }
 
-AActor* UFunKActorScenarioComponent::AcquireActor()
+AActor* UFunKActorScenarioComponent::AcquireActor(FFunKActorScenario& Scenario)
 {
 	return nullptr;
 }
 
-void UFunKActorScenarioComponent::ReleaseActor(AActor* Actor)
+bool UFunKActorScenarioComponent::VerifyActor(AActor* Actor, FFunKActorScenario& Scenario)
+{
+	return Actor != nullptr;
+}
+
+void UFunKActorScenarioComponent::ReleaseActor(AActor* Actor, FFunKActorScenario& Scenario)
 {
 }

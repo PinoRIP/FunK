@@ -89,7 +89,9 @@ public:
 	FFunKPeerStageFinishing OnPeerStageFinishing;
 
 	const FFunKAnonymousBitmask& GetStagePeerState() const;
-	
+
+	UFUNCTION(BlueprintCallable)
+	int32 GetPeerIndex() const;
 protected:
 	/**
 	 * A description of the test, like what is this test trying to determine.

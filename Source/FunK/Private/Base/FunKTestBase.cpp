@@ -342,7 +342,7 @@ void AFunKTestBase::OnFinishStage(EFunKStageResult StageResult, FString Message)
 	Event.StageIndex = GetCurrentStageIndex();
 	Event.Result = StageResult;
 	Event.Message = Message;
-	Event.PeerIndex = GetWorldSubsystem()->GetPeerIndex();
+	Event.PeerIndex = GetPeerIndex();
 	Event.TestRunID = TestRunID;
 	Event.Test = this;
 
@@ -567,6 +567,11 @@ const FFunKAnonymousBitmask& AFunKTestBase::GetStagePeerState() const
 	return PeerBitMask;
 }
 
+int32 AFunKTestBase::GetPeerIndex() const
+{
+	return GetWorldSubsystem()->GetPeerIndex();
+}
+
 void AFunKTestBase::GatherContext(FFunKEvent& Event) const
 {
 	if (TestRunID != 0)
@@ -581,7 +586,7 @@ void AFunKTestBase::GatherContext(FFunKEvent& Event) const
 
 	Event.AddToContext(GetName());
 	
-	Event.AddToContext(GetWorldSubsystem()->GetPeerIndex());
+	Event.AddToContext(GetPeerIndex());
 }
 
 FFunKStage* AFunKTestBase::GetCurrentStageMutable()

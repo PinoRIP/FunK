@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FunKActorScenario.h"
 #include "Components/ActorComponent.h"
 #include "FunKActorScenarioComponent.generated.h"
 
@@ -16,8 +17,9 @@ public:
 	// Sets default values for this component's properties
 	UFunKActorScenarioComponent();
 
-	virtual AActor* AcquireActor();
-	virtual void ReleaseActor(AActor* Actor);
+	virtual AActor* AcquireActor(FFunKActorScenario& Scenario);
+	virtual bool VerifyActor(AActor* Actor, FFunKActorScenario& Scenario);
+	virtual void ReleaseActor(AActor* Actor, FFunKActorScenario& Scenario);
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK")
 	bool IsOppositionActor = false;
@@ -36,7 +38,4 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK")
 	bool IsListenServerClientRelevant = true;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK")
-	bool IsTryingToPossess = true;
 };

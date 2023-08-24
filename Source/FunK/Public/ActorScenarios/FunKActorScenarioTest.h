@@ -3,11 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FunKActorScenario.h"
 #include "Base/FunKTestBase.h"
 #include "Base/FunKTimeLimit.h"
 #include "GameFramework/Actor.h"
 #include "ActorScenarios/FunKTestLocationTarget.h"
 #include "FunKActorScenarioTest.generated.h"
+
+
 
 UCLASS(Blueprintable)
 class FUNK_API AFunKActorScenarioTest : public AFunKTestBase
@@ -23,6 +26,27 @@ public:
 	virtual void OnFinish(const FString& Message) override;
 
 	virtual void Tick(float DeltaTime) override;
+
+	UFUNCTION(BlueprintCallable)
+	bool IsListenServerScenario() const;
+
+	UFUNCTION(BlueprintCallable)
+	bool IsDedicatedServerScenario() const;
+
+	UFUNCTION(BlueprintCallable)
+	bool IsServerToClientScenario() const;
+	
+	UFUNCTION(BlueprintCallable)
+	bool IsClientToServerScenario() const;
+
+	UFUNCTION(BlueprintCallable)
+	bool IsClientToClientScenario() const;
+	
+	UFUNCTION(BlueprintCallable)
+	bool IsStandaloneScenario() const;
+	
+	UFUNCTION(BlueprintCallable)
+	bool IsLocalScenario() const;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup|Timeout")
@@ -96,6 +120,7 @@ private:
 	TArray<AActor*> AcquiredActors;
 
 	FString CurrentStageScenario;
+	FFunKActorScenario CurrentScenario;
 	bool IsCurrentStageScenarioFinished;
 
 	void ErrorFallbackStage();

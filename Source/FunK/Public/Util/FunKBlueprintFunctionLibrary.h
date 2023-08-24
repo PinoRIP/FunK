@@ -30,14 +30,23 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext", ExpandEnumAsExecs = "Branches"))
 	static void SwitchNetMode(UObject* WorldContext, EFunKNetMode& Branches);
 
+	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
+	static EFunKClient GetClients(UObject* WorldContext);
+
 	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext", ExpandEnumAsExecs = "Branches"))
 	static void SwitchClients(UObject* WorldContext, EFunKClient& Branches);
+
+	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
+	static EFunKTestEnvironmentType GetTestEnvironmentType(UObject* WorldContext);
 
 	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext", ExpandEnumAsExecs = "Branches"))
 	static void SwitchTestEnvironmentType(UObject* WorldContext, EFunKTestEnvironmentType& Branches);
 	
 	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
 	static bool IsServerDedicated(UObject* WorldContext);
+
+	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
+	static EFunKNetLocation GetNetLocation(UObject* WorldContext);
 
 	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext", ExpandEnumAsExecs = "Branches"))
 	static void SwitchNetLocation(UObject* WorldContext, EFunKNetLocation& Branches);
