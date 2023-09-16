@@ -56,6 +56,8 @@ class FUNK_API UFunKInputSimulationSystem : public UTickableWorldSubsystem
 
 public:
 	virtual void Tick(float DeltaTime) override;
+
+	virtual TStatId GetStatId() const override;
 	
 public: //Enhanced input system
 	UFUNCTION(BlueprintCallable)
@@ -68,7 +70,7 @@ public: //Enhanced input system
 	void SimulateFirstPlayerInputActionFor(const UInputAction* InputAction, FInputActionValue InputActionValue, float applicationTimeMs);
 	
 	UFUNCTION(BlueprintCallable)
-	void SimulateInputActionOnceFor(APlayerController* PlayerController, const UInputAction* InputAction, FInputActionValue InputActionValue, float applicationTimeMs);
+	void SimulateInputActionFor(APlayerController* PlayerController, const UInputAction* InputAction, FInputActionValue InputActionValue, float applicationTimeMs);
 
 	UFUNCTION(BlueprintCallable)
 	FFunKInputSimulationHandle SimulateFirstPlayerInputAction(const UInputAction* InputAction, FInputActionValue InputActionValue);

@@ -69,6 +69,11 @@ void UFunKInputSimulationSystem::Tick(float DeltaTime)
 	}
 }
 
+TStatId UFunKInputSimulationSystem::GetStatId() const
+{
+	RETURN_QUICK_DECLARE_CYCLE_STAT(UFunKInputSimulationSystem, STATGROUP_Tickables);
+}
+
 void UFunKInputSimulationSystem::SimulateFirstPlayerInputActionOnce(const UInputAction* InputAction, FInputActionValue InputActionValue)
 {
 	SimulateInputActionOnce(GetWorld()->GetFirstPlayerController(), InputAction, InputActionValue);
@@ -86,7 +91,7 @@ void UFunKInputSimulationSystem::SimulateFirstPlayerInputActionFor(const UInputA
 	SimulateFirstPlayerInputAction(InputAction, InputActionValue, applicationTimeMs);
 }
 
-void UFunKInputSimulationSystem::SimulateInputActionOnceFor(APlayerController* PlayerController, const UInputAction* InputAction, FInputActionValue InputActionValue, float applicationTimeMs)
+void UFunKInputSimulationSystem::SimulateInputActionFor(APlayerController* PlayerController, const UInputAction* InputAction, FInputActionValue InputActionValue, float applicationTimeMs)
 {
 	SimulateInputAction(PlayerController, InputAction, InputActionValue, applicationTimeMs);
 }
@@ -145,7 +150,8 @@ void UFunKInputSimulationSystem::SimulateLegacyActionInput(APlayerController* Pl
 	
 	const FKey* InputAxisKey = GetInputActionKey(ActionName);
 	if(!InputAxisKey) return;
-	
+
+	SimulatePlayerControllerKeyPressInput(PlayerController, *InputAxisKey, InputEventType);
 }
 
 void UFunKInputSimulationSystem::SimulateLegacyFirstPlayerAxisInput(const FName& AxisName, float AxisValue)
@@ -170,7 +176,7 @@ void UFunKInputSimulationSystem::SimulateLegacyAxisInput(APlayerController* Play
 const FKey* UFunKInputSimulationSystem::GetInputActionKey(const FName& ActionName) const
 {
 	const UInputSettings* InputSettings = GetInputSettings();
-	if (InputSettings) return nullptr;
+	if (!InputSettings) return nullptr;
 
 	for (const FInputActionKeyMapping& Mapping : InputSettings->GetActionMappings())
 	{
@@ -187,7 +193,7 @@ const FKey* UFunKInputSimulationSystem::GetInputActionKey(const FName& ActionNam
 const FKey* UFunKInputSimulationSystem::GetInputAxisKey(const FName& AxisName) const
 {
 	const UInputSettings* InputSettings = GetInputSettings();
-	if (InputSettings) return nullptr;
+	if (!InputSettings) return nullptr;
 
 	for (const FInputAxisKeyMapping& Mapping : InputSettings->GetAxisMappings())
 	{

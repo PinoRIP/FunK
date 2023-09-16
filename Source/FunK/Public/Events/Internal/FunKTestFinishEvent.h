@@ -17,7 +17,7 @@ public:
 	int32 TestRunID = 0;
 
 	UPROPERTY()
-	AFunKTestBase* Test = nullptr;
+	class AFunKTestBase* Test = nullptr;
 
 	UPROPERTY()
 	EFunKTestResult Result = EFunKTestResult::None;
