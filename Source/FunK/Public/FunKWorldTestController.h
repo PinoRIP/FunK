@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "FunKWorldTestController.generated.h"
 
+class UFunKSettingsObject;
 class AFunKTestBase;
 class UFunKTestRunner;
 class UFunKWorldTestExecution;

@@ -38,7 +38,9 @@ public class FunK : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-				"UnrealEd"
+				"UnrealEd",
+				"InputCore", 
+				"EnhancedInput"
 				// ... add private dependencies that you statically link with here ...	
 			}
 			);

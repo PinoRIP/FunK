@@ -13,6 +13,7 @@
 #include "Components/BillboardComponent.h"
 #include "Events/Internal/FunKTestBeginEvent.h"
 #include "Events/Internal/FunKTestFinishEvent.h"
+#include "InputSimulation/FunKInputSimulationSystem.h"
 #include "Net/UnrealNetwork.h"
 #include "UObject/ConstructorHelpers.h"
 #include "Util/FunKAnonymousBitmask.h"
@@ -307,6 +308,8 @@ void AFunKTestBase::OnFinish(const FFunKTestFinishedEvent& Event)
 void AFunKTestBase::OnFinish(const FString& Message)
 {
 	OnTestFinish.Broadcast();
+
+	EndAllInputActionSimulations();
 }
 
 void AFunKTestBase::FinishStage()
@@ -570,6 +573,12 @@ const FFunKAnonymousBitmask& AFunKTestBase::GetStagePeerState() const
 int32 AFunKTestBase::GetPeerIndex() const
 {
 	return GetWorldSubsystem()->GetPeerIndex();
+}
+
+void AFunKTestBase::EndAllInputActionSimulations() const
+{
+	UFunKInputSimulationSystem* InputSimulationSystem = GetWorld()->GetSubsystem<UFunKInputSimulationSystem>();
+	InputSimulationSystem->EndAllInputActionSimulations();
 }
 
 void AFunKTestBase::GatherContext(FFunKEvent& Event) const

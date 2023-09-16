@@ -92,6 +92,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	int32 GetPeerIndex() const;
+	
 protected:
 	/**
 	 * A description of the test, like what is this test trying to determine.
@@ -154,6 +155,8 @@ private:
 	void SetupStages();
 	FFunKStage* GetCurrentStageMutable();
 	FFunKStage* GetStageMutable(int32 StageIndex);
+
+	void EndAllInputActionSimulations() const;
 
 public:
 	// Called every frame
