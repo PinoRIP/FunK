@@ -8,6 +8,8 @@
 #include "Kismet/BlueprintAsyncActionBase.h"
 #include "FunKBlueprintAsyncWaitForSyncPoint.generated.h"
 
+class AFunKTestBase;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFunKSyncPointReady);
 
 UENUM(BlueprintType)

@@ -142,7 +142,7 @@ bool UFunKAssertions::AssertVector4NotEqual(FVector4 Actual, FVector4 NotExpecte
 	return Assert([Actual, NotExpected, Tolerance]() { return !Actual.Equals(NotExpected, Tolerance); }, BuildMessage(What, NotExpected.ToString(), Actual.ToString(), EFunKComparisonMethod::NotEqualTo), Context);
 }
 
-bool UFunKAssertions::AsserQuatEqual(FQuat Actual, FQuat Expected, const FString& What, UObject* Context, float Tolerance)
+bool UFunKAssertions::AssertQuatEqual(FQuat Actual, FQuat Expected, const FString& What, UObject* Context, float Tolerance)
 {
 	return Assert([Actual, Expected, Tolerance]() { return Actual.Equals(Expected, Tolerance); }, BuildMessage(What, Expected.ToString(), Actual.ToString(), EFunKComparisonMethod::EqualTo), Context);
 }
@@ -162,7 +162,7 @@ bool UFunKAssertions::AssertMatrixNotEqual(FMatrix Actual, FMatrix NotExpected, 
 	return Assert([Actual, NotExpected, Tolerance]() { return !Actual.Equals(NotExpected, Tolerance); }, BuildMessage(What, NotExpected.ToString(), Actual.ToString(), EFunKComparisonMethod::NotEqualTo), Context);
 }
 
-bool UFunKAssertions::Assert(TFunctionRef<bool()> Assertion, const FString& Message, UObject* Context, int32 stackOffset)
+bool UFunKAssertions::Assert(const TFunctionRef<bool()>& Assertion, const FString& Message, UObject* Context, int32 stackOffset)
 {
 	const bool result = Assertion();
 	

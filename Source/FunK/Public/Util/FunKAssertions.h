@@ -111,7 +111,7 @@ public:
 	static bool AssertVector4NotEqual(FVector4 Actual, FVector4 NotExpected, const FString& What, UObject* Context, float Tolerance = 1.e-4f);
 
 	UFUNCTION(BlueprintCallable, Category = "FunK|Assertions", meta = ( HidePin = "Context", DefaultToSelf = "Context"))
-	static bool AsserQuatEqual(FQuat Actual, FQuat Expected, const FString& What, UObject* Context, float Tolerance = 1.e-4f);
+	static bool AssertQuatEqual(FQuat Actual, FQuat Expected, const FString& What, UObject* Context, float Tolerance = 1.e-4f);
 
 	UFUNCTION(BlueprintCallable, Category = "FunK|Assertions", meta = ( HidePin = "Context", DefaultToSelf = "Context"))
 	static bool AssertQuatNotEqual(FQuat Actual, FQuat NotExpected, const FString& What, UObject* Context, float Tolerance = 1.e-4f);
@@ -124,7 +124,7 @@ public:
 
 
 private:
-	static bool Assert(TFunctionRef<bool()> Assertion, const FString& Message, UObject* Context, int32 stackOffset = 2);
+	static bool Assert(const TFunctionRef<bool()>& Assertion, const FString& Message, UObject* Context, int32 stackOffset = 2);
 
 	FORCEINLINE static FString BuildMessage(const FString& What, const FString& Expected, const FString& Actual, EFunKComparisonMethod ComparisonMethod = EFunKComparisonMethod::None, const FString Ext = "");
 	FORCEINLINE static FString GetObjectName(UObject* object);

@@ -467,29 +467,6 @@ void AFunKActorScenarioTest::AddScenarioStages(FFunKStagesSetup& stages, const F
 	}
 }
 
-void AFunKActorScenarioTest::AssignOwner(AActor* Actor, AActor* NewOwner, bool tryToPossess)
-{
-	if(tryToPossess)
-	{
-		APawn* Pawn = Cast<APawn>(Actor);
-		AController* Controller = Cast<AController>(NewOwner);
-	
-		if(Pawn && Controller)
-		{
-			Pawn->PossessedBy(Controller);
-		}
-	}
-
-	if(Actor->GetNetOwner() != NewOwner)
-	{
-		Actor->ForceNetUpdate();
-		Actor->bAlwaysRelevant = true;
-		Actor->SetAutonomousProxy(true);
-	}
-	
-	Actor->ForceNetUpdate();
-}
-
 void AFunKActorScenarioTest::GetActorScenarioComponents(TArray<UFunKActorScenarioComponent*>& ActorScenarioComponents)
 {
 	GetComponents(ActorScenarioComponents);

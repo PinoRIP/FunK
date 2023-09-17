@@ -35,14 +35,14 @@ inline bool FFunKAnonymousBitmask::IsClear(int32 Index) const
 {
 	if(Index >= Length || Index < INDEX_NONE) return false;
 	if(Index == INDEX_NONE) return Bits == 0;
-	else return !IsBitSet(Index);
+	return !IsBitSet(Index);
 }
 
 inline bool FFunKAnonymousBitmask::IsSet(int32 Index) const
 {
 	if(Index >= Length || Index < INDEX_NONE) return false;
 	if(Index == INDEX_NONE) return Bits == (0 | ((1 << Length) - 1));
-	else return IsBitSet(Index);
+	return IsBitSet(Index);
 }
 
 bool FFunKAnonymousBitmask::IsBitSet(int32 Index) const

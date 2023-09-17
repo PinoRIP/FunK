@@ -11,6 +11,7 @@
 #include "FunKActorScenarioTest.generated.h"
 
 
+class UFunKActorScenarioComponent;
 
 UCLASS(Blueprintable)
 class FUNK_API AFunKActorScenarioTest : public AFunKTestBase
@@ -126,7 +127,6 @@ private:
 	void ErrorFallbackStage();
 	void SetupStages(FFunKStagesSetup& stages, TArray<UFunKActorScenarioComponent*>& actorScenarioComponents);
 	void AddScenarioStages(FFunKStagesSetup& stages, const FString& name, bool standalone, bool dedicated, bool dedicatedClient, bool listen, bool listenClient);
-	void AssignOwner(AActor* Actor, AActor* NewOwner, bool tryToPossess);
 
 	void GetActorScenarioComponents(TArray<UFunKActorScenarioComponent*>& ActorScenarioComponents);
 	FORCEINLINE FString ParseStageScenario(const FString& StageName) const;
