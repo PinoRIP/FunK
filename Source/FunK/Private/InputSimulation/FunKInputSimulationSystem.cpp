@@ -115,11 +115,11 @@ void UFunKInputSimulationSystem::EndSimulateControllerInputAction(APlayerControl
 
 FFunKInputActionSimulationTick& UFunKInputSimulationSystem::ScheduleInputActionSimulation(APlayerController* PlayerController, const UInputAction* InputAction, FInputActionValue InputActionValue)
 {
-	FFunKPlayerControllerInputSimulations* ControllerInputSimulations = GetControllerInputSimulations(PlayerController, true);
-	FFunKInputActionSimulationTick* InputActionEntry = ControllerInputSimulations->InputActionSimulations.Find(InputAction);
+	FFunKPlayerControllerInputSimulations* InputSimulations = GetControllerInputSimulations(PlayerController, true);
+	FFunKInputActionSimulationTick* InputActionEntry = InputSimulations->InputActionSimulations.Find(InputAction);
 	if(!InputActionEntry)
 	{
-		InputActionEntry = &ControllerInputSimulations->InputActionSimulations.Add(InputAction, FFunKInputActionSimulationTick());
+		InputActionEntry = &InputSimulations->InputActionSimulations.Add(InputAction, FFunKInputActionSimulationTick());
 	}
 
 	InputActionEntry->Value = InputActionValue;
@@ -286,11 +286,11 @@ void UFunKInputSimulationSystem::SimulateAxisInput(APlayerController* PlayerCont
 
 FFunKAxisInputSimulationTick& UFunKInputSimulationSystem::ScheduleAxisInputSimulation(APlayerController* PlayerController, const FKey& key, float AxisValue)
 {
-	FFunKPlayerControllerInputSimulations* ControllerInputSimulations = GetControllerInputSimulations(PlayerController, true);
-	FFunKAxisInputSimulationTick* AxisInputEntry = ControllerInputSimulations->AxisInputSimulations.Find(key.GetFName());
+	FFunKPlayerControllerInputSimulations* InputSimulations = GetControllerInputSimulations(PlayerController, true);
+	FFunKAxisInputSimulationTick* AxisInputEntry = InputSimulations->AxisInputSimulations.Find(key.GetFName());
 	if(!AxisInputEntry)
 	{
-		AxisInputEntry = &ControllerInputSimulations->AxisInputSimulations.Add(key.GetFName(), FFunKAxisInputSimulationTick());
+		AxisInputEntry = &InputSimulations->AxisInputSimulations.Add(key.GetFName(), FFunKAxisInputSimulationTick());
 	}
 
 	AxisInputEntry->Key = key;
