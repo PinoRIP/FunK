@@ -2,124 +2,132 @@
 
 
 #include "InputSimulation/FunKInputSimulationBlueprintFunctionLibrary.h"
-
 #include "GameFramework/PlayerController.h"
 #include "InputSimulation/FunKInputSimulationSystem.h"
 
-void UFunKInputSimulationBlueprintFunctionLibrary::EndInputSimulation(UObject* WorldContext, const FFunKInputSimulationHandle& Handle)
-{
-	if(!WorldContext) return;
-	UFunKInputSimulationSystem* InputSimulationSystem = WorldContext->GetWorld()->GetSubsystem<UFunKInputSimulationSystem>();
-	InputSimulationSystem->EndInputActionSimulation(Handle.Key);
-}
-
-void UFunKInputSimulationBlueprintFunctionLibrary::EndInputSimulations(UObject* WorldContext, const TArray<FFunKInputSimulationHandle>& Handles)
-{
-	if(!WorldContext) return;
-	UFunKInputSimulationSystem* InputSimulationSystem = WorldContext->GetWorld()->GetSubsystem<UFunKInputSimulationSystem>();
-	for (const FFunKInputSimulationHandle& Handle : Handles)
-	{
-		InputSimulationSystem->EndInputActionSimulation(Handle.Key);
-	}
-}
-
-void UFunKInputSimulationBlueprintFunctionLibrary::SimulateFirstPlayerInputActionOnce(UObject* WorldContext, const UInputAction* InputAction, FInputActionValue InputActionValue)
+void UFunKInputSimulationBlueprintFunctionLibrary::EndAllInputSimulations(UObject* WorldContext)
 {
 	if(!WorldContext) return;
 	GetInputSimulationSystem(WorldContext)
-		->SimulateFirstPlayerInputActionOnce(InputAction, InputActionValue);
+		->EndAllInputSimulations();
 }
 
-void UFunKInputSimulationBlueprintFunctionLibrary::SimulateInputActionOnce(APlayerController* PlayerController, const UInputAction* InputAction, FInputActionValue InputActionValue)
-{
-	if(!PlayerController) return;
-	GetInputSimulationSystem(PlayerController)
-		->SimulateInputActionOnce(PlayerController, InputAction, InputActionValue);
-}
-
-void UFunKInputSimulationBlueprintFunctionLibrary::SimulateFirstPlayerInputActionFor(UObject* WorldContext, const UInputAction* InputAction, FInputActionValue InputActionValue, float applicationTimeMs)
+void UFunKInputSimulationBlueprintFunctionLibrary::SimulateInputAction(UObject* WorldContext, const UInputAction* InputAction, FInputActionValue InputActionValue)
 {
 	if(!WorldContext) return;
 	GetInputSimulationSystem(WorldContext)
-		->SimulateFirstPlayerInputActionFor(InputAction, InputActionValue, applicationTimeMs);
+		->SimulateInputAction(InputAction, InputActionValue);
 }
 
-void UFunKInputSimulationBlueprintFunctionLibrary::SimulateInputActionFor(APlayerController* PlayerController, const UInputAction* InputAction, FInputActionValue InputActionValue, float applicationTimeMs)
+void UFunKInputSimulationBlueprintFunctionLibrary::SimulateControllerInputAction(APlayerController* PlayerController, const UInputAction* InputAction, FInputActionValue InputActionValue)
 {
 	if(!PlayerController) return;
 	GetInputSimulationSystem(PlayerController)
-		->SimulateInputActionFor(PlayerController, InputAction, InputActionValue, applicationTimeMs);
+			->SimulateControllerInputAction(PlayerController, InputAction, InputActionValue);
 }
 
-FFunKInputSimulationHandle UFunKInputSimulationBlueprintFunctionLibrary::SimulateFirstPlayerInputAction(UObject* WorldContext, const UInputAction* InputAction, FInputActionValue InputActionValue)
-{
-	if(!WorldContext) FFunKInputSimulationHandle(-1);
-	return GetInputSimulationSystem(WorldContext)
-		->SimulateFirstPlayerInputAction(InputAction, InputActionValue);
-}
-
-FFunKInputSimulationHandle UFunKInputSimulationBlueprintFunctionLibrary::SimulateInputAction(APlayerController* PlayerController, const UInputAction* InputAction, FInputActionValue InputActionValue)
-{
-	if(!PlayerController) FFunKInputSimulationHandle(-1);
-	return GetInputSimulationSystem(PlayerController)
-			->SimulateInputAction(PlayerController, InputAction, InputActionValue);
-}
-
-void UFunKInputSimulationBlueprintFunctionLibrary::SimulateLegacyFirstPlayerActionInput(UObject* WorldContext, const FName& ActionName, EInputEvent InputEventType)
+void UFunKInputSimulationBlueprintFunctionLibrary::EndSimulateInputAction(UObject* WorldContext, const UInputAction* InputAction)
 {
 	if(!WorldContext) return;
 	GetInputSimulationSystem(WorldContext)
-		->SimulateLegacyFirstPlayerActionInput(ActionName, InputEventType);
+		->EndSimulateInputAction(InputAction);
 }
 
-void UFunKInputSimulationBlueprintFunctionLibrary::SimulateLegacyActionInput(APlayerController* PlayerController, const FName& ActionName, EInputEvent InputEventType)
+void UFunKInputSimulationBlueprintFunctionLibrary::EndSimulateControllerInputAction(APlayerController* PlayerController, const UInputAction* InputAction)
 {
 	if(!PlayerController) return;
 	GetInputSimulationSystem(PlayerController)
-		->SimulateLegacyActionInput(PlayerController, ActionName, InputEventType);
+		->EndSimulateControllerInputAction(PlayerController, InputAction);
 }
 
-void UFunKInputSimulationBlueprintFunctionLibrary::SimulateLegacyFirstPlayerAxisInput(UObject* WorldContext, const FName& AxisName, float AxisValue)
+
+void UFunKInputSimulationBlueprintFunctionLibrary::SimulateLegacyActionInput(UObject* WorldContext, const FName& ActionName, EInputEvent InputEventType)
 {
 	if(!WorldContext) return;
 	GetInputSimulationSystem(WorldContext)
-		->SimulateLegacyFirstPlayerAxisInput(AxisName, AxisValue);
+		->SimulateLegacyActionInput(ActionName, InputEventType);
 }
 
-void UFunKInputSimulationBlueprintFunctionLibrary::SimulateLegacyAxisInput(APlayerController* PlayerController, const FName& AxisName, float AxisValue)
+void UFunKInputSimulationBlueprintFunctionLibrary::SimulateLegacyControllerActionInput(APlayerController* PlayerController, const FName& ActionName, EInputEvent InputEventType)
 {
 	if(!PlayerController) return;
 	GetInputSimulationSystem(PlayerController)
-		->SimulateLegacyAxisInput(PlayerController, AxisName, AxisValue);
+		->SimulateLegacyControllerActionInput(PlayerController, ActionName, InputEventType);
 }
 
-void UFunKInputSimulationBlueprintFunctionLibrary::SimulateFirstPlayerKeyPressInput(UObject* WorldContext, const FName& PressedKey, EInputEvent InputEventType)
+
+void UFunKInputSimulationBlueprintFunctionLibrary::SimulateLegacyAxisInput(UObject* WorldContext, const FName& AxisName, float AxisValue)
 {
 	if(!WorldContext) return;
 	GetInputSimulationSystem(WorldContext)
-		->SimulateFirstPlayerKeyPressInput(PressedKey, InputEventType);
+		->SimulateLegacyAxisInput(AxisName, AxisValue);
 }
 
-void UFunKInputSimulationBlueprintFunctionLibrary::SimulateKeyPressInput(APlayerController* PlayerController, const FName& PressedKey, EInputEvent InputEventType)
+void UFunKInputSimulationBlueprintFunctionLibrary::SimulateLegacyControllerAxisInput(APlayerController* PlayerController, const FName& AxisName, float AxisValue)
 {
 	if(!PlayerController) return;
 	GetInputSimulationSystem(PlayerController)
-		->SimulateKeyPressInput(PlayerController, PressedKey, InputEventType);
+		->SimulateLegacyControllerAxisInput(PlayerController, AxisName, AxisValue);
 }
 
-void UFunKInputSimulationBlueprintFunctionLibrary::SimulateFirstPlayerKeyAxisInput(UObject* WorldContext, const FName& AxisKey, float AxisValue)
+void UFunKInputSimulationBlueprintFunctionLibrary::EndSimulateLegacyAxisInput(UObject* WorldContext, const FName& AxisName)
 {
 	if(!WorldContext) return;
 	GetInputSimulationSystem(WorldContext)
-		->SimulateFirstPlayerKeyAxisInput(AxisKey, AxisValue);
+		->EndSimulateLegacyAxisInput(AxisName);
 }
 
-void UFunKInputSimulationBlueprintFunctionLibrary::SimulateKeyAxisInput(APlayerController* PlayerController, const FName& AxisKey, float AxisValue)
+void UFunKInputSimulationBlueprintFunctionLibrary::EndSimulateLegacyControllerAxisInput(APlayerController* PlayerController, const FName& AxisName)
 {
 	if(!PlayerController) return;
 	GetInputSimulationSystem(PlayerController)
-		->SimulateKeyAxisInput(PlayerController, AxisKey, AxisValue);
+		->EndSimulateLegacyControllerAxisInput(PlayerController, AxisName);
 }
+
+
+void UFunKInputSimulationBlueprintFunctionLibrary::SimulateKeyPressInput(UObject* WorldContext, const FName& PressedKey, EInputEvent InputEventType)
+{
+	if(!WorldContext) return;
+	GetInputSimulationSystem(WorldContext)
+		->SimulateKeyPressInput(PressedKey, InputEventType);
+}
+
+void UFunKInputSimulationBlueprintFunctionLibrary::SimulateControllerKeyPressInput(APlayerController* PlayerController, const FName& PressedKey, EInputEvent InputEventType)
+{
+	if(!PlayerController) return;
+	GetInputSimulationSystem(PlayerController)
+		->SimulateControllerKeyPressInput(PlayerController, PressedKey, InputEventType);
+}
+
+
+void UFunKInputSimulationBlueprintFunctionLibrary::SimulateKeyAxisInput(UObject* WorldContext, const FName& AxisKey, float AxisValue)
+{
+	if(!WorldContext) return;
+	GetInputSimulationSystem(WorldContext)
+		->SimulateKeyAxisInput(AxisKey, AxisValue);
+}
+
+void UFunKInputSimulationBlueprintFunctionLibrary::SimulateControllerKeyAxisInput(APlayerController* PlayerController, const FName& AxisKey, float AxisValue)
+{
+	if(!PlayerController) return;
+	GetInputSimulationSystem(PlayerController)
+		->SimulateControllerKeyAxisInput(PlayerController, AxisKey, AxisValue);
+}
+
+void UFunKInputSimulationBlueprintFunctionLibrary::EndSimulateKeyAxisInput(UObject* WorldContext, const FName& AxisKey)
+{
+	if(!WorldContext) return;
+	GetInputSimulationSystem(WorldContext)
+		->EndSimulateKeyAxisInput(AxisKey);
+}
+
+void UFunKInputSimulationBlueprintFunctionLibrary::EndSimulateControllerKeyAxisInput(APlayerController* PlayerController, const FName& AxisKey)
+{
+	if(!PlayerController) return;
+	GetInputSimulationSystem(PlayerController)
+		->EndSimulateControllerKeyAxisInput(PlayerController, AxisKey);
+}
+
 
 UFunKInputSimulationSystem* UFunKInputSimulationBlueprintFunctionLibrary::GetInputSimulationSystem(const UObject* WorldContext)
 {

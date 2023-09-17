@@ -11,21 +11,6 @@ class UInputAction;
 class UInputSettings;
 
 USTRUCT(BlueprintType)
-struct FFunKInputSimulationHandle
-{
-	GENERATED_BODY()
-
-	FFunKInputSimulationHandle()
-		: FFunKInputSimulationHandle(-1)
-	{  }
-	FFunKInputSimulationHandle(int32 key)
-		: Key(key)
-	{  }
-
-	int32 Key;
-};
-
-USTRUCT(BlueprintType)
 struct FFunKInputActionSimulationTick
 {
 	GENERATED_BODY()
@@ -33,17 +18,37 @@ struct FFunKInputActionSimulationTick
 public:
 	FFunKInputActionSimulationTick() {  }
 
-	UPROPERTY()
-	const UInputAction* InputAction = nullptr;
-
-	UPROPERTY()
-	APlayerController* PlayerController = nullptr;
-
 	FInputActionValue Value;
 
-	float ApplicationTimeMs = 0.f;
+	uint64 AddedInputTime = 0;
+};
 
-	float ActiveTimeMs = 0.f;
+USTRUCT(BlueprintType)
+struct FFunKAxisInputSimulationTick
+{
+	GENERATED_BODY()
+
+public:
+	FFunKAxisInputSimulationTick() {  }
+
+	FKey Key;
+
+	float AxisValue = 0.f;
+
+	uint64 AddedInputTime = 0;
+};
+
+USTRUCT(BlueprintType)
+struct FFunKPlayerControllerInputSimulations
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY()
+	TMap<const UInputAction*, FFunKInputActionSimulationTick> InputActionSimulations;
+	
+	UPROPERTY()
+	TMap<FName, FFunKAxisInputSimulationTick> AxisInputSimulations;
 };
 
 /**
@@ -58,48 +63,45 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	virtual TStatId GetStatId() const override;
+
+	UFUNCTION(BlueprintCallable)
+	void EndAllInputSimulations();
 	
 public: //Enhanced input system
 	UFUNCTION(BlueprintCallable)
-	void SimulateFirstPlayerInputActionOnce(const UInputAction* InputAction, FInputActionValue InputActionValue);
+	void SimulateInputAction(const UInputAction* InputAction, FInputActionValue InputActionValue);
 	
 	UFUNCTION(BlueprintCallable)
-	void SimulateInputActionOnce(APlayerController* PlayerController, const UInputAction* InputAction, FInputActionValue InputActionValue);
-
-	UFUNCTION(BlueprintCallable)
-	void SimulateFirstPlayerInputActionFor(const UInputAction* InputAction, FInputActionValue InputActionValue, float applicationTimeMs);
+	void SimulateControllerInputAction(APlayerController* PlayerController, const UInputAction* InputAction, FInputActionValue InputActionValue);
 	
 	UFUNCTION(BlueprintCallable)
-	void SimulateInputActionFor(APlayerController* PlayerController, const UInputAction* InputAction, FInputActionValue InputActionValue, float applicationTimeMs);
-
-	UFUNCTION(BlueprintCallable)
-	FFunKInputSimulationHandle SimulateFirstPlayerInputAction(const UInputAction* InputAction, FInputActionValue InputActionValue);
+	void EndSimulateInputAction(const UInputAction* InputAction);
 	
 	UFUNCTION(BlueprintCallable)
-	FFunKInputSimulationHandle SimulateInputAction(APlayerController* PlayerController, const UInputAction* InputAction, FInputActionValue InputActionValue);
-	
-	void EndAllInputActionSimulations();
+	void EndSimulateControllerInputAction(APlayerController* PlayerController, const UInputAction* InputAction);
 
 private:
-	TMap<int32, FFunKInputActionSimulationTick> InputActionSimulations;
-
-	int32 SimulateFirstPlayerInputAction(const UInputAction* InputAction, const FInputActionValue& InputActionValue, float applicationTimeMs);
-	int32 SimulateInputAction(APlayerController* PlayerController, const UInputAction* InputAction, const FInputActionValue& InputActionValue, float applicationTimeMs);
-	
-	void EndInputActionSimulation(int32 key);
+	FFunKInputActionSimulationTick& ScheduleInputActionSimulation(APlayerController* PlayerController, const UInputAction* InputAction, FInputActionValue InputActionValue);
+	static void InjectInputForAction(const APlayerController* PlayerController, const UInputAction* InputAction, const FInputActionValue& InputActionValue);
 	
 public: //Legacy input system
 	UFUNCTION(BlueprintCallable)
-	void SimulateLegacyFirstPlayerActionInput(const FName& ActionName, EInputEvent InputEventType);
+	void SimulateLegacyActionInput(const FName& ActionName, EInputEvent InputEventType);
 	
 	UFUNCTION(BlueprintCallable)
-	void SimulateLegacyActionInput(APlayerController* PlayerController, const FName& ActionName, EInputEvent InputEventType);
+	void SimulateLegacyControllerActionInput(APlayerController* PlayerController, const FName& ActionName, EInputEvent InputEventType);
 
 	UFUNCTION(BlueprintCallable)
-	void SimulateLegacyFirstPlayerAxisInput(const FName& AxisName, float AxisValue);
+	void SimulateLegacyAxisInput(const FName& AxisName, float AxisValue);
 	
 	UFUNCTION(BlueprintCallable)
-	void SimulateLegacyAxisInput(APlayerController* PlayerController, const FName& AxisName, float AxisValue);
+	void SimulateLegacyControllerAxisInput(APlayerController* PlayerController, const FName& AxisName, float AxisValue);
+	
+	UFUNCTION(BlueprintCallable)
+	void EndSimulateLegacyAxisInput(const FName& AxisName);
+	
+	UFUNCTION(BlueprintCallable)
+	void EndSimulateLegacyControllerAxisInput(APlayerController* PlayerController, const FName& AxisName);
 
 private:
 	const FKey* GetInputActionKey(const FName& ActionName) const;
@@ -108,20 +110,34 @@ private:
 
 public: //"Lower level" input system
 	UFUNCTION(BlueprintCallable)
-	void SimulateFirstPlayerKeyPressInput(const FName& PressedKey, EInputEvent InputEventType);
+	void SimulateKeyPressInput(const FName& PressedKey, EInputEvent InputEventType);
 	
 	UFUNCTION(BlueprintCallable)
-	void SimulateKeyPressInput(APlayerController* PlayerController, const FName& PressedKey, EInputEvent InputEventType);
+	void SimulateControllerKeyPressInput(APlayerController* PlayerController, const FName& PressedKey, EInputEvent InputEventType);
 
 	UFUNCTION(BlueprintCallable)
-	void SimulateFirstPlayerKeyAxisInput(const FName& AxisKey, float AxisValue);
+	void SimulateKeyAxisInput(const FName& AxisKey, float AxisValue);
 	
 	UFUNCTION(BlueprintCallable)
-	void SimulateKeyAxisInput(APlayerController* PlayerController, const FName& AxisKey, float AxisValue);
+	void SimulateControllerKeyAxisInput(APlayerController* PlayerController, const FName& AxisKey, float AxisValue);
+	
+	UFUNCTION(BlueprintCallable)
+	void EndSimulateKeyAxisInput(const FName& AxisKey);
+	
+	UFUNCTION(BlueprintCallable)
+	void EndSimulateControllerKeyAxisInput(APlayerController* PlayerController, const FName& AxisKey);
 	
 private:
+	void SimulateAxisInput(APlayerController* PlayerController, const FKey& key, float AxisValue);
+	FFunKAxisInputSimulationTick& ScheduleAxisInputSimulation(APlayerController* PlayerController, const FKey& key, float AxisValue);
+	static void InjectAxisInput(APlayerController* PlayerController, const FKey& key, float AxisValue, float DeltaTime);
+	static float SenseAdjustAxisValue(const APlayerController* PlayerController, const FKey& key, float AxisValue);
 	static void SimulatePlayerControllerKeyPressInput(APlayerController* PlayerController, const FKey& key, EInputEvent InputEventType);
-	static void SimulatePlayerControllerAxisInput(APlayerController* PlayerController, const FKey& key, float AxisValue);
+
+private:
+	TMap<APlayerController*, FFunKPlayerControllerInputSimulations> ControllerInputSimulations;
+
+	FFunKPlayerControllerInputSimulations* GetControllerInputSimulations(APlayerController* PlayerController, bool create = false);
 
 	friend class UFunKInputSimulationBlueprintFunctionLibrary;
 };

@@ -20,53 +20,60 @@ class FUNK_API UFunKInputSimulationBlueprintFunctionLibrary : public UBlueprintF
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "FunK|InputSimulationHandle", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
-	static void EndInputSimulation(UObject* WorldContext, const FFunKInputSimulationHandle& Handle);
+	static void EndAllInputSimulations(UObject* WorldContext);
 	
-	UFUNCTION(BlueprintCallable, Category = "FunK|InputSimulationHandle", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
-	static void EndInputSimulations(UObject* WorldContext, const TArray<FFunKInputSimulationHandle>& Handles);
-
 	UFUNCTION(BlueprintCallable, Category = "FunK|InputSimulation", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
-	static void SimulateFirstPlayerInputActionOnce(UObject* WorldContext, const UInputAction* InputAction, FInputActionValue InputActionValue);
+	static void SimulateInputAction(UObject* WorldContext, const UInputAction* InputAction, FInputActionValue InputActionValue);
 	
 	UFUNCTION(BlueprintCallable, Category = "FunK|InputSimulation")
-	static void SimulateInputActionOnce(APlayerController* PlayerController, const UInputAction* InputAction, FInputActionValue InputActionValue);
-
+	static void SimulateControllerInputAction(APlayerController* PlayerController, const UInputAction* InputAction, FInputActionValue InputActionValue);
+	
 	UFUNCTION(BlueprintCallable, Category = "FunK|InputSimulation", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
-	static void SimulateFirstPlayerInputActionFor(UObject* WorldContext, const UInputAction* InputAction, FInputActionValue InputActionValue, float applicationTimeMs);
+	void EndSimulateInputAction(UObject* WorldContext, const UInputAction* InputAction);
 	
 	UFUNCTION(BlueprintCallable, Category = "FunK|InputSimulation")
-	static void SimulateInputActionFor(APlayerController* PlayerController, const UInputAction* InputAction, FInputActionValue InputActionValue, float applicationTimeMs);
+	void EndSimulateControllerInputAction(APlayerController* PlayerController, const UInputAction* InputAction);
 
+public:
 	UFUNCTION(BlueprintCallable, Category = "FunK|InputSimulation", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
-	static FFunKInputSimulationHandle SimulateFirstPlayerInputAction(UObject* WorldContext, const UInputAction* InputAction, FInputActionValue InputActionValue);
+	static void SimulateLegacyActionInput(UObject* WorldContext, const FName& ActionName, EInputEvent InputEventType);
 	
 	UFUNCTION(BlueprintCallable, Category = "FunK|InputSimulation")
-	static FFunKInputSimulationHandle SimulateInputAction(APlayerController* PlayerController, const UInputAction* InputAction, FInputActionValue InputActionValue);
+	static void SimulateLegacyControllerActionInput(APlayerController* PlayerController, const FName& ActionName, EInputEvent InputEventType);
 
+	
 	UFUNCTION(BlueprintCallable, Category = "FunK|InputSimulation", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
-	static void SimulateLegacyFirstPlayerActionInput(UObject* WorldContext, const FName& ActionName, EInputEvent InputEventType);
+	static void SimulateLegacyAxisInput(UObject* WorldContext, const FName& AxisName, float AxisValue);
 	
 	UFUNCTION(BlueprintCallable, Category = "FunK|InputSimulation")
-	static void SimulateLegacyActionInput(APlayerController* PlayerController, const FName& ActionName, EInputEvent InputEventType);
-
+	static void SimulateLegacyControllerAxisInput(APlayerController* PlayerController, const FName& AxisName, float AxisValue);
+		
 	UFUNCTION(BlueprintCallable, Category = "FunK|InputSimulation", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
-	static void SimulateLegacyFirstPlayerAxisInput(UObject* WorldContext, const FName& AxisName, float AxisValue);
+	static void EndSimulateLegacyAxisInput(UObject* WorldContext, const FName& AxisName);
 	
 	UFUNCTION(BlueprintCallable, Category = "FunK|InputSimulation")
-	static void SimulateLegacyAxisInput(APlayerController* PlayerController, const FName& AxisName, float AxisValue);
-
+	static void EndSimulateLegacyControllerAxisInput(APlayerController* PlayerController, const FName& AxisName);
+	
+public:
 	UFUNCTION(BlueprintCallable, Category = "FunK|InputSimulation", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
-	static void SimulateFirstPlayerKeyPressInput(UObject* WorldContext, const FName& PressedKey, EInputEvent InputEventType);
+	static void SimulateKeyPressInput(UObject* WorldContext, const FName& PressedKey, EInputEvent InputEventType);
 	
 	UFUNCTION(BlueprintCallable, Category = "FunK|InputSimulation")
-	static void SimulateKeyPressInput(APlayerController* PlayerController, const FName& PressedKey, EInputEvent InputEventType);
+	static void SimulateControllerKeyPressInput(APlayerController* PlayerController, const FName& PressedKey, EInputEvent InputEventType);
 
+	
 	UFUNCTION(BlueprintCallable, Category = "FunK|InputSimulation", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
-	static void SimulateFirstPlayerKeyAxisInput(UObject* WorldContext, const FName& AxisKey, float AxisValue);
+	static void SimulateKeyAxisInput(UObject* WorldContext, const FName& AxisKey, float AxisValue);
 	
 	UFUNCTION(BlueprintCallable, Category = "FunK|InputSimulation")
-	static void SimulateKeyAxisInput(APlayerController* PlayerController, const FName& AxisKey, float AxisValue);
+	static void SimulateControllerKeyAxisInput(APlayerController* PlayerController, const FName& AxisKey, float AxisValue);
+		
+	UFUNCTION(BlueprintCallable, Category = "FunK|InputSimulation", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
+	static void EndSimulateKeyAxisInput(UObject* WorldContext, const FName& AxisKey);
 	
+	UFUNCTION(BlueprintCallable, Category = "FunK|InputSimulation")
+	static void EndSimulateControllerKeyAxisInput(APlayerController* PlayerController, const FName& AxisKey);
+
 private:
 	static class UFunKInputSimulationSystem* GetInputSimulationSystem(const UObject* WorldContext);
 };

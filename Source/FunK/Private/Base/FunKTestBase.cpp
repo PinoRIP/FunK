@@ -578,7 +578,7 @@ int32 AFunKTestBase::GetPeerIndex() const
 void AFunKTestBase::EndAllInputActionSimulations() const
 {
 	UFunKInputSimulationSystem* InputSimulationSystem = GetWorld()->GetSubsystem<UFunKInputSimulationSystem>();
-	InputSimulationSystem->EndAllInputActionSimulations();
+	InputSimulationSystem->EndAllInputSimulations();
 }
 
 void AFunKTestBase::GatherContext(FFunKEvent& Event) const
