@@ -28,10 +28,10 @@ void UFunKActorScenarioSpawnOwnedActorComponent::AssignOwner(AActor* Actor, cons
 	auto NetMode = GetNetMode();
 
 	// No owners in standalone
-	if(NetMode == NM_Standalone)
-		return;
-
-	check(Actor->GetIsReplicated());
+	if(NetMode != NM_Standalone)
+	{
+		check(Actor->GetIsReplicated());
+	}
 	
 	AssignOwner(Actor, GetController(Scenario));
 }
