@@ -29,10 +29,10 @@ public:
 	static void SimulateControllerInputAction(APlayerController* PlayerController, const UInputAction* InputAction, FInputActionValue InputActionValue);
 	
 	UFUNCTION(BlueprintCallable, Category = "FunK|InputSimulation", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
-	void EndSimulateInputAction(UObject* WorldContext, const UInputAction* InputAction);
+	static void EndSimulateInputAction(UObject* WorldContext, const UInputAction* InputAction);
 	
 	UFUNCTION(BlueprintCallable, Category = "FunK|InputSimulation")
-	void EndSimulateControllerInputAction(APlayerController* PlayerController, const UInputAction* InputAction);
+	static void EndSimulateControllerInputAction(APlayerController* PlayerController, const UInputAction* InputAction);
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "FunK|InputSimulation", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))

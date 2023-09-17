@@ -310,7 +310,7 @@ float UFunKInputSimulationSystem::SenseAdjustAxisValue(const APlayerController* 
 	FInputAxisProperties AxisProps;
 	if (PlayerController->PlayerInput->GetAxisProperties(key, AxisProps) && AxisProps.Sensitivity != 1.f)
 	{
-		return (FVector(AxisValue, 0, 0) / AxisProps.Sensitivity).X;
+		return AxisValue / AxisProps.Sensitivity;
 	}
 	
 	return AxisValue;
