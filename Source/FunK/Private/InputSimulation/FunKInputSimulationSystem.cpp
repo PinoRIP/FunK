@@ -57,13 +57,13 @@ void UFunKInputSimulationSystem::Tick(float DeltaTime)
 		{
 			for (TTuple<const UInputAction*, FFunKInputActionSimulationTick>& InputActionSimulation : ControllerInputSimulation.Value.InputActionSimulations)
 			{
-				if(InputActionSimulation.Value.AddedInputTime == GInputTime) continue;
+				if(InputActionSimulation.Value.AddedInputTime == GFrameCounter) continue;
 				InjectInputForAction(ControllerInputSimulation.Key, InputActionSimulation.Key, InputActionSimulation.Value.Value);
 			}
 			
 			for (TTuple<FName, FFunKAxisInputSimulationTick>& AxisInputSimulation : ControllerInputSimulation.Value.AxisInputSimulations)
 			{
-				if(AxisInputSimulation.Value.AddedInputTime == GInputTime) continue;
+				if(AxisInputSimulation.Value.AddedInputTime == GFrameCounter) continue;
 				InjectAxisInput(ControllerInputSimulation.Key, AxisInputSimulation.Value.Key, AxisInputSimulation.Value.AxisValue, DeltaTime);
 			}
 		}
@@ -123,7 +123,7 @@ FFunKInputActionSimulationTick& UFunKInputSimulationSystem::ScheduleInputActionS
 	}
 
 	InputActionEntry->Value = InputActionValue;
-	InputActionEntry->AddedInputTime = GInputTime;
+	InputActionEntry->AddedInputTime = GFrameCounter;
 
 	return *InputActionEntry;
 }
@@ -295,7 +295,7 @@ FFunKAxisInputSimulationTick& UFunKInputSimulationSystem::ScheduleAxisInputSimul
 
 	AxisInputEntry->Key = key;
 	AxisInputEntry->AxisValue = SenseAdjustAxisValue(PlayerController, key, AxisValue);
-	AxisInputEntry->AddedInputTime = GInputTime;
+	AxisInputEntry->AddedInputTime = GFrameCounter;
 
 	return *AxisInputEntry;
 }
