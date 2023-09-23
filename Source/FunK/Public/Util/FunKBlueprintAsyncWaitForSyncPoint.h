@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FunKAnonymousBitmask.h"
-#include "EventBus/FunKEventBusSubsystem.h"
+#include "Internal/Util/FunKAnonymousBitmask.h"
+#include "Internal/EventBus/FunKEventBusSubsystem.h"
 #include "Kismet/BlueprintAsyncActionBase.h"
 #include "FunKBlueprintAsyncWaitForSyncPoint.generated.h"
 
@@ -34,7 +34,7 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FFunKSyncPointReady OnSyncPointReady;
 
-	UFUNCTION(BlueprintCallable, meta = (HidePin = "Test", DefaultToSelf = "Test", BlueprintInternalUseOnly = "true"), Category = "AsyncNode")
+	UFUNCTION(BlueprintCallable, meta = (HidePin = "Test", DefaultToSelf = "Test", BlueprintInternalUseOnly = "true"), Category = "AsyncNode", DisplayName="WaitFor (Sync point)")
 	static UFunKBlueprintAsyncWaitForSyncPoint* WaitFor(AFunKTestBase* Test, EFunKSyncTarget WaitFor);
 
 	virtual void Activate() override;

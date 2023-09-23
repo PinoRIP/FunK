@@ -4,10 +4,7 @@
 #include "FunKWorldTestController.h"
 #include "EngineUtils.h"
 #include "FunKFunctionalTest.h"
-#include "FunKSettingsObject.h"
-#include "FunKWorldSubsystem.h"
-#include "GameFramework/GameModeBase.h"
-#include "Net/UnrealNetwork.h"
+#include "Internal/FunKSettingsObject.h"
 
 
 // Sets default values

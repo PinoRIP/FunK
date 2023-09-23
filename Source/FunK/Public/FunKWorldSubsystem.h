@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "EventBus/FunKEventBusSubsystem.h"
 #include "FunKWorldSubsystem.generated.h"
 
 class AFunKTestBase;

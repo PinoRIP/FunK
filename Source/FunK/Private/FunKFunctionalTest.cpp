@@ -2,7 +2,7 @@
 
 
 #include "FunKFunctionalTest.h"
-#include "Base/FunKStagesSetup.h"
+#include "Internal/Setup/FunKStagesSetup.h"
 
 
 AFunKFunctionalTest::AFunKFunctionalTest()

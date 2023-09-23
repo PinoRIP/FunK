@@ -2,9 +2,10 @@
 
 
 #include "FunKWorldSubsystem.h"
-#include "FunKSettingsObject.h"
 #include "FunKWorldTestController.h"
-#include "EventBus/FunKEventBusReplicationController.h"
+#include "Internal/FunKSettingsObject.h"
+#include "Internal/EventBus/FunKEventBusReplicationController.h"
+#include "Internal/EventBus/FunKEventBusSubsystem.h"
 
 AFunKWorldTestController* UFunKWorldSubsystem::GetLocalTestController()
 {

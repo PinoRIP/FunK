@@ -3,13 +3,11 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Base/FunKTestBase.h"
-#include "Base/FunKTimeLimit.h"
+#include "Internal/FunKTestBase.h"
+#include "Internal/Setup/FunKTimeLimit.h"
 #include "FunkFunctionalTest.generated.h"
 
 class AFunKWorldTestController;
-
-
 
 UCLASS(Blueprintable)
 class FUNK_API AFunKFunctionalTest : public AFunKTestBase

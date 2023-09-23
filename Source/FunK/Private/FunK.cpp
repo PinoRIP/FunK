@@ -3,11 +3,10 @@
 #include "FunK.h"
 #include "EngineUtils.h"
 #include "FunKFunctionalTest.h"
-#include "FunKSettingsObject.h"
 #include "ISettingsModule.h"
 #include "ISettingsSection.h"
 #include "AssetRegistry/AssetRegistryModule.h"
-#include "Misc/AutomationTest.h"
+#include "Internal/FunKSettingsObject.h"
 
 #define LOCTEXT_NAMESPACE "FFunKModule"
 
@@ -73,7 +72,7 @@ void FFunKModule::GetTests(bool bEditorOnlyTests, TArray<FString>& OutBeautified
 #endif
 
 		TArray<FAssetData> MapList;
-		GetTestMapAsserts(AssetRegistry, MapList);
+		GetTestMapAssets(AssetRegistry, MapList);
 		for (const FAssetData& MapAsset : MapList)
 		{
 			FString MapAssetPath = MapAsset.GetObjectPathString();
@@ -193,7 +192,7 @@ void FFunKModule::OnWorldGetAssetTags(const UWorld* World, TArray<UObject::FAsse
 	}
 }
 
-void FFunKModule::GetTestMapAsserts(const IAssetRegistry& AssetRegistry, TArray<FAssetData>& MapList) const
+void FFunKModule::GetTestMapAssets(const IAssetRegistry& AssetRegistry, TArray<FAssetData>& MapList) const
 {
 	const FFunKSettings& settings = GetDefault<UFunKSettingsObject>()->Settings;
 

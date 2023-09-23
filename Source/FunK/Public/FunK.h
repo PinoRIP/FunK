@@ -3,7 +3,6 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Automation/FunKTestRunner.h"
 #include "Modules/ModuleManager.h"
 
 class IAssetRegistry;
@@ -54,5 +53,5 @@ public:
 private:
 	void OnWorldGetAssetTags(const UWorld* World, TArray<UObject::FAssetRegistryTag>& OutTags);
 
-	void GetTestMapAsserts(const IAssetRegistry& AssetRegistry, TArray<FAssetData>& MapList) const;
+	void GetTestMapAssets(const IAssetRegistry& AssetRegistry, TArray<FAssetData>& MapList) const;
 };

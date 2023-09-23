@@ -9,44 +9,6 @@
 #include "GameFramework/InputSettings.h"
 #include "GameFramework/PlayerController.h"
 
-/*void UFunKInputSimulationSystem::Do()
-{
-	UGameInstance* GameInst = GetWorld()->GetGameInstance();
-	UGameViewportClient* ViewportClient = GameInst->GetGameViewportClient();
-	FViewport* Viewport = ViewportClient->Viewport;
-
-	int32 ControllerId = 0; // or whatever controller id, could be a function param
-	FName PressedKey = FName(TEXT("X")); // or whatever key, could be a function param
-	FInputKeyEventArgs Args = FInputKeyEventArgs(
-			Viewport,
-			ControllerId,
-			FKey(PressedKey),
-			EInputEvent::IE_Pressed);
-
-	ViewportClient->InputKey(Args);
-}*/
-
-/*void UFunKInputSimulationSystem::Do()
-{
-	// Get the player controller that you care about from wherever you want
-	APlayerController* PC;
-
-	UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer());
-	auto b = Subsystem->QueryKeysMappedToAction(nullptr);
- 
-	UEnhancedPlayerInput* PlayerInput = Subsystem->GetPlayerInput();
-
-	Subsystem->
- 
-	UInputAction* InputAction = nullptr;
-	InputAction->
-	
-	FInputActionValue ActionValue(1.0f); // This can be a bool, float, FVector2D, or FVector
-	PlayerInput->InjectInputForAction(InputAction, ActionValue);
-
-	PlayerInput->
-}*/
-
 void UFunKInputSimulationSystem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
