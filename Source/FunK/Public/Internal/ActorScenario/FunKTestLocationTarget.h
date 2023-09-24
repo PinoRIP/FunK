@@ -6,6 +6,8 @@
 #include "UObject/Object.h"
 #include "FunKTestLocationTarget.generated.h"
 
+//Usage: UPROPERTY(EditAnywhere, BlueprintReadOnly, meta = (Bitmask, BitmaskEnum = "/Script/FunK.EFunKTestLocationTarget"), Category="FunK|Setup")
+
 UENUM(BlueprintType, meta = (Bitflags, UseEnumValuesAsMaskValuesInEditor = "true"))
 enum class EFunKTestLocationTarget: uint8
 {

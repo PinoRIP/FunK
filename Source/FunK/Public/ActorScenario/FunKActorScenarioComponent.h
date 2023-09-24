@@ -7,6 +7,16 @@
 #include "Components/ActorComponent.h"
 #include "FunKActorScenarioComponent.generated.h"
 
+UENUM(BlueprintType)
+enum class EFunKActorScenarioOwnership : uint8
+{
+	None,
+	AppositionPlayer,
+	OppositionPlayer,
+
+	//TODO: Setup AI
+	AI,
+};
 
 UCLASS(ClassGroup=(Custom), Abstract)
 class FUNK_API UFunKActorScenarioComponent : public UActorComponent
@@ -20,22 +30,8 @@ public:
 	virtual AActor* AcquireActor(const FFunKActorScenario& Scenario);
 	virtual bool VerifyActor(AActor* Actor, const FFunKActorScenario& Scenario);
 	virtual void ReleaseActor(AActor* Actor, const FFunKActorScenario& Scenario);
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK")
-	bool IsOppositionActor = false;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK")
-	bool IsStandaloneRelevant = true;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK")
-	bool IsDedicatedServerRelevant = true;
-
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK")
-	bool IsDedicatedServerClientRelevant = true;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK")
-	bool IsListenServerRelevant = true;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK")
-	bool IsListenServerClientRelevant = true;
+public:
+	UPROPERTY(EditAnywhere, Category = "Ownership")
+	EFunKActorScenarioOwnership ActorOwnership = EFunKActorScenarioOwnership::AppositionPlayer;
 };

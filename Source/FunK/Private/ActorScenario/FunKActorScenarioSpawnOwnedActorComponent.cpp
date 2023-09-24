@@ -60,24 +60,24 @@ bool UFunKActorScenarioSpawnOwnedActorComponent::VerifyActor(AActor* Actor, cons
 	if(!Super::VerifyActor(Actor, Scenario))
 		return false;
 
-	const EFunKTestLocationTarget ActorLocationTarget = IsOppositionActor
-		? Scenario.GetTo()
-		: Scenario.GetFrom();
+	//const EFunKTestLocationTarget ActorLocationTarget = IsOppositionActor
+	//	? Scenario.GetTo()
+	//	: Scenario.GetFrom();
 
-	if(ActorLocationTarget == EFunKTestLocationTarget::Standalone || ActorLocationTarget == EFunKTestLocationTarget::DedicatedServer || ActorLocationTarget == EFunKTestLocationTarget::ListenServer)
-		return true;
+	//if(ActorLocationTarget == EFunKTestLocationTarget::Standalone || ActorLocationTarget == EFunKTestLocationTarget::DedicatedServer || ActorLocationTarget == EFunKTestLocationTarget::ListenServer)
+	//	return true;
 
-	// Dont check the owner on the other client -> The owner will only be replicated to the owning client.
-	const ENetMode NetMode = GetNetMode();
-	if(NetMode == NM_Client)
-	{
-		const EFunKClient client = UFunKBlueprintFunctionLibrary::GetClients(GetOwner());
-		if(client == EFunKClient::Second && !IsOppositionActor)
-			return true;
+	//// Dont check the owner on the other client -> The owner will only be replicated to the owning client.
+	//const ENetMode NetMode = GetNetMode();
+	//if(NetMode == NM_Client)
+	//{
+	//	const EFunKClient client = UFunKBlueprintFunctionLibrary::GetClients(GetOwner());
+	//	if(client == EFunKClient::Second && !IsOppositionActor)
+	//		return true;
 
-		if(client == EFunKClient::First && IsOppositionActor)
-			return true;
-	}
+	//	if(client == EFunKClient::First && IsOppositionActor)
+	//		return true;
+	//}
 
 	return Actor->GetOwner() != nullptr;
 }
@@ -96,7 +96,7 @@ void UFunKActorScenarioSpawnOwnedActorComponent::ReleaseActor(AActor* Actor, con
 
 APlayerController* UFunKActorScenarioSpawnOwnedActorComponent::GetController(const FFunKActorScenario& Scenario) const
 {
-	const EFunKTestLocationTarget ActorLocationTarget = IsOppositionActor
+	const EFunKTestLocationTarget ActorLocationTarget = false
 		? Scenario.GetTo()
 		: Scenario.GetFrom();
 
@@ -116,7 +116,7 @@ APlayerController* UFunKActorScenarioSpawnOwnedActorComponent::GetController(con
 		++It;
 
 	// The opposition in client to client is client 2
-	if(IsOppositionActor)
+	if(false)
 		++It;
 
 	return It->Get();

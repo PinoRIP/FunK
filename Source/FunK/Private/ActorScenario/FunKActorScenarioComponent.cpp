@@ -22,3 +22,4 @@ bool UFunKActorScenarioComponent::VerifyActor(AActor* Actor, const FFunKActorSce
 void UFunKActorScenarioComponent::ReleaseActor(AActor* Actor, const FFunKActorScenario& Scenario)
 {
 }
+

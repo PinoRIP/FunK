@@ -34,6 +34,8 @@ public:
 
 	bool IsFromClient() const { return (From == EFunKTestLocationTarget::ListenServerClient || From == EFunKTestLocationTarget::DedicatedServerClient); }
 	bool IsFromServer() const { return (From == EFunKTestLocationTarget::ListenServer || From == EFunKTestLocationTarget::DedicatedServer); }
+	bool IsToClient() const { return (To == EFunKTestLocationTarget::ListenServerClient || To == EFunKTestLocationTarget::DedicatedServerClient); }
+	bool IsToServer() const { return (To == EFunKTestLocationTarget::ListenServer || To == EFunKTestLocationTarget::DedicatedServer); }
 
 private:
 	EFunKTestLocationTarget From;
