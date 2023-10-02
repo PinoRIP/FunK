@@ -1,5 +1,5 @@
 # FunK
-FunK is a functional testing framework with multiplayer support for Unreal Engine 5
+FunK is a functional testing framework with multiplayer support for Unreal Engine 5. This is the plugin. The UE-project used to develop is here: [FunKProject](https://github.com/PinoRIP/FunKProject)
 
 ## TODO (not necessarily in order)
 - Readme.md with setup, usage & concepts
