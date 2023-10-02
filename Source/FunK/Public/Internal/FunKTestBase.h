@@ -3,21 +3,17 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "FunKTestEvents.h"
 #include "FunKTestResult.h"
 #include "EventBus/FunKEventBusRegistrationContainer.h"
 #include "EventBus/FunKEventBusSubsystem.h"
 #include "Internal/Setup/FunKStages.h"
 #include "Events/FunKEvent.h"
-#include "Internal/Events/FunKTestFinishedEvent.h"
-#include "Internal/Events/FunKTestStageFinishedEvent.h"
 #include "Util/FunKAnonymousBitmask.h"
 #include "FunKTestBase.generated.h"
 
-class UFunKEventBusSubsystem;
-class UFunKWorldSubsystem;
 struct FFunKStagesSetup;
-class AFunKWorldTestController;
-
+class UFunKWorldSubsystem;
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFunKTestFinishing);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFunKPeerStageFinishing, int32, PeerIndex);
 
@@ -73,7 +69,7 @@ public:
 	const FFunKStages* GetStages() const;
 	int32 GetCurrentStageExecutionTime() const { return CurrentStageExecutionTime; }
 
-	virtual void BeginTest(int32 InTestRunID, int32 InSeed);
+	virtual void BeginTest(int32 InTestRunID, int32 InSeed, int32 Variation);
 	virtual void FinishTest(const FString& Reason = "");
 	virtual void FinishTest(EFunKTestResult InResult, const FString& Reason = "");
 	
@@ -91,7 +87,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	int32 GetPeerIndex() const;
-	
+
+	static void RegisterEvents(UFunKEventBusSubsystem* EventBusSubsystem);
 protected:
 	/**
 	 * A description of the test, like what is this test trying to determine.
@@ -102,8 +99,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK")
 	bool IsEnabled = true;
 	
-	virtual void OnBegin();
-	virtual void OnBeginStage();
+	virtual void OnBegin(const FFunKTestBeginEvent& BeginEvent);
+	virtual void OnBeginStage(const FFunKTestStageBeginEvent& BeginEvent);
+	virtual void OnInvokeStage();
 	virtual void OnFinishStage(EFunKStageResult StageResult, FString Message);
 	virtual void OnFinish(const FString& Message);
 	
@@ -119,9 +117,19 @@ protected:
 	bool IsServer() const;
 	bool IsDriver() const;
 
+	UFUNCTION(BlueprintCallable, Category="FunK")
+	void Info(const FString& Message, const FString& Context = "") const;
+
+	UFUNCTION(BlueprintCallable, Category="FunK")
+	void Warning(const FString& Message, const FString& Context = "") const;
+
+	UFUNCTION(BlueprintCallable, Category="FunK")
+	void Error(const FString& Message, const FString& Context = "") const;
+
 private:
 	int32 Seed;
 	int32 CurrentStageIndex = INDEX_NONE;
+	int32 CurrentVariation = INDEX_NONE;
 	int32 TestRunID;
 	FFunKStages Stages;
 	EFunKTestResult Result = EFunKTestResult::None;
@@ -133,29 +141,27 @@ private:
 
 	FFunKEventBusRegistration BeginRegistration;
 	FFunKEventBusRegistrationContainer RunningRegistrations;
+
+	static bool IsDriver(ENetMode NetMode);
 	
 	UPROPERTY( replicated )
 	bool IsFinishComplete;
+
+	FFunKEvent& FillEnvironmentContext(FFunKEvent& Event) const;
+	void DispatchRaisedEvent(const FFunKEvent& Event) const;
 	
-	void UpdateStageState(int32 InSeed, int32 StageIndex);
-	void OnBeginFirstStage(int32 InTestRunID, int32 InSeed, int32 StageIndex);
-	void OnFinishStage(const FFunKTestStageFinishedEvent& Event);
-	void OnFinish(const FFunKTestFinishedEvent& Event);
-	void NextStage(int32 InTestRunID, int32 InSeed);
+	void OnFinish(const FFunKTestFinishEvent& Event);
+	void NextStage();
 	void Finish(EFunKTestResult TestResult, FString Message);
 	int32 GetNextStageIndex() const;
 
-	void BeginStage(int32 InTestRunID, int32 InSeed, int32 StageIndex);
-	UFUNCTION(NetMulticast, Reliable)
-	void ClientBeginStage(int32 InTestRunID, int32 InSeed, int32 StageIndex);
-	UFUNCTION(NetMulticast, Reliable)
-	void MultiUpdatePeerBitMask(int32 InTestRunID, int32 StageIndex, int32 PeerIndex, int32 PeerCount);
+	void OnFinishStage(const FFunKTestStageFinishEvent& StageFinishEvent);
 	
 	void SetupStages();
 	FFunKStage* GetCurrentStageMutable();
 	FFunKStage* GetStageMutable(int32 StageIndex);
 
-	void EndAllInputActionSimulations() const;
+	void EndAllInputSimulations() const;
 
 public:
 	// Called every frame

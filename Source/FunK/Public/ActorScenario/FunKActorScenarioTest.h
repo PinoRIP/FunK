@@ -23,7 +23,7 @@ public:
 	
 	virtual void GetLifetimeReplicatedProps( TArray< FLifetimeProperty > & OutLifetimeProps ) const override;
 
-	virtual void OnBeginStage() override;
+	virtual void OnBeginStage(); //override
 	virtual void OnFinish(const FString& Message) override;
 
 	virtual void Tick(float DeltaTime) override;

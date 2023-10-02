@@ -6,17 +6,11 @@
 #include "FunKWorldSubsystem.h"
 #include "Components/BillboardComponent.h"
 #include "InputSimulation/FunKInputSimulationSystem.h"
-#include "Internal/Events/FunKTestBeginEvent.h"
-#include "Internal/Events/FunKTestFinishedEvent.h"
-#include "Internal/Events/FunKTestFinishEvent.h"
+#include "Internal/FunKTestEvents.h"
 #include "Internal/Events/FunKTestLifeTimeContext.h"
-#include "Internal/Events/FunKTestStageFinishedEvent.h"
 #include "Internal/Setup/FunKStagesSetup.h"
 #include "Net/UnrealNetwork.h"
 #include "UObject/ConstructorHelpers.h"
-
-struct FFunKAnonymousBitmask;
-struct FFunKTestFinishedEvent;
 
 AFunKTestBase::AFunKTestBase()
 {
@@ -79,7 +73,7 @@ bool AFunKTestBase::IsRunOnListenServerClients() const
 	return Stages.OnListenServerClientCount > 0;
 }
 
-void AFunKTestBase::BeginTest(int32 InTestRunID, int32 InSeed)
+void AFunKTestBase::BeginTest(int32 InTestRunID, int32 InSeed, int32 Variation)
 {
 	if (IsRunning())
 	{
@@ -88,39 +82,27 @@ void AFunKTestBase::BeginTest(int32 InTestRunID, int32 InSeed)
 
 	if (!IsDriver())
 	{
-		FFunKTestBeginEvent TestBeginEvent;
+		FFunKTestRequestBeginEvent TestBeginEvent;
 		TestBeginEvent.Seed = InSeed;
 		TestBeginEvent.TestRunID = InTestRunID;
 		TestBeginEvent.Test = this;
+		TestBeginEvent.Variation = Variation;
 
 		GetEventBusSubsystem()->Raise(TestBeginEvent);
 	}
 	else
 	{
-		PeerBitMask = FFunKAnonymousBitmask(GetWorldSubsystem()->GetPeerCount());
-		RunningRegistrations.Add(GetEventBusSubsystem()->On<FFunKTestStageFinishedEvent>([this](const FFunKTestStageFinishedEvent& Event)
-		{
-			if (Event.Test == this)
-			{
-				OnFinishStage(Event);
-			}
-		}));
+		FFunKTestBeginEvent TestBeginEvent;
+		TestBeginEvent.Seed = InSeed;
+		TestBeginEvent.TestRunID = InTestRunID;
+		TestBeginEvent.Variation = Variation;
+		TestBeginEvent.Test = this;
 		
-		RunningRegistrations.Add(GetEventBusSubsystem()->On<FFunKTestFinishEvent>([this](const FFunKTestFinishEvent& Event)
-		{
-			if (Event.Test == this)
-			{
-				Finish(Event.Result, Event.Message);
-			}
-		}));
-
-		RaiseEvent(FFunKEvent::Info("Start Test", FunKTestLifeTimeContext::BeginTest).AddToContext(InTestRunID));
-
-		NextStage(InTestRunID, InSeed);
+		GetEventBusSubsystem()->Raise(TestBeginEvent);
 	}
 }
 
-void AFunKTestBase::NextStage(int32 InTestRunID, int32 InSeed)
+void AFunKTestBase::NextStage()
 {
 	const int32 NextStageIndex = GetNextStageIndex();
 	if (!IsValidStageIndex(NextStageIndex))
@@ -129,34 +111,70 @@ void AFunKTestBase::NextStage(int32 InTestRunID, int32 InSeed)
 		return;
 	}
 
-	BeginStage(InTestRunID, InSeed, NextStageIndex);
+	FFunKTestStageBeginEvent StageBeginEvent;
+	StageBeginEvent.Stage = NextStageIndex;
+	StageBeginEvent.TestRunID = TestRunID;
+	StageBeginEvent.Test = this;
+	
+	GetEventBusSubsystem()->Raise(StageBeginEvent);
 }
 
-void AFunKTestBase::BeginStage(int32 InTestRunID, int32 InSeed, int32 StageIndex)
+bool AFunKTestBase::IsDriver(ENetMode NetMode)
 {
-	if (IsDriver())
-	{
-		if (!IsValidStageIndex(StageIndex))
-		{
-			FinishStage(EFunKStageResult::Error, "Test has no stage " + FString::FromInt(StageIndex));
-			return;
-		}
+	return NetMode < NM_Client;
+}
 
-		if(IsServer())
-			ClientBeginStage(InTestRunID, InSeed, StageIndex);
-	}
+FFunKEvent& AFunKTestBase::FillEnvironmentContext(FFunKEvent& Event) const
+{
+	Event.AddToContext(GetName());
+	Event.AddToContext(GetPeerIndex());
 
-	if (!IsRunning())
+	return Event;
+}
+
+void AFunKTestBase::DispatchRaisedEvent(const FFunKEvent& Event) const
+{
+	GetEventBusSubsystem()->Raise<FFunKEvent>(Event);
+}
+
+void AFunKTestBase::OnBegin(const FFunKTestBeginEvent& BeginEvent)
+{
+	if(IsRunning())
 	{
-		OnBeginFirstStage(InTestRunID, InSeed, StageIndex);
-	}
-	else if (TestRunID != InTestRunID)
-	{
-		FinishStage(EFunKStageResult::Error, "Test is running under different test id: " + FString::FromInt(TestRunID) + " - " + FString::FromInt(InTestRunID));
+		Error("Test is already running", FString::FromInt(BeginEvent.TestRunID));
 		return;
 	}
+	
+	TestRunID = BeginEvent.TestRunID;
+	Seed = BeginEvent.Seed;
+	CurrentVariation = BeginEvent.Variation;
+	Result = EFunKTestResult::None;
+	PeerBitMask = FFunKAnonymousBitmask(GetWorldSubsystem()->GetPeerCount());
+	CurrentStageIndex = INDEX_NONE;
+	SetActorTickEnabled(true);
 
-	UpdateStageState(InSeed, StageIndex);
+	if(IsDriver())
+	{
+		RaiseEvent(FFunKEvent::Info("Start Test", FunKTestLifeTimeContext::BeginTest).Ref());
+		NextStage();
+	}
+}
+
+bool AFunKTestBase::IsExecutingStage(const FFunKStage& stage) const
+{
+	ENetMode netMode = GetNetMode();
+	return (stage.IsOnStandalone && netMode == NM_Standalone) ||
+		(stage.IsOnDedicatedServer && netMode == NM_DedicatedServer) ||
+		(stage.IsOnListenServer && netMode == NM_ListenServer) ||
+		(netMode == NM_Client && (GetWorldSubsystem()->IsServerDedicated() ? stage.IsOnDedicatedServerClient : stage.IsOnListenServerClient));
+}
+
+void AFunKTestBase::OnBeginStage(const FFunKTestStageBeginEvent& BeginEvent)
+{
+	PeerBitMask.ClearAll();
+	CurrentStageIndex = BeginEvent.Stage;
+	IsLocalStageFinished = false;
+	CurrentStageExecutionTime = 0;
 
 	if (IsDriver())
 	{
@@ -171,61 +189,15 @@ void AFunKTestBase::BeginStage(int32 InTestRunID, int32 InSeed, int32 StageIndex
 	}
 
 	IsCurrentStageTickDelegateSetup = CurrentStage->TickDelegate.IsBound();
-	OnBeginStage();
-
+	OnInvokeStage();
+	
 	if (!CurrentStage->IsLatent && !IsLocalStageFinished)
 	{
 		FinishStage();
 	}
 }
 
-void AFunKTestBase::ClientBeginStage_Implementation(int32 InTestRunID, int32 InSeed, int32 StageIndex)
-{
-	if(IsDriver()) return;
-	
-	BeginStage(InTestRunID, InSeed, StageIndex);
-}
-
-void AFunKTestBase::OnBeginFirstStage(int32 InTestRunID, int32 InSeed, int32 StageIndex)
-{
-	SetActorTickEnabled(true);
-	TestRunID = InTestRunID;
-	Result = EFunKTestResult::None;
-
-	RunningRegistrations.Add(GetEventBusSubsystem()->On<FFunKTestFinishedEvent>([this](const FFunKTestFinishedEvent& FinishedEvent)
-	{
-		if (FinishedEvent.Test == this && FinishedEvent.TestRunID == TestRunID)
-		{
-			OnFinish(FinishedEvent);
-		}
-	}));
-
-	UpdateStageState(InSeed, StageIndex);
-	OnBegin();
-}
-
-void AFunKTestBase::UpdateStageState(int32 InSeed, int32 StageIndex)
-{
-	Seed = InSeed;
-	CurrentStageIndex = StageIndex;
-	IsLocalStageFinished = false;
-	CurrentStageExecutionTime = 0;
-}
-
-void AFunKTestBase::OnBegin()
-{
-}
-
-bool AFunKTestBase::IsExecutingStage(const FFunKStage& stage) const
-{
-	ENetMode netMode = GetNetMode();
-	return (stage.IsOnStandalone && netMode == NM_Standalone) ||
-		(stage.IsOnDedicatedServer && netMode == NM_DedicatedServer) ||
-		(stage.IsOnListenServer && netMode == NM_ListenServer) ||
-		(netMode == NM_Client && (GetWorldSubsystem()->IsServerDedicated() ? stage.IsOnDedicatedServerClient : stage.IsOnListenServerClient));
-}
-
-void AFunKTestBase::OnBeginStage()
+void AFunKTestBase::OnInvokeStage()
 {
 	if (const FFunKStage* CurrentStage = GetCurrentStageMutable())
 	{
@@ -255,7 +227,7 @@ void AFunKTestBase::Finish(EFunKTestResult TestResult, FString Message)
 {
 	if (IsDriver())
 	{
-		FFunKTestFinishedEvent Event;
+		FFunKTestFinishEvent Event;
 		Event.TestRunID = TestRunID;
 		Event.Test = this;
 		Event.Result = TestResult;
@@ -268,7 +240,7 @@ void AFunKTestBase::Finish(EFunKTestResult TestResult, FString Message)
 	}
 	else
 	{
-		FFunKTestFinishEvent Event;
+		FFunKTestRequestFinishEvent Event;
 		Event.TestRunID = TestRunID;
 		Event.Test = this;
 		Event.Result = TestResult;
@@ -278,7 +250,7 @@ void AFunKTestBase::Finish(EFunKTestResult TestResult, FString Message)
 	}
 }
 
-void AFunKTestBase::OnFinish(const FFunKTestFinishedEvent& Event)
+void AFunKTestBase::OnFinish(const FFunKTestFinishEvent& Event)
 {
 	SetActorTickEnabled(false);
 	Result = Event.Result;
@@ -297,7 +269,10 @@ void AFunKTestBase::OnFinish(const FFunKTestFinishedEvent& Event)
 		RaiseEvent(FFunKEvent(Event.Result == EFunKTestResult::Succeeded || Event.Result == EFunKTestResult::Skipped ? EFunKEventType::Info : EFunKEventType::Error, EventMessage, FunKTestLifeTimeContext::FinishTest).AddToContext(LexToString(Event.Result)));
 	}
 
-	UpdateStageState(0, INDEX_NONE);
+	TestRunID = 0;
+	Seed = 0;
+	CurrentStageIndex = INDEX_NONE;
+	CurrentVariation = INDEX_NONE;
 	RunningRegistrations.Unregister();
 	TestRunID = 0;
 }
@@ -306,7 +281,7 @@ void AFunKTestBase::OnFinish(const FString& Message)
 {
 	OnTestFinish.Broadcast();
 
-	EndAllInputActionSimulations();
+	EndAllInputSimulations();
 }
 
 void AFunKTestBase::FinishStage()
@@ -323,9 +298,6 @@ void AFunKTestBase::FinishStage(EFunKStageResult StageResult, const FString& Mes
 
 	IsLocalStageFinished = true;
 
-	if(!IsDriver())
-		PeerBitMask.ClearAll();
-
 	FString ResultMessage = Message;
 	if (StageResult == EFunKStageResult::None)
 	{
@@ -338,36 +310,15 @@ void AFunKTestBase::FinishStage(EFunKStageResult StageResult, const FString& Mes
 
 void AFunKTestBase::OnFinishStage(EFunKStageResult StageResult, FString Message)
 {
-	FFunKTestStageFinishedEvent Event;
-	Event.StageIndex = GetCurrentStageIndex();
+	FFunKTestStageFinishEvent Event;
+	Event.Stage = GetCurrentStageIndex();
 	Event.Result = StageResult;
 	Event.Message = Message;
 	Event.PeerIndex = GetPeerIndex();
 	Event.TestRunID = TestRunID;
 	Event.Test = this;
 
-	GetEventBusSubsystem()->Raise<FFunKTestStageFinishedEvent>(Event);
-}
-
-void AFunKTestBase::OnFinishStage(const FFunKTestStageFinishedEvent& Event)
-{
-	if (Event.StageIndex != CurrentStageIndex) return;
-	if (Event.TestRunID != TestRunID) return;
-	
-	if (Event.Result != EFunKStageResult::Succeeded)
-	{
-		RaiseEvent(FFunKEvent::Info("Finish Stage", FunKTestLifeTimeContext::FinishStage).AddToContext(LexToString(Event.Result)));
-		Finish(StageToTestResult(Event.Result), Event.Message);
-		return;
-	}
-
-	MultiUpdatePeerBitMask(Event.TestRunID, Event.StageIndex, Event.PeerIndex, PeerBitMask.Num());
-	if (PeerBitMask.IsSet())
-	{
-		RaiseEvent(FFunKEvent::Info("Finish Stage", FunKTestLifeTimeContext::FinishStage).Ref());
-		PeerBitMask.ClearAll();
-		NextStage(TestRunID, GetSeed());
-	}
+	GetEventBusSubsystem()->Raise<FFunKTestStageFinishEvent>(Event);
 }
 
 bool AFunKTestBase::IsRunning() const
@@ -439,19 +390,6 @@ void AFunKTestBase::BeginPlay()
 {
 	Super::BeginPlay();
 	SetActorTickEnabled(false);
-
-	if (!IsDriver())
-	{
-		return;
-	}
-
-	BeginRegistration = GetEventBusSubsystem()->On<FFunKTestBeginEvent>([this](const FFunKTestBeginEvent& Event)
-	{
-		if (Event.Test == this)
-		{
-			BeginTest(Event.TestRunID, Event.Seed);
-		}
-	});
 }
 
 void AFunKTestBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -512,6 +450,43 @@ int32 AFunKTestBase::GetNextStageIndex() const
 	return INDEX_NONE;
 }
 
+void AFunKTestBase::OnFinishStage(const FFunKTestStageFinishEvent& StageFinishEvent)
+{
+	if(!IsRunning()) return;
+	
+	if (StageFinishEvent.TestRunID != TestRunID)
+	{
+		Error("Stage finish event received from invalid test id", "Invalid id: " + FString::FromInt(StageFinishEvent.TestRunID));
+		return;
+	}
+	
+	if (StageFinishEvent.Stage != CurrentStageIndex)
+	{
+		Error("Stage finish event received from invalid stage", "Event stage: " + FString::FromInt(StageFinishEvent.Stage));
+		return;
+	}
+
+	PeerBitMask.Set(StageFinishEvent.PeerIndex);
+	OnPeerStageFinishing.Broadcast(StageFinishEvent.PeerIndex);
+
+	if(!IsDriver())
+		return;
+	
+	if (StageFinishEvent.Result != EFunKStageResult::Succeeded)
+	{
+		RaiseEvent(FFunKEvent::Info("Finish Stage", FunKTestLifeTimeContext::FinishStage).AddToContext(LexToString(StageFinishEvent.Result)));
+		Finish(StageToTestResult(StageFinishEvent.Result), StageFinishEvent.Message);
+		return;
+	}
+
+	if (PeerBitMask.IsSet())
+	{
+		RaiseEvent(FFunKEvent::Info("Finish Stage", FunKTestLifeTimeContext::FinishStage).Ref());
+		PeerBitMask.ClearAll();
+		NextStage();
+	}
+}
+
 bool AFunKTestBase::IsServer() const
 {
 	const ENetMode NetMode = GetNetMode();
@@ -520,20 +495,22 @@ bool AFunKTestBase::IsServer() const
 
 bool AFunKTestBase::IsDriver() const
 {
-	const ENetMode NetMode = GetNetMode();
-	return NetMode < NM_Client;
+	return IsDriver(GetNetMode());
 }
 
-void AFunKTestBase::MultiUpdatePeerBitMask_Implementation(int32 InTestRunID, int32 StageIndex, int32 PeerIndex, int32 PeerCount)
+void AFunKTestBase::Info(const FString& Message, const FString& Context) const
 {
-	if(TestRunID == InTestRunID && CurrentStageIndex == StageIndex && (!IsLocalStageFinished || IsDriver()))
-	{
-		if(PeerBitMask.Num() != PeerCount)
-			PeerBitMask = FFunKAnonymousBitmask(PeerCount);
-		
-		PeerBitMask.Set(PeerIndex);
-		OnPeerStageFinishing.Broadcast(PeerIndex);
-	}
+	DispatchRaisedEvent(FillEnvironmentContext(FFunKEvent::Info(Message, Context).Ref()));
+}
+
+void AFunKTestBase::Warning(const FString& Message, const FString& Context) const
+{
+	DispatchRaisedEvent(FillEnvironmentContext(FFunKEvent::Warning(Message, Context).Ref()));
+}
+
+void AFunKTestBase::Error(const FString& Message, const FString& Context) const
+{
+	DispatchRaisedEvent(FillEnvironmentContext(FFunKEvent::Error(Message, Context).Ref()));
 }
 
 void AFunKTestBase::SetupStages()
@@ -572,7 +549,43 @@ int32 AFunKTestBase::GetPeerIndex() const
 	return GetWorldSubsystem()->GetPeerIndex();
 }
 
-void AFunKTestBase::EndAllInputActionSimulations() const
+void AFunKTestBase::RegisterEvents(UFunKEventBusSubsystem* EventBusSubsystem)
+{
+	if(IsDriver(EventBusSubsystem->GetWorld()->GetNetMode()))
+	{
+		EventBusSubsystem->On<FFunKTestRequestBeginEvent>([](const FFunKTestRequestBeginEvent& Event)
+		{
+			Event.Test->BeginTest(Event.TestRunID, Event.Seed, Event.Variation);
+		});
+
+		EventBusSubsystem->On<FFunKTestRequestFinishEvent>([](const FFunKTestRequestFinishEvent& Event)
+		{
+			Event.Test->Finish(Event.Result, Event.Message);
+		});
+	}
+	
+	EventBusSubsystem->On<FFunKTestBeginEvent>([](const FFunKTestBeginEvent& Event)
+	{
+		Event.Test->OnBegin(Event);
+	});
+
+	EventBusSubsystem->On<FFunKTestFinishEvent>([](const FFunKTestFinishEvent& FinishedEvent)
+	{
+		FinishedEvent.Test->OnFinish(FinishedEvent);
+	});
+		
+	EventBusSubsystem->On<FFunKTestStageBeginEvent>([](const FFunKTestStageBeginEvent& Event)
+	{
+		Event.Test->OnBeginStage(Event);
+	});
+		
+	EventBusSubsystem->On<FFunKTestStageFinishEvent>([](const FFunKTestStageFinishEvent& Event)
+	{
+		Event.Test->OnFinishStage(Event);
+	});
+}
+
+void AFunKTestBase::EndAllInputSimulations() const
 {
 	UFunKInputSimulationSystem* InputSimulationSystem = GetWorld()->GetSubsystem<UFunKInputSimulationSystem>();
 	InputSimulationSystem->EndAllInputSimulations();
@@ -590,9 +603,7 @@ void AFunKTestBase::GatherContext(FFunKEvent& Event) const
 		Event.AddToContext(GetStageName().ToString());
 	}
 
-	Event.AddToContext(GetName());
-	
-	Event.AddToContext(GetPeerIndex());
+	FillEnvironmentContext(Event);
 }
 
 FFunKStage* AFunKTestBase::GetCurrentStageMutable()
@@ -659,5 +670,5 @@ void AFunKTestBase::GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) con
 void AFunKTestBase::RaiseEvent(FFunKEvent& Event) const
 {
 	GatherContext(Event);
-	GetEventBusSubsystem()->Raise<FFunKEvent>(Event);
+	DispatchRaisedEvent(Event);
 }

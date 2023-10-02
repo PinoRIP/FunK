@@ -32,6 +32,11 @@ void AFunKFunctionalTest::SetupFunctionalTestStages(FFunKStagesSetup& stages)
 {
 	stages
 		.AddNamedStage<AFunKFunctionalTest>("Assume", &AFunKFunctionalTest::InvokeAssume)
+		
+		//.ThenAddNamedLatentStage<AFunKFunctionalTest>("ArrangeVariation", &AFunKFunctionalTest::ArrangeVariation)
+		//.WithTickDelegate<AFunKFunctionalTest>(&AFunKFunctionalTest::ArrangeVariationTick)
+		//.UpdateTimeLimit(ArrangeTimeLimit)
+		//.WithOptionalBpTickDelegate(AFunKFunctionalTest, BpArrangeTick)
 	
 		.ThenAddNamedLatentStage<AFunKFunctionalTest>("Arrange", &AFunKFunctionalTest::InvokeArrange)
 		.UpdateTimeLimit(ArrangeTimeLimit)
@@ -50,6 +55,14 @@ void AFunKFunctionalTest::InvokeAssume()
 	{
 		FinishStage(EFunKStageResult::Skipped, "Assumption not met");
 	}
+}
+
+void AFunKFunctionalTest::ArrangeVariation()
+{
+}
+
+void AFunKFunctionalTest::ArrangeVariationTick(float DeltaTime)
+{
 }
 
 void AFunKFunctionalTest::InvokeArrange()

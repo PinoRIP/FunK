@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "FunKWorldSubsystem.generated.h"
 
+class UFunKTestVariationComponent;
 class AFunKTestBase;
 class AFunKWorldTestController;
 
@@ -22,11 +23,21 @@ public:
 	int32 GetPeerIndex() const;
 	int32 GetPeerCount() const;
 	bool IsServerDedicated() const;
+
+	const TArray<UFunKTestVariationComponent*>& GetWorldVariations();
+
+	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 	
 private:
+	bool AreVariationsGathered = false;
+	
 	UPROPERTY()
 	AFunKWorldTestController* LocalTestController = nullptr;
 	AFunKWorldTestController* NewTestController() const;
+
+	UPROPERTY()
+	TArray<UFunKTestVariationComponent*> Variations;
+	void GatherVariations(TArray<UFunKTestVariationComponent*>& OutVariations) const;
 
 	friend class AFunKTestBase;
 };

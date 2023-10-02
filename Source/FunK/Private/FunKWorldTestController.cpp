@@ -28,7 +28,7 @@ void AFunKWorldTestController::Tick(float DeltaTime)
 
 	if(!CurrentTest && Next())
 	{
-		CurrentTest->BeginTest(TestRunID, Seed);
+		CurrentTest->BeginTest(TestRunID, Seed, 0);
 	}
 
 	if(!CurrentTest)

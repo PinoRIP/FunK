@@ -50,7 +50,7 @@ void AFunKActorScenarioTest::OnBeginStage()
 		OnStageScenarioChanged(StageName, StageScenario);
 	}
 	
-	Super::OnBeginStage();
+	// Super::OnBeginStage();
 }
 
 void AFunKActorScenarioTest::OnFinish(const FString& Message)
