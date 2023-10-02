@@ -22,10 +22,7 @@ class FUNK_API AFunKFunctionalTest : public AFunKTestBase
 public:
 	AFunKFunctionalTest();
 
-protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup|Timeout", AdvancedDisplay)
-	FFunKTimeLimit ArrangeVariationTimeLimit;
-	
+protected:	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup|Timeout")
 	FFunKTimeLimit ArrangeTimeLimit;
 	
@@ -51,10 +48,6 @@ protected:
 	virtual void SetupFunctionalTestStages(FFunKStagesSetup& stages);
 
 	void InvokeAssume();
-
-	void ArrangeVariation();
-	void ArrangeVariationTick(float DeltaTime);
-	
 	void InvokeArrange();
 
 	virtual bool Assume();

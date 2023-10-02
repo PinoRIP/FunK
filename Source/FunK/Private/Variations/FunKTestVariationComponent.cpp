@@ -27,7 +27,8 @@ void UFunKTestVariationComponent::Finish()
 {
 }
 
-void UFunKTestVariationComponent::GetName(FName& OutName)
+FString UFunKTestVariationComponent::GetName()
 {
+	return FString();
 }
 

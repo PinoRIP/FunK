@@ -12,10 +12,33 @@
 #include "Util/FunKAnonymousBitmask.h"
 #include "FunKTestBase.generated.h"
 
+class UFunKTestRootVariationComponent;
+class UFunKTestVariationComponent;
 struct FFunKStagesSetup;
 class UFunKWorldSubsystem;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFunKTestFinishing);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FFunKPeerStageFinishing, int32, PeerIndex);
+
+USTRUCT()
+struct FFunKTestVariations
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY()
+	UFunKTestRootVariationComponent* RootVariations = nullptr;
+	
+	UPROPERTY()
+	TArray<UFunKTestVariationComponent*> Variations;
+
+	UPROPERTY()
+	bool IsGathered = false;
+
+	int32 GetCount() const;
+	int32 GetVariationsCount() const;
+	int32 GetRootVariationsCount() const;
+};
 
 /**
  * 
@@ -85,11 +108,28 @@ public:
 
 	const FFunKAnonymousBitmask& GetStagePeerState() const;
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category="FunK")
 	int32 GetPeerIndex() const;
 
 	static void RegisterEvents(UFunKEventBusSubsystem* EventBusSubsystem);
+
+	const FFunKTestVariations& GetTestVariations();
+	int32 GetTestVariationCount();
+
+	UFUNCTION(BlueprintCallable, Category="FunK")
+	int32 GetRootVariation() const;
+	UFUNCTION(BlueprintCallable, Category="FunK")
+	int32 GetVariation() const;
+
+	UFUNCTION(BlueprintCallable, Category="FunK")
+	UFunKTestRootVariationComponent* GetRootVariationComponent() const;
+	UFUNCTION(BlueprintCallable, Category="FunK")
+	UFunKTestVariationComponent* GeVariationComponent() const;
+	
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup|Timeout", AdvancedDisplay)
+	FFunKTimeLimit ArrangeVariationTimeLimit;
+	
 	/**
 	 * A description of the test, like what is this test trying to determine.
 	 */
@@ -104,7 +144,7 @@ protected:
 	virtual void OnInvokeStage();
 	virtual void OnFinishStage(EFunKStageResult StageResult, FString Message);
 	virtual void OnFinish(const FString& Message);
-	
+
 	virtual void SetupStages(FFunKStagesSetup& stages);
 	const FFunKStage* GetStage(int32 StageIndex) const;
 	virtual bool IsExecutingStage(const FFunKStage& stage) const;
@@ -127,24 +167,29 @@ protected:
 	void Error(const FString& Message, const FString& Context = "") const;
 
 private:
+	int32 TestRunID;
 	int32 Seed;
 	int32 CurrentStageIndex = INDEX_NONE;
-	int32 CurrentVariation = INDEX_NONE;
-	int32 TestRunID;
 	FFunKStages Stages;
 	EFunKTestResult Result = EFunKTestResult::None;
 	FFunKAnonymousBitmask PeerBitMask;
+	int32 CurrentVariation = INDEX_NONE;
+	int32 CurrentRootVariation = INDEX_NONE;
+	
+	UPROPERTY(Transient)
+	UFunKTestVariationComponent* CurrentVariationComponent = nullptr;
 
+	UPROPERTY(Transient)
+	FFunKTestVariations Variations;
+
+	bool IsVariationBegun = false;
 	bool IsLocalStageFinished = false;
 	bool IsCurrentStageTickDelegateSetup = false;
 	float CurrentStageExecutionTime = 0;
 
-	FFunKEventBusRegistration BeginRegistration;
-	FFunKEventBusRegistrationContainer RunningRegistrations;
-
 	static bool IsDriver(ENetMode NetMode);
 	
-	UPROPERTY( replicated )
+	UPROPERTY( replicated, Transient )
 	bool IsFinishComplete;
 
 	FFunKEvent& FillEnvironmentContext(FFunKEvent& Event) const;
@@ -161,7 +206,15 @@ private:
 	FFunKStage* GetCurrentStageMutable();
 	FFunKStage* GetStageMutable(int32 StageIndex);
 
+	void SetCurrentVariation(int32 Variation);
+
 	void EndAllInputSimulations() const;
+
+	UFUNCTION()
+	void ArrangeVariation();
+
+	UFUNCTION()
+	void ArrangeVariationTick(float DeltaTime);
 
 public:
 	// Called every frame

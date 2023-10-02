@@ -42,10 +42,16 @@ private:
 	int32 Seed;
 
 	UPROPERTY()
+	int32 CurrentVariation = 0;
+
+	UPROPERTY()
 	TArray<AFunKTestBase*> Tests;
 
 	UPROPERTY()
 	AFunKTestBase* CurrentTest;
+
+	UPROPERTY()
+	AFunKTestBase* LastTest;
 
 	UPROPERTY()
 	const UFunKSettingsObject* Settings = nullptr;

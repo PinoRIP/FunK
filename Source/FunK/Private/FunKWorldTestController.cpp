@@ -6,6 +6,7 @@
 #include "FunKFunctionalTest.h"
 #include "Internal/FunKSettingsObject.h"
 
+//TODO: I kinda hate this
 
 // Sets default values
 AFunKWorldTestController::AFunKWorldTestController()
@@ -28,7 +29,7 @@ void AFunKWorldTestController::Tick(float DeltaTime)
 
 	if(!CurrentTest && Next())
 	{
-		CurrentTest->BeginTest(TestRunID, Seed, 0);
+		CurrentTest->BeginTest(TestRunID, Seed, CurrentVariation);
 	}
 
 	if(!CurrentTest)
@@ -36,6 +37,7 @@ void AFunKWorldTestController::Tick(float DeltaTime)
 	
 	if(!CurrentTest->IsRunning() && CurrentTest->IsFinished())
 	{
+		LastTest = CurrentTest;
 		CurrentTest = nullptr;
 	}
 	else if(!IsWaitingForTimeout)
@@ -108,12 +110,22 @@ void AFunKWorldTestController::ExecuteTests()
 
 bool AFunKWorldTestController::Next()
 {
+	if(LastTest)
+	{
+		CurrentVariation++;
+		if(LastTest->GetTestVariationCount() > CurrentVariation)
+		{
+			CurrentTest = LastTest;
+			return true;
+		}
+	}
+	
 	if(Tests.Num() <= 0)
 	{
 		End();
 		return false;
 	}
-
+	
 	IsWaitingForTimeout = false;
 	CurrentTestStageWaitingTime = 0;
 	const int32 last = Tests.Num() - 1;
@@ -121,6 +133,7 @@ bool AFunKWorldTestController::Next()
 	if(NextTest->IsRunning()) return false;
 	
 	CurrentTest = NextTest;
+	CurrentVariation = 0;
 	Tests.RemoveAt(last);
 	
 	return true;

@@ -3,6 +3,7 @@
 
 #include "Internal/FunKTestBase.h"
 #include "FunK.h"
+#include "FunKLogging.h"
 #include "FunKWorldSubsystem.h"
 #include "Components/BillboardComponent.h"
 #include "InputSimulation/FunKInputSimulationSystem.h"
@@ -11,6 +12,30 @@
 #include "Internal/Setup/FunKStagesSetup.h"
 #include "Net/UnrealNetwork.h"
 #include "UObject/ConstructorHelpers.h"
+#include "Variations/FunKTestRootVariationComponent.h"
+#include "Variations/FunKTestVariationComponent.h"
+
+int32 FFunKTestVariations::GetCount() const
+{
+	const int32 VariationCount = GetVariationsCount() * GetRootVariationsCount();
+	return VariationCount <= 0 ? 1 : VariationCount;
+}
+
+int32 FFunKTestVariations::GetVariationsCount() const
+{
+	int32 Count = 0;
+	for (UFunKTestVariationComponent* Variation : Variations)
+	{
+		Count += Variation->GetCount();
+	}
+
+	return Count;
+}
+
+int32 FFunKTestVariations::GetRootVariationsCount() const
+{
+	return RootVariations ? RootVariations->GetCount() : 1;
+}
 
 AFunKTestBase::AFunKTestBase()
 {
@@ -147,7 +172,7 @@ void AFunKTestBase::OnBegin(const FFunKTestBeginEvent& BeginEvent)
 	
 	TestRunID = BeginEvent.TestRunID;
 	Seed = BeginEvent.Seed;
-	CurrentVariation = BeginEvent.Variation;
+	SetCurrentVariation(BeginEvent.Variation);
 	Result = EFunKTestResult::None;
 	PeerBitMask = FFunKAnonymousBitmask(GetWorldSubsystem()->GetPeerCount());
 	CurrentStageIndex = INDEX_NONE;
@@ -269,12 +294,21 @@ void AFunKTestBase::OnFinish(const FFunKTestFinishEvent& Event)
 		RaiseEvent(FFunKEvent(Event.Result == EFunKTestResult::Succeeded || Event.Result == EFunKTestResult::Skipped ? EFunKEventType::Info : EFunKEventType::Error, EventMessage, FunKTestLifeTimeContext::FinishTest).AddToContext(LexToString(Event.Result)));
 	}
 
+	if(Variations.RootVariations)
+	{
+		Variations.RootVariations->Finish();
+	}
+	
+	if(CurrentVariationComponent)
+	{
+		CurrentVariationComponent->Finish();
+	}
+
 	TestRunID = 0;
 	Seed = 0;
 	CurrentStageIndex = INDEX_NONE;
-	CurrentVariation = INDEX_NONE;
-	RunningRegistrations.Unregister();
-	TestRunID = 0;
+	SetCurrentVariation(INDEX_NONE);
+	IsVariationBegun = false;
 }
 
 void AFunKTestBase::OnFinish(const FString& Message)
@@ -404,6 +438,9 @@ void AFunKTestBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void AFunKTestBase::SetupStages(FFunKStagesSetup& stages)
 {
+	stages.AddNamedLatentStage<AFunKTestBase>("ArrangeVariation", &AFunKTestBase::ArrangeVariation)
+		.WithTickDelegate<AFunKTestBase>(&AFunKTestBase::ArrangeVariationTick)
+		.UpdateTimeLimit(ArrangeVariationTimeLimit);
 }
 
 const FFunKStage* AFunKTestBase::GetStage(int32 StageIndex) const
@@ -585,10 +622,104 @@ void AFunKTestBase::RegisterEvents(UFunKEventBusSubsystem* EventBusSubsystem)
 	});
 }
 
+const FFunKTestVariations& AFunKTestBase::GetTestVariations()
+{
+	if(Variations.IsGathered) return Variations;
+
+	Variations.IsGathered = true;
+	auto WorldVariations = GetWorldSubsystem()->GetWorldVariations();
+	
+	Variations.Variations = WorldVariations.Variations;
+	
+	TArray<UFunKTestVariationComponent*> Array;
+	GetComponents<UFunKTestVariationComponent>(Array);
+		
+	Array.Sort([](const UFunKTestVariationComponent& ip1, const UFunKTestVariationComponent& ip2) {
+		return  ip1.GetFName().FastLess(ip2.GetFName());
+	});
+
+	for (UFunKTestVariationComponent* FunKTestVariationComponent : Array)
+	{
+		if(FunKTestVariationComponent->IsA(UFunKTestRootVariationComponent::StaticClass()))
+		{
+			if(Variations.RootVariations)
+			{
+				UE_LOG(FunKLog, Error, TEXT("Only one root variation component is allowed per test! %s"), *GetName())
+				continue;
+			}
+			
+			Variations.RootVariations = Cast<UFunKTestRootVariationComponent>(FunKTestVariationComponent);
+			continue;
+		}
+				
+		Variations.Variations.Add(FunKTestVariationComponent);
+	}
+
+	return Variations;
+}
+
+int32 AFunKTestBase::GetTestVariationCount()
+{
+	const FFunKTestVariations& TestVariations = GetTestVariations();
+	return TestVariations.GetCount();
+}
+
+int32 AFunKTestBase::GetRootVariation() const
+{
+	return CurrentRootVariation;
+}
+
+int32 AFunKTestBase::GetVariation() const
+{
+	return CurrentVariation;
+}
+
+UFunKTestRootVariationComponent* AFunKTestBase::GetRootVariationComponent() const
+{
+	return Variations.RootVariations;
+}
+
+UFunKTestVariationComponent* AFunKTestBase::GeVariationComponent() const
+{
+	return CurrentVariationComponent;
+}
+
 void AFunKTestBase::EndAllInputSimulations() const
 {
 	UFunKInputSimulationSystem* InputSimulationSystem = GetWorld()->GetSubsystem<UFunKInputSimulationSystem>();
 	InputSimulationSystem->EndAllInputSimulations();
+}
+
+void AFunKTestBase::ArrangeVariation()
+{
+	IsVariationBegun = true;
+	
+	const FFunKTestVariations& TestVariations = GetTestVariations();
+	if(TestVariations.RootVariations)
+	{
+		TestVariations.RootVariations->Begin(CurrentRootVariation);
+	}
+
+	if(CurrentVariationComponent)
+	{
+		CurrentVariationComponent->Begin(CurrentVariation);
+	}
+}
+
+void AFunKTestBase::ArrangeVariationTick(float DeltaTime)
+{
+	const FFunKTestVariations& TestVariations = GetTestVariations();
+	bool isReady = TestVariations.RootVariations ? TestVariations.RootVariations->IsReady() : true;
+
+	if(CurrentVariationComponent)
+	{
+		isReady = CurrentVariationComponent->IsReady() && isReady;
+	}
+
+	if(isReady)
+	{
+		FinishStage();
+	}
 }
 
 void AFunKTestBase::GatherContext(FFunKEvent& Event) const
@@ -601,6 +732,19 @@ void AFunKTestBase::GatherContext(FFunKEvent& Event) const
 	if (CurrentStageIndex > INDEX_NONE)
 	{
 		Event.AddToContext(GetStageName().ToString());
+	}
+
+	if(IsVariationBegun)
+	{
+		if(Variations.RootVariations && CurrentRootVariation != INDEX_NONE)
+		{
+			Event.AddToContext(Variations.RootVariations->GetName());
+		}
+
+		if(CurrentVariationComponent && CurrentVariation != INDEX_NONE)
+		{
+			Event.AddToContext(CurrentVariationComponent->GetName());
+		}
 	}
 
 	FillEnvironmentContext(Event);
@@ -619,6 +763,31 @@ FFunKStage* AFunKTestBase::GetStageMutable(int32 StageIndex)
 	}
 
 	return nullptr;
+}
+
+void AFunKTestBase::SetCurrentVariation(int32 Variation)
+{
+	CurrentRootVariation = INDEX_NONE;
+	CurrentVariation = INDEX_NONE;
+	CurrentVariationComponent = nullptr;
+	
+	if (Variation != INDEX_NONE)
+	{
+		const FFunKTestVariations& TestVariations = GetTestVariations();
+		CurrentRootVariation = Variation % TestVariations.GetRootVariationsCount();
+		CurrentVariation = (Variation / TestVariations.GetRootVariationsCount());
+
+		for (UFunKTestVariationComponent* VariationComponent : TestVariations.Variations)
+		{
+			const int32 variationCount = VariationComponent->GetCount();
+			if(variationCount > CurrentVariation)
+			{
+				CurrentVariationComponent = VariationComponent;
+				return;
+			}
+			CurrentVariation = CurrentVariation - variationCount;
+		}
+	}
 }
 
 void AFunKTestBase::Tick(float DeltaTime)

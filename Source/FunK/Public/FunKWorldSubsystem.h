@@ -9,6 +9,19 @@ class UFunKTestVariationComponent;
 class AFunKTestBase;
 class AFunKWorldTestController;
 
+USTRUCT()
+struct FFunKWorldVariations
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY()
+	TArray<UFunKTestVariationComponent*> Variations;
+
+	UPROPERTY()
+	int32 VariationCount = 0;
+};
+
 /**
  * 
  */
@@ -24,7 +37,7 @@ public:
 	int32 GetPeerCount() const;
 	bool IsServerDedicated() const;
 
-	const TArray<UFunKTestVariationComponent*>& GetWorldVariations();
+	const FFunKWorldVariations& GetWorldVariations();
 
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 	
@@ -36,8 +49,8 @@ private:
 	AFunKWorldTestController* NewTestController() const;
 
 	UPROPERTY()
-	TArray<UFunKTestVariationComponent*> Variations;
-	void GatherVariations(TArray<UFunKTestVariationComponent*>& OutVariations) const;
+	FFunKWorldVariations Variations;
+	void GatherVariations(FFunKWorldVariations& OutVariations) const;
 
 	friend class AFunKTestBase;
 };

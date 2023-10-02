@@ -20,5 +20,5 @@ public:
 	virtual void Begin(int32 index);
 	virtual bool IsReady();
 	virtual void Finish();
-	virtual void GetName(FName& OutName);
+	virtual FString GetName();
 };

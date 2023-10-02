@@ -11,6 +11,7 @@
 #include "Internal/EventBus/FunKEventBusReplicationController.h"
 #include "Internal/EventBus/FunKEventBusSubsystem.h"
 #include "Variations/FunKSharedTestVariations.h"
+#include "Variations/FunKTestRootVariationComponent.h"
 #include "Variations/FunKTestVariationComponent.h"
 
 AFunKWorldTestController* UFunKWorldSubsystem::GetLocalTestController()
@@ -67,7 +68,7 @@ bool UFunKWorldSubsystem::IsServerDedicated() const
 	return funkEventController->GetIsServerDedicated();
 }
 
-const TArray<UFunKTestVariationComponent*>& UFunKWorldSubsystem::GetWorldVariations()
+const FFunKWorldVariations& UFunKWorldSubsystem::GetWorldVariations()
 {
 	if(!AreVariationsGathered)
 	{
@@ -100,7 +101,7 @@ AFunKWorldTestController* UFunKWorldSubsystem::NewTestController() const
 		: GetWorld()->SpawnActor<AFunKWorldTestController>();
 }
 
-void UFunKWorldSubsystem::GatherVariations(TArray<UFunKTestVariationComponent*>& OutVariations) const
+void UFunKWorldSubsystem::GatherVariations(FFunKWorldVariations& OutVariations) const
 {
 	TArray<AFunKSharedTestVariations*> SharedTestVariationActors;
 	for (TActorIterator<AFunKSharedTestVariations> ActorItr(GetWorld(), AFunKSharedTestVariations::StaticClass(), EActorIteratorFlags::AllActors); ActorItr; ++ActorItr)
@@ -112,7 +113,8 @@ void UFunKWorldSubsystem::GatherVariations(TArray<UFunKTestVariationComponent*>&
 		return  ip1.GetName() < ip2.GetName();
 	});
 
-	OutVariations.Empty();
+	OutVariations.Variations.Empty();
+	OutVariations.VariationCount = 0;
 	for (const AFunKSharedTestVariations* SharedTestVariationActor : SharedTestVariationActors)
 	{
 		TArray<UFunKTestVariationComponent*> Array;
@@ -124,7 +126,14 @@ void UFunKWorldSubsystem::GatherVariations(TArray<UFunKTestVariationComponent*>&
 
 		for (UFunKTestVariationComponent* FunKTestVariationComponent : Array)
 		{
-			OutVariations.Add(FunKTestVariationComponent);
+			if(FunKTestVariationComponent->IsA(UFunKTestRootVariationComponent::StaticClass()))
+			{
+				UE_LOG(FunKLog, Error, TEXT("Root variation components are not allowed on shared test variations! %s"), *SharedTestVariationActor->GetName())
+				continue;
+			}
+				
+			OutVariations.Variations.Add(FunKTestVariationComponent);
+			OutVariations.VariationCount += FunKTestVariationComponent->GetCount();
 		}
 	}
 }
