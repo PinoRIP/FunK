@@ -293,17 +293,7 @@ void AFunKTestBase::OnFinish(const FFunKTestFinishEvent& Event)
 
 		RaiseEvent(FFunKEvent(Event.Result == EFunKTestResult::Succeeded || Event.Result == EFunKTestResult::Skipped ? EFunKEventType::Info : EFunKEventType::Error, EventMessage, FunKTestLifeTimeContext::FinishTest).AddToContext(LexToString(Event.Result)));
 	}
-
-	if(Variations.RootVariations)
-	{
-		Variations.RootVariations->Finish();
-	}
 	
-	if(CurrentVariationComponent)
-	{
-		CurrentVariationComponent->Finish();
-	}
-
 	TestRunID = 0;
 	Seed = 0;
 	CurrentStageIndex = INDEX_NONE;
@@ -314,6 +304,16 @@ void AFunKTestBase::OnFinish(const FFunKTestFinishEvent& Event)
 void AFunKTestBase::OnFinish(const FString& Message)
 {
 	OnTestFinish.Broadcast();
+
+	if(Variations.RootVariations)
+	{
+		Variations.RootVariations->Finish();
+	}
+	
+	if(CurrentVariationComponent)
+	{
+		CurrentVariationComponent->Finish();
+	}
 
 	EndAllInputSimulations();
 }

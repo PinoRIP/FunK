@@ -18,6 +18,15 @@ enum class EFunKActorScenarioVariationOwnership : uint8
 	AI,
 };
 
+UENUM(BlueprintType)
+enum class EFunKActorScenarioMode : uint8
+{
+	Standalone,
+	ClientToClient,
+	ClientToServer,
+	ServerToClient,
+};
+
 USTRUCT(BlueprintType)
 struct FFunKActorScenarioVariationSpawnActor
 {
@@ -57,21 +66,32 @@ public:
 	UFunKActorScenarioVariationComponent();
 
 private:
-	UPROPERTY(EditAnywhere, meta = (Bitmask, BitmaskEnum = "/Script/FunK.EFunKTestLocationTarget"), Category="FunK|Setup")
-	int32 Exclude = 0;
-
 	UPROPERTY(EditAnywhere, Category="FunK|Setup")
 	TArray<FFunKActorScenarioVariationActor> Actors;
 
 public:
+	virtual int32 GetCount() override;
 	virtual void Begin(int32 index) override;
+	virtual bool IsReady() override;
+	virtual void Finish() override;
+	virtual FString GetName() override;
+
+	virtual void GetLifetimeReplicatedProps( TArray< FLifetimeProperty > & OutLifetimeProps ) const override;
 
 protected:
 	virtual AActor* AcquireActor(const FFunKActorScenarioVariationActor& VariationActor);
 	virtual AActor* GetSceneActor(const FFunKActorScenarioVariationActor& VariationActor);
 	virtual AActor* SpawnActor(const FFunKActorScenarioVariationActor& VariationActor);
 	virtual void AssignOwner(AActor* Actor, EFunKActorScenarioVariationOwnership Ownership);
-	virtual void AssignAppositionPlayer(AActor* Actor);
-	virtual void AssignOppositionPlayer(AActor* Actor);
-	virtual void AssignAI(AActor* Actor);
+	virtual void ReleaseActor(AActor* Actor, const FFunKActorScenarioVariationActor& VariationActor);
+	virtual void ReleaseSceneActor(AActor* Actor, const FFunKActorScenarioVariationActor& VariationActor);
+	virtual void ReleaseSpawnActor(AActor* Actor, const FFunKActorScenarioVariationActor& VariationActor);
+	virtual APlayerController* GetController(EFunKActorScenarioVariationOwnership Ownership);
+
+private:
+	EFunKActorScenarioMode Mode;
+	
+	UPROPERTY( replicated )
+	TArray<AActor*> AcquiredActors;
 };
+
