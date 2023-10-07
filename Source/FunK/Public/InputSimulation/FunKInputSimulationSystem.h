@@ -66,6 +66,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void EndAllInputSimulations();
+
+	UFUNCTION(BlueprintCallable)
+	void DisableActualInputs();
+
+	UFUNCTION(BlueprintCallable)
+	void EnableActualInputs();
 	
 public: //Enhanced input system
 	UFUNCTION(BlueprintCallable)

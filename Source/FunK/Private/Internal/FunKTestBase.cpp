@@ -177,6 +177,9 @@ void AFunKTestBase::OnBegin(const FFunKTestBeginEvent& BeginEvent)
 	PeerBitMask = FFunKAnonymousBitmask(GetWorldSubsystem()->GetPeerCount());
 	CurrentStageIndex = INDEX_NONE;
 	SetActorTickEnabled(true);
+	
+	UFunKInputSimulationSystem* InputSimulationSystem = GetWorld()->GetSubsystem<UFunKInputSimulationSystem>();
+	InputSimulationSystem->DisableActualInputs();
 
 	if(IsDriver())
 	{
@@ -293,6 +296,9 @@ void AFunKTestBase::OnFinish(const FFunKTestFinishEvent& Event)
 
 		RaiseEvent(FFunKEvent(Event.Result == EFunKTestResult::Succeeded || Event.Result == EFunKTestResult::Skipped ? EFunKEventType::Info : EFunKEventType::Error, EventMessage, FunKTestLifeTimeContext::FinishTest).AddToContext(LexToString(Event.Result)));
 	}
+
+	UFunKInputSimulationSystem* InputSimulationSystem = GetWorld()->GetSubsystem<UFunKInputSimulationSystem>();
+	InputSimulationSystem->EnableActualInputs();
 	
 	TestRunID = 0;
 	Seed = 0;

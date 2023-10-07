@@ -42,6 +42,44 @@ void UFunKInputSimulationSystem::EndAllInputSimulations()
 	ControllerInputSimulations.Empty();
 }
 
+void UFunKInputSimulationSystem::DisableActualInputs()
+{
+	const UGameInstance* GameInstance = GetWorld()->GetGameInstance();
+	if(!GameInstance)
+	{
+		UE_LOG(FunKLog, Warning, TEXT("Input can't be disabled: Game instance could not be aquired!"))
+		return;
+	}
+	
+	UGameViewportClient* ViewportClient = GameInstance->GetGameViewportClient();
+	if(!ViewportClient)
+	{
+		UE_LOG(FunKLog, Warning, TEXT("Input can't be disabled: Game viewport client could not be aquired!"))
+		return;
+	}
+	
+	ViewportClient->SetIgnoreInput(true);
+}
+
+void UFunKInputSimulationSystem::EnableActualInputs()
+{
+	const UGameInstance* GameInstance = GetWorld()->GetGameInstance();
+	if(!GameInstance)
+	{
+		UE_LOG(FunKLog, Warning, TEXT("Input can't be enabled: Game instance could not be aquired!"))
+		return;
+	}
+	
+	UGameViewportClient* ViewportClient = GameInstance->GetGameViewportClient();
+	if(!ViewportClient)
+	{
+		UE_LOG(FunKLog, Warning, TEXT("Input can't be enabled: Game viewport client could not be aquired!"))
+		return;
+	}
+	
+	ViewportClient->SetIgnoreInput(false);
+}
+
 void UFunKInputSimulationSystem::SimulateInputAction(const UInputAction* InputAction, FInputActionValue InputActionValue)
 {
 	SimulateControllerInputAction(GetWorld()->GetFirstPlayerController(), InputAction, InputActionValue);
