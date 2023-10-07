@@ -12,13 +12,14 @@ enum class EFunKTestEnvironmentType;
 UENUM(BlueprintType)
 enum class EFunKActorScenarioVariationOwnership : uint8
 {
-	None,
-	AppositionPlayer,
-	OppositionPlayer,
+	None				= 0,
+	AppositionPlayer	= 1 << 0,
+	OppositionPlayer	= 1 << 1,
 
 	//TODO: Setup AI
-	AI,
+	AI					= 1 << 2,
 };
+ENUM_CLASS_FLAGS(EFunKActorScenarioVariationOwnership);
 
 UENUM(BlueprintType)
 enum class EFunKActorScenarioMode : uint8
@@ -95,6 +96,8 @@ public:
 
 	virtual void GetLifetimeReplicatedProps( TArray< FLifetimeProperty > & OutLifetimeProps ) const override;
 
+	
+
 protected:
 	virtual AActor* AcquireActor(const FFunKActorScenarioVariationActor& VariationActor);
 	virtual AActor* GetSceneActor(const FFunKActorScenarioVariationActor& VariationActor);
@@ -113,5 +116,15 @@ private:
 	
 	UPROPERTY( replicated )
 	TArray<AActor*> AcquiredActors;
+
+public:
+	UFUNCTION(BlueprintCallable)
+	virtual AActor* GetActor(int32 Index = 0);
+
+	UFUNCTION(BlueprintCallable)
+	virtual AActor* GetActorByOwnership(EFunKActorScenarioVariationOwnership Ownership, int32 Index = 0);
+
+	UFUNCTION(BlueprintCallable)
+	EFunKActorScenarioVariationOwnership GetLocalOwnerships();
 };
 

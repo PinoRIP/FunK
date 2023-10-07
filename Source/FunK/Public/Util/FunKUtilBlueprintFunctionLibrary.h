@@ -19,35 +19,35 @@ class FUNK_API UFunKBlueprintFunctionLibrary : public UBlueprintFunctionLibrary
 
 public:
 	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
-	static UFunKWorldSubsystem* GetFunKWorldSubsystem(UObject* WorldContext);
+	static UFunKWorldSubsystem* GetFunKWorldSubsystem(const UObject* WorldContext);
 	
 	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
-	static int32 GetPeerIndex(UObject* WorldContext);
+	static int32 GetPeerIndex(const UObject* WorldContext);
 
 	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
-	static EFunKNetMode GetNetMode(UObject* WorldContext);
+	static EFunKNetMode GetNetMode(const UObject* WorldContext);
 
 	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext", ExpandEnumAsExecs = "Branches"))
-	static void SwitchNetMode(UObject* WorldContext, EFunKNetMode& Branches);
+	static void SwitchNetMode(const UObject* WorldContext, EFunKNetMode& Branches);
 
 	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
-	static EFunKClient GetClients(UObject* WorldContext);
+	static EFunKClient GetClients(const UObject* WorldContext);
 
 	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext", ExpandEnumAsExecs = "Branches"))
-	static void SwitchClients(UObject* WorldContext, EFunKClient& Branches);
+	static void SwitchClients(const UObject* WorldContext, EFunKClient& Branches);
 
 	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
-	static EFunKTestEnvironmentType GetTestEnvironmentType(UObject* WorldContext);
+	static EFunKTestEnvironmentType GetTestEnvironmentType(const UObject* WorldContext);
 
 	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext", ExpandEnumAsExecs = "Branches"))
-	static void SwitchTestEnvironmentType(UObject* WorldContext, EFunKTestEnvironmentType& Branches);
+	static void SwitchTestEnvironmentType(const UObject* WorldContext, EFunKTestEnvironmentType& Branches);
 	
 	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
-	static bool IsServerDedicated(UObject* WorldContext);
+	static bool IsServerDedicated(const UObject* WorldContext);
 
 	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext"))
-	static EFunKNetLocation GetNetLocation(UObject* WorldContext);
+	static EFunKNetLocation GetNetLocation(const UObject* WorldContext);
 
 	UFUNCTION(BlueprintCallable, Category = "FunK|Helper", meta = ( HidePin = "WorldContext", DefaultToSelf = "WorldContext", ExpandEnumAsExecs = "Branches"))
-	static void SwitchNetLocation(UObject* WorldContext, EFunKNetLocation& Branches);
+	static void SwitchNetLocation(const UObject* WorldContext, EFunKNetLocation& Branches);
 };

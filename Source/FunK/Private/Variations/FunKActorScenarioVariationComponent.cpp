@@ -146,6 +146,29 @@ void UFunKActorScenarioVariationComponent::GetLifetimeReplicatedProps(TArray<FLi
 	DOREPLIFETIME( UFunKActorScenarioVariationComponent, AcquiredActors );
 }
 
+AActor* UFunKActorScenarioVariationComponent::GetActor(int32 Index)
+{
+	if(Index < 0 || Index >= AcquiredActors.Num()) return nullptr;
+	return AcquiredActors[Index];
+}
+
+AActor* UFunKActorScenarioVariationComponent::GetActorByOwnership(EFunKActorScenarioVariationOwnership Ownership, int32 Index)
+{
+	if(Index < 0 || Index >= AcquiredActors.Num()) return nullptr;
+	int32 OwnershipIndex = 0;
+
+	for (int i = 0; i < Actors.Num(); ++i)
+	{
+		if(Actors[i].Ownership == Ownership)
+		{
+			if(OwnershipIndex == Index) return AcquiredActors[i];
+			OwnershipIndex++;
+		}
+	}
+
+	return nullptr;
+}
+
 AActor* UFunKActorScenarioVariationComponent::AcquireActor(const FFunKActorScenarioVariationActor& VariationActor)
 {
 	if(VariationActor.SceneActor)
@@ -254,11 +277,7 @@ APlayerController* UFunKActorScenarioVariationComponent::GetController(EFunKActo
 
 EFunKTestEnvironmentType UFunKActorScenarioVariationComponent::GetEnvironment() const
 {
-	const ENetMode NetMode = GetNetMode();
-	if(NetMode == NM_Standalone) return EFunKTestEnvironmentType::Standalone;
-	if(NetMode == NM_Standalone) return EFunKTestEnvironmentType::ListenServer;
-	if(GetWorld()->GetSubsystem<UFunKWorldSubsystem>()->IsServerDedicated()) return EFunKTestEnvironmentType::DedicatedServer;
-	return EFunKTestEnvironmentType::ListenServer;
+	return UFunKBlueprintFunctionLibrary::GetTestEnvironmentType(this);
 }
 
 FFunKOwnershipDistribution UFunKActorScenarioVariationComponent::GetOwnershipDistribution()
@@ -274,4 +293,30 @@ FFunKOwnershipDistribution UFunKActorScenarioVariationComponent::GetOwnershipDis
 	}
 
 	return OwnershipDistribution;
+}
+
+EFunKActorScenarioVariationOwnership UFunKActorScenarioVariationComponent::GetLocalOwnerships()
+{
+	const ENetMode NetMode = GetNetMode();
+	if(NetMode == NM_Standalone) return EFunKActorScenarioVariationOwnership::None | EFunKActorScenarioVariationOwnership::AppositionPlayer | EFunKActorScenarioVariationOwnership::OppositionPlayer | EFunKActorScenarioVariationOwnership::AI;
+	if(NetMode == NM_DedicatedServer) return EFunKActorScenarioVariationOwnership::None | EFunKActorScenarioVariationOwnership::AI;
+	if(NetMode == NM_ListenServer)
+	{
+		constexpr EFunKActorScenarioVariationOwnership Default = EFunKActorScenarioVariationOwnership::None | EFunKActorScenarioVariationOwnership::AI;
+		if (Mode == EFunKActorScenarioMode::ServerToClient) return Default | EFunKActorScenarioVariationOwnership::AppositionPlayer;
+		if (Mode == EFunKActorScenarioMode::ClientToServer) return Default | EFunKActorScenarioVariationOwnership::OppositionPlayer;
+		return Default;
+	}
+
+	const EFunKClient client = UFunKBlueprintFunctionLibrary::GetClients(GetOwner());
+	switch (Mode)
+	{
+	case EFunKActorScenarioMode::ClientToClient:
+		return client == EFunKClient::First ? EFunKActorScenarioVariationOwnership::AppositionPlayer : EFunKActorScenarioVariationOwnership::OppositionPlayer;
+	case EFunKActorScenarioMode::ClientToServer:
+		return client == EFunKClient::First ? EFunKActorScenarioVariationOwnership::AppositionPlayer : EFunKActorScenarioVariationOwnership::None;
+	case EFunKActorScenarioMode::ServerToClient:
+		return client == EFunKClient::First ? EFunKActorScenarioVariationOwnership::None : EFunKActorScenarioVariationOwnership::OppositionPlayer;
+	default: return EFunKActorScenarioVariationOwnership::None;
+	}
 }

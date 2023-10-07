@@ -4,7 +4,7 @@
 #include "Util/FunKUtilBlueprintFunctionLibrary.h"
 #include "FunKWorldSubsystem.h"
 
-UFunKWorldSubsystem* UFunKBlueprintFunctionLibrary::GetFunKWorldSubsystem(UObject* WorldContext)
+UFunKWorldSubsystem* UFunKBlueprintFunctionLibrary::GetFunKWorldSubsystem(const UObject* WorldContext)
 {
 	if(!WorldContext)
 		return nullptr;
@@ -12,7 +12,7 @@ UFunKWorldSubsystem* UFunKBlueprintFunctionLibrary::GetFunKWorldSubsystem(UObjec
 	return WorldContext->GetWorld()->GetSubsystem<UFunKWorldSubsystem>();
 }
 
-int32 UFunKBlueprintFunctionLibrary::GetPeerIndex(UObject* WorldContext)
+int32 UFunKBlueprintFunctionLibrary::GetPeerIndex(const UObject* WorldContext)
 {
 	if(const UFunKWorldSubsystem* Subsystem = GetFunKWorldSubsystem(WorldContext))
 	{
@@ -22,7 +22,7 @@ int32 UFunKBlueprintFunctionLibrary::GetPeerIndex(UObject* WorldContext)
 	return INDEX_NONE;
 }
 
-EFunKNetMode UFunKBlueprintFunctionLibrary::GetNetMode(UObject* WorldContext)
+EFunKNetMode UFunKBlueprintFunctionLibrary::GetNetMode(const UObject* WorldContext)
 {
 	if(!WorldContext)
 		return EFunKNetMode::MAX;
@@ -37,12 +37,12 @@ EFunKNetMode UFunKBlueprintFunctionLibrary::GetNetMode(UObject* WorldContext)
 	}
 }
 
-void UFunKBlueprintFunctionLibrary::SwitchNetMode(UObject* WorldContext, EFunKNetMode& Branches)
+void UFunKBlueprintFunctionLibrary::SwitchNetMode(const UObject* WorldContext, EFunKNetMode& Branches)
 {
 	Branches = GetNetMode(WorldContext);
 }
 
-EFunKClient UFunKBlueprintFunctionLibrary::GetClients(UObject* WorldContext)
+EFunKClient UFunKBlueprintFunctionLibrary::GetClients(const UObject* WorldContext)
 {
 	const auto netMode = GetNetMode(WorldContext);
 	if (netMode == EFunKNetMode::Standalone)
@@ -70,12 +70,12 @@ EFunKClient UFunKBlueprintFunctionLibrary::GetClients(UObject* WorldContext)
 	return EFunKClient::None;
 }
 
-void UFunKBlueprintFunctionLibrary::SwitchClients(UObject* WorldContext, EFunKClient& Branches)
+void UFunKBlueprintFunctionLibrary::SwitchClients(const UObject* WorldContext, EFunKClient& Branches)
 {
 	Branches = GetClients(WorldContext);
 }
 
-EFunKTestEnvironmentType UFunKBlueprintFunctionLibrary::GetTestEnvironmentType(UObject* WorldContext)
+EFunKTestEnvironmentType UFunKBlueprintFunctionLibrary::GetTestEnvironmentType(const UObject* WorldContext)
 {
 	const auto netMode = GetNetMode(WorldContext);
 	if (netMode == EFunKNetMode::Standalone)
@@ -103,12 +103,12 @@ EFunKTestEnvironmentType UFunKBlueprintFunctionLibrary::GetTestEnvironmentType(U
 	return EFunKTestEnvironmentType::MAX;
 }
 
-void UFunKBlueprintFunctionLibrary::SwitchTestEnvironmentType(UObject* WorldContext, EFunKTestEnvironmentType& Branches)
+void UFunKBlueprintFunctionLibrary::SwitchTestEnvironmentType(const UObject* WorldContext, EFunKTestEnvironmentType& Branches)
 {
 	Branches = GetTestEnvironmentType(WorldContext);
 }
 
-bool UFunKBlueprintFunctionLibrary::IsServerDedicated(UObject* WorldContext)
+bool UFunKBlueprintFunctionLibrary::IsServerDedicated(const UObject* WorldContext)
 {
 	if(const UFunKWorldSubsystem* Subsystem = GetFunKWorldSubsystem(WorldContext))
 	{
@@ -118,7 +118,7 @@ bool UFunKBlueprintFunctionLibrary::IsServerDedicated(UObject* WorldContext)
 	return false;
 }
 
-EFunKNetLocation UFunKBlueprintFunctionLibrary::GetNetLocation(UObject* WorldContext)
+EFunKNetLocation UFunKBlueprintFunctionLibrary::GetNetLocation(const UObject* WorldContext)
 {
 	const auto netMode = GetNetMode(WorldContext);
 	if (netMode == EFunKNetMode::Standalone)
@@ -139,7 +139,7 @@ EFunKNetLocation UFunKBlueprintFunctionLibrary::GetNetLocation(UObject* WorldCon
 	return EFunKNetLocation::MAX;
 }
 
-void UFunKBlueprintFunctionLibrary::SwitchNetLocation(UObject* WorldContext, EFunKNetLocation& Branches)
+void UFunKBlueprintFunctionLibrary::SwitchNetLocation(const UObject* WorldContext, EFunKNetLocation& Branches)
 {
 	Branches = GetNetLocation(WorldContext);
 }
