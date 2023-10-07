@@ -10,6 +10,7 @@ AFunKFunctionalTest::AFunKFunctionalTest()
 {
 	ArrangeTimeLimit.Message = FText::FromString("Preparation time limit reached");
 	ActTimeLimit.Message = FText::FromString("Execution time limit reached");
+	AssertTimeLimit.Message = FText::FromString("Assertion time limit reached");
 }
 
 void AFunKFunctionalTest::SetupStages(FFunKStagesSetup& stages)
@@ -41,9 +42,18 @@ void AFunKFunctionalTest::SetupFunctionalTestStages(FFunKStagesSetup& stages)
 	
 		.ThenAddLatentStage(AFunKFunctionalTest, Act)
 		.UpdateTimeLimit(ActTimeLimit)
-		.WithOptionalBpTickDelegate(AFunKFunctionalTest, BpActTick)
-	
-		.ThenAddStage(AFunKFunctionalTest, Assert);
+		.WithOptionalBpTickDelegate(AFunKFunctionalTest, BpActTick);
+
+	if(LatentAssert)
+	{
+		stages.AddNamedLatentStage<AFunKFunctionalTest>("Assert", &AFunKFunctionalTest::InvokeAssert)
+			.UpdateTimeLimit(AssertTimeLimit)
+			.WithOptionalBpTickDelegate(AFunKFunctionalTest, BpAssertTick);
+	}
+	else
+	{
+		stages.AddNamedStage<AFunKFunctionalTest>("Assert", &AFunKFunctionalTest::InvokeAssert);
+	}
 }
 
 void AFunKFunctionalTest::InvokeAssume()
@@ -57,6 +67,14 @@ void AFunKFunctionalTest::InvokeAssume()
 void AFunKFunctionalTest::InvokeArrange()
 {
 	if(Arrange())
+	{
+		FinishStage();
+	}
+}
+
+void AFunKFunctionalTest::InvokeAssert()
+{
+	if(Assert() || !LatentAssert)
 	{
 		FinishStage();
 	}
@@ -100,11 +118,21 @@ void AFunKFunctionalTest::BpActTick_Implementation(float DeltaTime)
 {
 }
 
-void AFunKFunctionalTest::Assert()
+bool AFunKFunctionalTest::Assert()
 {
-	BpAssert();
+	if(IsBpEventImplemented(GET_FUNCTION_NAME_CHECKED(AFunKFunctionalTest, BpAssert)))
+	{
+		BpAssert();
+		return false;
+	}
+	
+	return true;
 }
 
 void AFunKFunctionalTest::BpAssert_Implementation()
+{
+}
+
+void AFunKFunctionalTest::BpAssertTick_Implementation(float DeltaTime)
 {
 }

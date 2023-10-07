@@ -43,12 +43,19 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup")
 	bool RunOnListenServerClients = true;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="FunK|Setup|Assert")
+	bool LatentAssert = false;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup|Assert", meta=(EditCondition="LatentAssert"))
+	FFunKTimeLimit AssertTimeLimit;
 
 	virtual void SetupStages(FFunKStagesSetup& stages) override final;
 	virtual void SetupFunctionalTestStages(FFunKStagesSetup& stages);
 
 	void InvokeAssume();
 	void InvokeArrange();
+	void InvokeAssert();
 
 	virtual bool Assume();
 	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="Assume")
@@ -66,7 +73,9 @@ protected:
 	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="ActTick")
 	void BpActTick(float DeltaTime);
 
-	virtual void Assert();
+	virtual bool Assert();
 	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="Assert")
 	void BpAssert();
+	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="ActTick")
+	void BpAssertTick(float DeltaTime);
 };
