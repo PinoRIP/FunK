@@ -311,3 +311,24 @@ EFunKActorScenarioVariationOwnership UFunKActorScenarioVariationComponent::GetLo
 	default: return EFunKActorScenarioVariationOwnership::None;
 	}
 }
+
+bool UFunKActorScenarioVariationComponent::IsAppositionPlayer()
+{
+	const uint8 LocalOwnerships = static_cast<uint8>(GetLocalOwnerships());
+	if (LocalOwnerships == 0) return false;
+	return (LocalOwnerships & static_cast<uint8>(EFunKActorScenarioVariationOwnership::AppositionPlayer)) == LocalOwnerships;
+}
+
+bool UFunKActorScenarioVariationComponent::IsOppositionPlayer()
+{
+	const uint8 LocalOwnerships = static_cast<uint8>(GetLocalOwnerships());
+	if (LocalOwnerships == 0) return false;
+	return (LocalOwnerships & static_cast<uint8>(EFunKActorScenarioVariationOwnership::OppositionPlayer)) == LocalOwnerships;
+}
+
+bool UFunKActorScenarioVariationComponent::IsAI()
+{
+	const uint8 LocalOwnerships = static_cast<uint8>(GetLocalOwnerships());
+	if (LocalOwnerships == 0) return false;
+	return (LocalOwnerships & static_cast<uint8>(EFunKActorScenarioVariationOwnership::AI)) == LocalOwnerships;
+}

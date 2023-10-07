@@ -123,5 +123,14 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	EFunKActorScenarioVariationOwnership GetLocalOwnerships();
+
+	UFUNCTION(BlueprintCallable)
+	bool IsAppositionPlayer();
+
+	UFUNCTION(BlueprintCallable)
+	bool IsOppositionPlayer();
+
+	UFUNCTION(BlueprintCallable)
+	bool IsAI();
 };
 
