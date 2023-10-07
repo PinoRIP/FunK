@@ -7,6 +7,8 @@
 #include "Components/ActorComponent.h"
 #include "FunKActorScenarioVariationComponent.generated.h"
 
+enum class EFunKTestEnvironmentType;
+
 UENUM(BlueprintType)
 enum class EFunKActorScenarioVariationOwnership : uint8
 {
@@ -21,7 +23,6 @@ enum class EFunKActorScenarioVariationOwnership : uint8
 UENUM(BlueprintType)
 enum class EFunKActorScenarioMode : uint8
 {
-	Standalone,
 	ClientToClient,
 	ClientToServer,
 	ServerToClient,
@@ -53,6 +54,22 @@ public:
 	FFunKActorScenarioVariationSpawnActor SpawnActor;
 
 	//TODO: Spawn handler?
+};
+
+struct FFunKOwnershipDistribution
+{
+	FFunKOwnershipDistribution(int32 InNoneCount, int32 InAppositionPlayerCount, int32 InOppositionPlayerCount, int32 InAICount)
+		: NoneCount(InNoneCount)
+		, AppositionPlayerCount(InAppositionPlayerCount)
+		, OppositionPlayerCount(InOppositionPlayerCount)
+		, AICount(InAICount)
+	{  }
+	
+public:
+	int32 NoneCount;
+	int32 AppositionPlayerCount;
+	int32 OppositionPlayerCount;
+	int32 AICount;
 };
 
 
@@ -88,6 +105,9 @@ protected:
 	virtual void ReleaseSpawnActor(AActor* Actor, const FFunKActorScenarioVariationActor& VariationActor);
 	virtual APlayerController* GetController(EFunKActorScenarioVariationOwnership Ownership);
 
+	EFunKTestEnvironmentType GetEnvironment() const;
+	FFunKOwnershipDistribution GetOwnershipDistribution();
+	
 private:
 	EFunKActorScenarioMode Mode;
 	
