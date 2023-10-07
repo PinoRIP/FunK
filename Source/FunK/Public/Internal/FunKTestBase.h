@@ -223,6 +223,7 @@ public:
 	virtual void PostLoad() override;
 	virtual void PostActorCreated() override;
 	virtual void GetLifetimeReplicatedProps( TArray< FLifetimeProperty > & OutLifetimeProps ) const override;
+	virtual void OnConstruction(const FTransform& Transform) override;
 		
 #if WITH_EDITOR
 	virtual void GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const override;
@@ -236,6 +237,11 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 	
 private:
+#if WITH_EDITORONLY_DATA
+	UPROPERTY()
+	TObjectPtr<class UTextRenderComponent> TestName;
+#endif
+	
 	
 	friend class UFunKAssertionBlueprintFunctionLibrary;
 };

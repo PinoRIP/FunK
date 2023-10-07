@@ -6,6 +6,7 @@
 #include "FunKLogging.h"
 #include "FunKWorldSubsystem.h"
 #include "Components/BillboardComponent.h"
+#include "Components/TextRenderComponent.h"
 #include "InputSimulation/FunKInputSimulationSystem.h"
 #include "Internal/FunKTestEvents.h"
 #include "Internal/Events/FunKTestLifeTimeContext.h"
@@ -61,8 +62,20 @@ AFunKTestBase::AFunKTestBase()
 
 #endif
 	}
-
+	
 	RootComponent = SpriteComponent;
+
+#if WITH_EDITORONLY_DATA
+	TestName = CreateEditorOnlyDefaultSubobject<UTextRenderComponent>(TEXT("TestName"));
+	if(TestName)
+	{
+		TestName->bHiddenInGame = true;
+		TestName->SetHorizontalAlignment(EHTA_Center);
+		TestName->SetRelativeLocation(FVector(0, 0, 80));
+		TestName->SetRelativeRotation(FRotator(0, 0, 0));
+		TestName->SetupAttachment(RootComponent);
+	}
+#endif
 }
 
 bool AFunKTestBase::IsStandaloneModeTest() const
@@ -405,6 +418,27 @@ void AFunKTestBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLif
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AFunKTestBase, IsFinishComplete);
+}
+
+void AFunKTestBase::OnConstruction(const FTransform& Transform)
+{
+	Super::OnConstruction(Transform);
+
+#if WITH_EDITOR
+	if ( TestName )
+	{
+		TestName->SetText(FText::FromString(GetActorLabel()));
+		
+		if ( IsEnabled )
+		{
+			TestName->SetTextRenderColor(FColor(45, 255, 0));
+		}
+		else
+		{
+			TestName->SetTextRenderColor(FColor(55, 55, 55));
+		}
+	}
+#endif
 }
 
 void AFunKTestBase::BuildTestRegistry(FString& append) const
