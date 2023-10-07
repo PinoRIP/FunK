@@ -17,8 +17,10 @@
 
 int32 FFunKTestVariations::GetCount() const
 {
-	const int32 VariationCount = GetVariationsCount() * GetRootVariationsCount();
-	return VariationCount <= 0 ? 1 : VariationCount;
+	auto variations = FMath::Max(1, GetVariationsCount());
+	auto rootVariations = FMath::Max(1, GetRootVariationsCount());
+	
+	return variations * rootVariations;
 }
 
 int32 FFunKTestVariations::GetVariationsCount() const

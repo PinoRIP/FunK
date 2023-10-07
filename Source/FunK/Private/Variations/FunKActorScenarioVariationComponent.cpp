@@ -2,14 +2,10 @@
 
 
 #include "Variations/FunKActorScenarioVariationComponent.h"
-
 #include "FunKLogging.h"
-#include "FunKWorldSubsystem.h"
 #include "GameFramework/PlayerController.h"
 #include "Net/UnrealNetwork.h"
 #include "Util/FunKUtilBlueprintFunctionLibrary.h"
-
-//TODO: Refactor this mess
 
 // Sets default values for this component's properties
 UFunKActorScenarioVariationComponent::UFunKActorScenarioVariationComponent()
@@ -52,8 +48,9 @@ void UFunKActorScenarioVariationComponent::Begin(int32 index)
 	{
 		Mode = index == 0 ? EFunKActorScenarioMode::ClientToServer : index == 1 ? EFunKActorScenarioMode::ServerToClient : EFunKActorScenarioMode::ClientToClient;
 	}
-	
-	if (GetNetMode() == NM_Client) return;
+
+	auto NetMode = GetNetMode();
+	if (NetMode == NM_Client) return;
 	
 	for (const FFunKActorScenarioVariationActor& Actor : Actors)
 	{
@@ -64,6 +61,11 @@ void UFunKActorScenarioVariationComponent::Begin(int32 index)
 		}
 		else
 		{
+			if(NetMode != NM_Standalone && !AcquiredActor->GetIsReplicated())
+			{
+				UE_LOG(FunKLog, Warning, TEXT("Actor %s is not replicated!"), *AcquiredActor->GetName())
+			}
+			
 			AssignOwner(AcquiredActor, Actor.Ownership);
 		}
 
@@ -76,37 +78,18 @@ bool UFunKActorScenarioVariationComponent::IsReady()
 	if(Actors.Num() != AcquiredActors.Num()) return false;
 
 	const ENetMode NetMode = GetNetMode();
-	const EFunKClient client = UFunKBlueprintFunctionLibrary::GetClients(GetOwner());
+	const uint8 LocalOwnerships = static_cast<uint8>(GetLocalOwnerships());
+	if(LocalOwnerships == 0) return true;
+	
 	for (int i = 0; i < Actors.Num(); ++i)
 	{
 		if (!AcquiredActors[i]) return false;
 		if (!AcquiredActors[i]->HasActorBegunPlay()) return false;
 		if (Actors[i].Ownership != EFunKActorScenarioVariationOwnership::None)
 		{
-			if(NetMode < NM_Client)
+			if(NetMode < NM_Client || (LocalOwnerships & static_cast<uint8>(Actors[i].Ownership)) == LocalOwnerships)
 			{
 				if(AcquiredActors[i]->GetOwner() == nullptr) return false;
-			}
-			else
-			{
-				if (Mode == EFunKActorScenarioMode::ClientToClient)
-				{
-					if (client == EFunKClient::First && Actors[i].Ownership == EFunKActorScenarioVariationOwnership::AppositionPlayer && AcquiredActors[i]->GetOwner() == nullptr)
-						return false;
-					
-					if (client == EFunKClient::Second && Actors[i].Ownership == EFunKActorScenarioVariationOwnership::OppositionPlayer && AcquiredActors[i]->GetOwner() == nullptr)
-						return false;
-				}
-				else if (Mode == EFunKActorScenarioMode::ClientToServer)
-				{
-					if (client == EFunKClient::First && Actors[i].Ownership == EFunKActorScenarioVariationOwnership::AppositionPlayer && AcquiredActors[i]->GetOwner() == nullptr)
-						return false;					
-				}
-				else if (Mode == EFunKActorScenarioMode::ServerToClient)
-				{
-					if (client == EFunKClient::Second && Actors[i].Ownership == EFunKActorScenarioVariationOwnership::OppositionPlayer && AcquiredActors[i]->GetOwner() == nullptr)
-						return false;				
-				}
 			}
 		}
 	}
@@ -116,7 +99,7 @@ bool UFunKActorScenarioVariationComponent::IsReady()
 
 void UFunKActorScenarioVariationComponent::Finish()
 {
-	auto NetMode = GetNetMode();
+	const ENetMode NetMode = GetNetMode();
 	if (NetMode < NM_Client)
 	{
 		for (int i = 0; i < Actors.Num(); ++i)
@@ -193,8 +176,10 @@ AActor* UFunKActorScenarioVariationComponent::SpawnActor(const FFunKActorScenari
 
 void UFunKActorScenarioVariationComponent::AssignOwner(AActor* Actor, EFunKActorScenarioVariationOwnership Ownership)
 {
-	auto Controller = GetController(Ownership);
+	APlayerController* Controller = GetController(Ownership);
+	if(!Controller) return;
 
+	const ENetMode NetMode = GetNetMode();
 	if(APawn* Pawn = Cast<APawn>(Actor))
 	{
 		// Pawn->PossessedBy(PlayerController);
@@ -203,11 +188,13 @@ void UFunKActorScenarioVariationComponent::AssignOwner(AActor* Actor, EFunKActor
 	else
 	{
 		Actor->SetOwner(Controller);
-		Actor->SetAutonomousProxy(true);
-		Actor->ForceNetUpdate();
+
+		if(NetMode != NM_Standalone)
+			Actor->SetAutonomousProxy(true);
 	}
-	
-	Actor->ForceNetUpdate();
+
+	if(NetMode != NM_Standalone)
+		Actor->ForceNetUpdate();
 }
 
 void UFunKActorScenarioVariationComponent::ReleaseActor(AActor* Actor, const FFunKActorScenarioVariationActor& VariationActor)
@@ -220,6 +207,7 @@ void UFunKActorScenarioVariationComponent::ReleaseActor(AActor* Actor, const FFu
 		if(Controller && Controller->GetPawn() == Actor)
 		{
 			Controller->UnPossess();
+			Actor->ForceNetUpdate();
 		}
 	}
 	
@@ -243,6 +231,8 @@ void UFunKActorScenarioVariationComponent::ReleaseSpawnActor(AActor* Actor, cons
 	GetWorld()->RemoveActor(Actor, true);
 }
 
+#define FUNK_NEXT_CONTROLLER(It) if(!++It) { UE_LOG(FunKLog, Error, TEXT("Invalid controller access")) return nullptr; }
+
 APlayerController* UFunKActorScenarioVariationComponent::GetController(EFunKActorScenarioVariationOwnership Ownership)
 {
 	if (Ownership == EFunKActorScenarioVariationOwnership::None) return nullptr;
@@ -257,16 +247,17 @@ APlayerController* UFunKActorScenarioVariationComponent::GetController(EFunKActo
 	switch (Mode)
 	{
 	case EFunKActorScenarioMode::ClientToClient:
-		if (NetMode == NM_ListenServer) ++It; // Skip playable Server
-		if (Ownership == EFunKActorScenarioVariationOwnership::OppositionPlayer) ++It; // Skip AppositionPlayer
+		if (NetMode == NM_ListenServer) FUNK_NEXT_CONTROLLER(It); // Skip playable Server
+		if (Ownership == EFunKActorScenarioVariationOwnership::OppositionPlayer) FUNK_NEXT_CONTROLLER(It); // Skip AppositionPlayer
 		return It->Get(); 
 	case EFunKActorScenarioMode::ClientToServer:
 		if(Ownership == EFunKActorScenarioVariationOwnership::OppositionPlayer) return It->Get(); // Take playable Server
-		++It; // Skip playable Server
+		FUNK_NEXT_CONTROLLER(It); // Skip playable Server
 		return It->Get(); 
 	case EFunKActorScenarioMode::ServerToClient:
 		if(Ownership == EFunKActorScenarioVariationOwnership::AppositionPlayer) return It->Get(); // Take playable Server
-		++It; // Skip playable Server
+		FUNK_NEXT_CONTROLLER(It); // Skip playable Server
+		FUNK_NEXT_CONTROLLER(It); // Skip client1
 		return It->Get(); 
 	default: ;
 	}
@@ -298,11 +289,11 @@ FFunKOwnershipDistribution UFunKActorScenarioVariationComponent::GetOwnershipDis
 EFunKActorScenarioVariationOwnership UFunKActorScenarioVariationComponent::GetLocalOwnerships()
 {
 	const ENetMode NetMode = GetNetMode();
-	if(NetMode == NM_Standalone) return EFunKActorScenarioVariationOwnership::None | EFunKActorScenarioVariationOwnership::AppositionPlayer | EFunKActorScenarioVariationOwnership::OppositionPlayer | EFunKActorScenarioVariationOwnership::AI;
-	if(NetMode == NM_DedicatedServer) return EFunKActorScenarioVariationOwnership::None | EFunKActorScenarioVariationOwnership::AI;
+	if(NetMode == NM_Standalone) return EFunKActorScenarioVariationOwnership::AppositionPlayer | EFunKActorScenarioVariationOwnership::OppositionPlayer | EFunKActorScenarioVariationOwnership::AI;
+	if(NetMode == NM_DedicatedServer) return EFunKActorScenarioVariationOwnership::AI;
 	if(NetMode == NM_ListenServer)
 	{
-		constexpr EFunKActorScenarioVariationOwnership Default = EFunKActorScenarioVariationOwnership::None | EFunKActorScenarioVariationOwnership::AI;
+		constexpr EFunKActorScenarioVariationOwnership Default = EFunKActorScenarioVariationOwnership::AI;
 		if (Mode == EFunKActorScenarioMode::ServerToClient) return Default | EFunKActorScenarioVariationOwnership::AppositionPlayer;
 		if (Mode == EFunKActorScenarioMode::ClientToServer) return Default | EFunKActorScenarioVariationOwnership::OppositionPlayer;
 		return Default;

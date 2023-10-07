@@ -5,9 +5,8 @@
 #include "CoreMinimal.h"
 #include "FunKTestRootVariationComponent.h"
 #include "Components/ActorComponent.h"
+#include "Util/FunKUtilTypes.h"
 #include "FunKActorScenarioVariationComponent.generated.h"
-
-enum class EFunKTestEnvironmentType;
 
 UENUM(BlueprintType)
 enum class EFunKActorScenarioVariationOwnership : uint8
@@ -95,8 +94,6 @@ public:
 	virtual FString GetName() override;
 
 	virtual void GetLifetimeReplicatedProps( TArray< FLifetimeProperty > & OutLifetimeProps ) const override;
-
-	
 
 protected:
 	virtual AActor* AcquireActor(const FFunKActorScenarioVariationActor& VariationActor);
