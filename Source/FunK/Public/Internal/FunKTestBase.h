@@ -182,6 +182,9 @@ private:
 	UPROPERTY(Transient)
 	FFunKTestVariations Variations;
 
+	UPROPERTY(EditAnywhere, Category="FunK|Setup")
+	TObjectPtr<AActor> ObservationPoint;
+
 	bool IsVariationBegun = false;
 	bool IsLocalStageFinished = false;
 	bool IsCurrentStageTickDelegateSetup = false;
@@ -215,6 +218,8 @@ private:
 
 	UFUNCTION()
 	void ArrangeVariationTick(float DeltaTime);
+
+	void ViewObservationPoint() const;
 
 public:
 	// Called every frame

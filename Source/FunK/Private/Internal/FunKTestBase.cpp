@@ -7,6 +7,7 @@
 #include "FunKWorldSubsystem.h"
 #include "Components/BillboardComponent.h"
 #include "Components/TextRenderComponent.h"
+#include "Engine/DebugCameraController.h"
 #include "InputSimulation/FunKInputSimulationSystem.h"
 #include "Internal/FunKTestEvents.h"
 #include "Internal/Events/FunKTestLifeTimeContext.h"
@@ -197,6 +198,8 @@ void AFunKTestBase::OnBegin(const FFunKTestBeginEvent& BeginEvent)
 	{
 		UFunKInputSimulationSystem* InputSimulationSystem = GetWorld()->GetSubsystem<UFunKInputSimulationSystem>();
 		InputSimulationSystem->DisableActualInputs();
+
+		ViewObservationPoint();
 	}
 	
 	if(IsDriver())
@@ -766,7 +769,30 @@ void AFunKTestBase::ArrangeVariationTick(float DeltaTime)
 
 	if(isReady)
 	{
+		if(GetNetMode() != NM_DedicatedServer)
+			ViewObservationPoint();
+		
 		FinishStage();
+	}
+}
+
+void AFunKTestBase::ViewObservationPoint() const
+{
+	if (ObservationPoint == nullptr) return;
+
+	const UWorld* World = GetWorld();
+	if (World && World->GetGameInstance())
+	{
+		for (FConstPlayerControllerIterator PCIterator = World->GetPlayerControllerIterator(); PCIterator; ++PCIterator)
+		{
+			APlayerController* PlayerController = PCIterator->Get();
+
+			if (PlayerController && !PlayerController->IsA(ADebugCameraController::StaticClass()))
+			{
+				PlayerController->SetViewTarget(ObservationPoint);
+				return;
+			}
+		}
 	}
 }
 
