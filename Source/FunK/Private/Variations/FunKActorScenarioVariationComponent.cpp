@@ -171,7 +171,7 @@ AActor* UFunKActorScenarioVariationComponent::GetSceneActor(const FFunKActorScen
 
 AActor* UFunKActorScenarioVariationComponent::SpawnActor(const FFunKActorScenarioVariationActor& VariationActor)
 {
-	return GetWorld()->SpawnActor(VariationActor.SpawnActor.Class);
+	return GetWorld()->SpawnActor(VariationActor.SpawnActor.Class, &VariationActor.SpawnActor.Transform);
 }
 
 void UFunKActorScenarioVariationComponent::AssignOwner(AActor* Actor, EFunKActorScenarioVariationOwnership Ownership)
@@ -213,11 +213,11 @@ void UFunKActorScenarioVariationComponent::ReleaseActor(AActor* Actor, const FFu
 	
 	if(VariationActor.SceneActor)
 	{
-		return ReleaseSceneActor(Actor, VariationActor);
+		ReleaseSceneActor(Actor, VariationActor);
 	}
 	else
 	{
-		return ReleaseSpawnActor(Actor, VariationActor);
+		ReleaseSpawnActor(Actor, VariationActor);
 	}
 }
 

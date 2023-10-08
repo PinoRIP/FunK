@@ -36,6 +36,9 @@ struct FFunKActorScenarioVariationSpawnActor
 public:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AActor> Class;
+
+	UPROPERTY(EditAnywhere)
+	FTransform Transform;
 };
 
 USTRUCT(BlueprintType)
