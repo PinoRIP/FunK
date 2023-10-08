@@ -228,7 +228,7 @@ void UFunKActorScenarioVariationComponent::ReleaseSceneActor(AActor* Actor, cons
 
 void UFunKActorScenarioVariationComponent::ReleaseSpawnActor(AActor* Actor, const FFunKActorScenarioVariationActor& VariationActor)
 {
-	GetWorld()->RemoveActor(Actor, true);
+	GetWorld()->DestroyActor(Actor, true, true);
 }
 
 #define FUNK_NEXT_CONTROLLER(It) if(!++It) { UE_LOG(FunKLog, Error, TEXT("Invalid controller access")) return nullptr; }
