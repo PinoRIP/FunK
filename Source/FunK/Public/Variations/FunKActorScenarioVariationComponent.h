@@ -8,6 +8,8 @@
 #include "Util/FunKUtilTypes.h"
 #include "FunKActorScenarioVariationComponent.generated.h"
 
+class UFunKActorScenarioVariationSceneActorResetHandler;
+
 UENUM(BlueprintType)
 enum class EFunKActorScenarioVariationOwnership : uint8
 {
@@ -37,8 +39,31 @@ public:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<AActor> Class;
 
-	UPROPERTY(EditAnywhere)
+	UPROPERTY(EditAnywhere, meta=(EditCondition="Class"))
 	FTransform Transform;
+
+	operator bool() const
+	{
+		return !!Class;
+	}
+};
+
+USTRUCT(BlueprintType)
+struct FFunKActorScenarioVariationSceneActor
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY(EditAnywhere)
+	AActor* Actor = nullptr;
+
+	UPROPERTY(EditAnywhere, meta=(EditCondition="Actor"))
+	TSubclassOf<UFunKActorScenarioVariationSceneActorResetHandler> ResetHandlerClass;
+
+	operator bool() const
+	{
+		return !!Actor;
+	}
 };
 
 USTRUCT(BlueprintType)
@@ -51,7 +76,7 @@ public:
 	EFunKActorScenarioVariationOwnership Ownership = EFunKActorScenarioVariationOwnership::None;
 	
 	UPROPERTY(EditAnywhere)
-	AActor* SceneActor = nullptr;
+	FFunKActorScenarioVariationSceneActor SceneActor;
 
 	UPROPERTY(EditAnywhere)
 	FFunKActorScenarioVariationSpawnActor SpawnActor;
@@ -105,6 +130,7 @@ protected:
 	virtual void AssignOwner(AActor* Actor, EFunKActorScenarioVariationOwnership Ownership);
 	virtual void ReleaseActor(AActor* Actor, const FFunKActorScenarioVariationActor& VariationActor);
 	virtual void ReleaseSceneActor(AActor* Actor, const FFunKActorScenarioVariationActor& VariationActor);
+	// virtual void CopyPropertiesFromTo(UObject* From, UObject* To);
 	virtual void ReleaseSpawnActor(AActor* Actor, const FFunKActorScenarioVariationActor& VariationActor);
 	virtual APlayerController* GetController(EFunKActorScenarioVariationOwnership Ownership);
 
@@ -114,9 +140,12 @@ protected:
 private:
 	EFunKActorScenarioMode Mode;
 	
-	UPROPERTY( replicated )
+	UPROPERTY( replicated, Transient )
 	TArray<AActor*> AcquiredActors;
 
+	UPROPERTY(Transient)
+	TArray<AActor*> InitialActorStates;
+	
 public:
 	UFUNCTION(BlueprintCallable)
 	virtual AActor* GetActor(int32 Index = 0);

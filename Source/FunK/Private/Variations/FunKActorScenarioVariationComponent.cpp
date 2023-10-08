@@ -4,9 +4,13 @@
 #include "Variations/FunKActorScenarioVariationComponent.h"
 #include "FunKLogging.h"
 #include "GameFramework/PlayerController.h"
+#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+#include "UObject/UnrealTypePrivate.h"
 #include "Util/FunKUtilBlueprintFunctionLibrary.h"
+#include "Variations/FunKActorScenarioVariationSceneActorResetHandler.h"
 
+class UProperty;
 // Sets default values for this component's properties
 UFunKActorScenarioVariationComponent::UFunKActorScenarioVariationComponent()
 {
@@ -154,7 +158,7 @@ AActor* UFunKActorScenarioVariationComponent::GetActorByOwnership(EFunKActorScen
 
 AActor* UFunKActorScenarioVariationComponent::AcquireActor(const FFunKActorScenarioVariationActor& VariationActor)
 {
-	if(VariationActor.SceneActor)
+	if(VariationActor.SceneActor.Actor)
 	{
 		return GetSceneActor(VariationActor);
 	}
@@ -166,7 +170,18 @@ AActor* UFunKActorScenarioVariationComponent::AcquireActor(const FFunKActorScena
 
 AActor* UFunKActorScenarioVariationComponent::GetSceneActor(const FFunKActorScenarioVariationActor& VariationActor)
 {
-	return VariationActor.SceneActor;
+	//FActorSpawnParameters ActorSpawnParameters = FActorSpawnParameters();
+	//ActorSpawnParameters.Template = VariationActor.SceneActor;
+	//ActorSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+	//ActorSpawnParameters.bDeferConstruction = true;
+
+	//AActor* Actor = GetWorld()->SpawnActor(VariationActor.SceneActor->GetClass(), &VariationActor.SceneActor->GetTransform(), FActorSpawnParameters(ActorSpawnParameters));
+	//Actor->SetActorEnableCollision(false);
+
+	//Actor->FinishSpawning(VariationActor.SceneActor->GetTransform());
+
+	//InitialActorStates.Add(Actor);
+	return VariationActor.SceneActor.Actor;
 }
 
 AActor* UFunKActorScenarioVariationComponent::SpawnActor(const FFunKActorScenarioVariationActor& VariationActor)
@@ -211,7 +226,7 @@ void UFunKActorScenarioVariationComponent::ReleaseActor(AActor* Actor, const FFu
 		}
 	}
 	
-	if(VariationActor.SceneActor)
+	if(VariationActor.SceneActor.Actor)
 	{
 		ReleaseSceneActor(Actor, VariationActor);
 	}
@@ -223,8 +238,38 @@ void UFunKActorScenarioVariationComponent::ReleaseActor(AActor* Actor, const FFu
 
 void UFunKActorScenarioVariationComponent::ReleaseSceneActor(AActor* Actor, const FFunKActorScenarioVariationActor& VariationActor)
 {
-	Actor->Reset();
+	//Actor->GetClass()->Properties
+
+	//UGameplayStatics::OpenLevel()
+	//
+	//AActor* InitialActorState = InitialActorStates[0];
+	//
+	//CopyPropertiesFromTo(InitialActorState, Actor);
+	//Actor->SetActorEnableCollision(true);
+
+	//InitialActorStates.RemoveAt(0);
+	//GetWorld()->DestroyActor(InitialActorState, true, true);
+	
+	// Actor->Reset();
+
+	const UFunKActorScenarioVariationSceneActorResetHandler* Handler = NewObject<UFunKActorScenarioVariationSceneActorResetHandler>();
+	Handler->Reset(Actor);	
 }
+
+//void UFunKActorScenarioVariationComponent::CopyPropertiesFromTo(UObject* From, UObject* To)
+//{
+//	for( TFieldIterator<FProperty> Prop(From->GetClass()); Prop; ++Prop ) {
+//		// Check if the property is not marked as transient
+//		if (!Prop->HasAnyPropertyFlags(CPF_Transient))
+//		{
+//			// Get the property's value from the source actor
+//			void* SourceValue = Prop->ContainerPtrToValuePtr<void>(From);
+//
+//			// Set the property's value on the target actor
+//			Prop->CopyCompleteValue(Prop->ContainerPtrToValuePtr<void>(To), SourceValue);
+//		}
+//	}
+//}
 
 void UFunKActorScenarioVariationComponent::ReleaseSpawnActor(AActor* Actor, const FFunKActorScenarioVariationActor& VariationActor)
 {
