@@ -638,12 +638,26 @@ void AFunKTestBase::Error(const FString& Message, const FString& Context) const
 
 UFunKTestFunctionality* AFunKTestBase::MakeTestFunctionality(TSubclassOf<UFunKTestFunctionality> Class)
 {
-	return AddTestFunctionality(NewObject<UFunKTestFunctionality>(this, Class));
+	UFunKTestFunctionality* Functionality = AddTestFunctionality(NewObject<UFunKTestFunctionality>(this, Class));
+
+	if(Functionality->IsSupportedForNetworking())
+	{
+		UE_LOG(FunKLog, Warning, TEXT("MakeTestFunctionality does not support networked functionalities!"))
+	}
+
+	return Functionality;
 }
 
 UFunKTestFunctionality* AFunKTestBase::MakeStageFunctionality(TSubclassOf<UFunKTestFunctionality> Class)
 {
-	return AddStageFunctionality(NewObject<UFunKTestFunctionality>(this, Class));
+	UFunKTestFunctionality* Functionality = AddStageFunctionality(NewObject<UFunKTestFunctionality>(this, Class));
+
+	if(Functionality->IsSupportedForNetworking())
+	{
+		UE_LOG(FunKLog, Warning, TEXT("MakeStageFunctionality does not support networked functionalities!"))
+	}
+
+	return Functionality;
 }
 
 UFunKTestFunctionality* AFunKTestBase::AddTestFunctionality(UFunKTestFunctionality* Functionality)

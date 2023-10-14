@@ -75,7 +75,7 @@ public:
 	FFunKCustomNetworkEmulation Custom;
 };
 
-UCLASS()
+UCLASS(NotBlueprintType)
 class UFunKNetworkVariationFunctionality : public UFunKTestFunctionality
 {
 	GENERATED_BODY()
@@ -87,7 +87,7 @@ public:
 
 private:
 	UPROPERTY()
-	UFunKNetworkVariationComponent* Spawner;
+	TWeakObjectPtr<UFunKNetworkVariationComponent> Spawner;
 	int32 Index = 0;
 
 	TArray<TKeyValuePair<TWeakObjectPtr<UNetDriver>, FPacketSimulationSettings>> InitialDriverSettings;

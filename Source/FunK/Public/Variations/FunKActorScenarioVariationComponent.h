@@ -104,7 +104,7 @@ public:
 
 // Just a cheap wrapper for the old concept for now...
 
-UCLASS()
+UCLASS(NotBlueprintType)
 class UFunKActorScenarioVariationFunctionality : public UFunKTestFunctionality
 {
 	GENERATED_BODY()
@@ -116,7 +116,7 @@ public:
 
 private:
 	UPROPERTY()
-	UFunKActorScenarioVariationComponent* Spawner;
+	TWeakObjectPtr<UFunKActorScenarioVariationComponent> Spawner;
 	int32 Index = 0;
 
 	friend UFunKActorScenarioVariationComponent;

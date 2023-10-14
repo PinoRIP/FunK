@@ -10,7 +10,6 @@
 
 void UFunKNetworkVariationFunctionality::OnAdded()
 {
-	
 	const EFunKNetLocation NetLocation = UFunKBlueprintFunctionLibrary::GetNetLocation(this);
 	if(NetLocation == EFunKNetLocation::Standalone) return;
 
@@ -73,7 +72,7 @@ void UFunKNetworkVariationFunctionality::OnRemoved()
 
 FString UFunKNetworkVariationFunctionality::GetReadableIdent() const
 {
-	if (Index == INDEX_NONE || !Spawner) return Super::GetName();
+	if (Index == INDEX_NONE || Spawner.IsStale()) return Super::GetName();
 	
 	const FFunKNetworkEmulation& Emulation = Spawner->Emulations[Index];
 	return Emulation.UseCustomSettings
