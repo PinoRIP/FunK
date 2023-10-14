@@ -17,40 +17,17 @@ int32 UFunKTestVariationComponent::GetCount()
 	return 0;
 }
 
-void UFunKTestVariationComponent::Begin(int32 index)
+UFunKTestFunctionality* UFunKTestVariationComponent::GetFunctionality(int32 Index)
 {
-	Index = index;
+	check(false)
+	return nullptr;
 }
 
-bool UFunKTestVariationComponent::IsReady()
+bool UFunKTestVariationComponent::IsReady(UFunKTestFunctionality* Instance, int32 Index)
 {
-	return true;
+	return Instance != nullptr;
 }
 
-void UFunKTestVariationComponent::Finish()
+void UFunKTestVariationComponent::OnUsing(UFunKTestFunctionality* Instance)
 {
-	Index = INDEX_NONE;
 }
-
-FString UFunKTestVariationComponent::GetName()
-{
-	return FString::FromInt(Index);
-}
-
-AFunKTestBase* UFunKTestVariationComponent::GetOwningTest() const
-{
-	return Cast<AFunKTestBase>(GetOwner());
-}
-
-void UFunKTestVariationComponent::Error(const FString& Message) const
-{
-	if(const AFunKTestBase* Test = GetOwningTest())
-	{
-		Test->RaiseEvent(FFunKEvent::Error(Message).Ref());
-	}
-	else
-	{
-		UE_LOG(FunKLog, Error, TEXT("%s"), *Message)
-	}
-}
-

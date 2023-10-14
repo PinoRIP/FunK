@@ -5,13 +5,13 @@
 #include "CoreMinimal.h"
 #include "FunKTestEvents.h"
 #include "FunKTestResult.h"
-#include "EventBus/FunKEventBusRegistrationContainer.h"
 #include "EventBus/FunKEventBusSubsystem.h"
 #include "Internal/Setup/FunKStages.h"
 #include "Events/FunKEvent.h"
 #include "Util/FunKAnonymousBitmask.h"
 #include "FunKTestBase.generated.h"
 
+class UFunKTestFunctionality;
 class UFunKTestRootVariationComponent;
 class UFunKTestVariationComponent;
 struct FFunKStagesSetup;
@@ -114,6 +114,7 @@ public:
 	static void RegisterEvents(UFunKEventBusSubsystem* EventBusSubsystem);
 
 	const FFunKTestVariations& GetTestVariations();
+	const FFunKTestVariations& GetTestVariationsConst() const;
 	int32 GetTestVariationCount();
 
 	UFUNCTION(BlueprintCallable, Category="FunK")
@@ -147,6 +148,8 @@ protected:
 	virtual void OnFinishStage(EFunKStageResult StageResult, FString Message);
 	virtual void OnFinish(const FString& Message);
 
+	virtual void OnNetworkedFunctionalitiesReceived(const FFunKTestNetworkedFunctionalitiesCreatedEvent& Event);
+
 	virtual void SetupStages(FFunKStagesSetup& stages);
 	const FFunKStage* GetStage(int32 StageIndex) const;
 	virtual bool IsExecutingStage(const FFunKStage& stage) const;
@@ -167,6 +170,18 @@ protected:
 	UFUNCTION(BlueprintCallable, Category="FunK")
 	void Error(const FString& Message, const FString& Context = "") const;
 
+	UFUNCTION(BlueprintCallable, Category="FunK")
+	UFunKTestFunctionality* MakeTestFunctionality(TSubclassOf<UFunKTestFunctionality> Class);
+
+	UFUNCTION(BlueprintCallable, Category="FunK")
+	UFunKTestFunctionality* MakeStageFunctionality(TSubclassOf<UFunKTestFunctionality> Class);
+
+	UFUNCTION(BlueprintCallable, Category="FunK")
+	UFunKTestFunctionality* AddTestFunctionality(UFunKTestFunctionality* Functionality);
+
+	UFUNCTION(BlueprintCallable, Category="FunK")
+	UFunKTestFunctionality* AddStageFunctionality(UFunKTestFunctionality* Functionality);
+
 private:
 	int32 TestRunID;
 	int32 Seed;
@@ -176,6 +191,12 @@ private:
 	FFunKAnonymousBitmask PeerBitMask;
 	int32 CurrentVariation = INDEX_NONE;
 	int32 CurrentRootVariation = INDEX_NONE;
+
+	UPROPERTY(Transient)
+	TArray<UFunKTestFunctionality*> TestFunctionalities;
+
+	UPROPERTY(Transient)
+	TArray<UFunKTestFunctionality*> StageFunctionalities;
 	
 	UPROPERTY(Transient)
 	UFunKTestVariationComponent* CurrentVariationComponent = nullptr;
@@ -222,6 +243,18 @@ private:
 
 	void ViewObservationPoint() const;
 
+	void FunctionalitiesOnBeginStage();
+	void FunctionalitiesOnFinishStage();
+	void AddVariationComponentFunctionality(UFunKTestVariationComponent* VariationComponent);
+	int32 GetVariationComponentFunctionalityIndex(const UFunKTestVariationComponent* VariationComponent) const;
+	FString GetVariationComponentFunctionalityName(const UFunKTestVariationComponent* VariationComponent) const;
+	bool IsVariationComponentFunctionalityReady(UFunKTestVariationComponent* VariationComponent, int32 Index) const;
+	void AddTestFunctionality(UFunKTestFunctionality* Functionality, int32 Index);
+	void AddStageFunctionality(UFunKTestFunctionality* Functionality, int32 Index);
+	void AddFunctionality(TArray<UFunKTestFunctionality*>& Functionalities, UFunKTestFunctionality* Functionality, int32 Index = INDEX_NONE);
+	static void ClearFunctionalities(TArray<UFunKTestFunctionality*>& Functionalities);
+
+	FFunKTestVariations BuildTestVariations() const;
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;

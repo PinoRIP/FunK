@@ -4,9 +4,12 @@
 
 #include "CoreMinimal.h"
 #include "Engine/NetDriver.h"
+#include "Functionality/FunKTestFunctionality.h"
 #include "Variations/FunKTestVariationComponent.h"
 #include "FunKNetworkVariationComponent.generated.h"
 
+
+class UFunKNetworkVariationComponent;
 
 UENUM()
 enum class EFunKNetworkEmulationTarget
@@ -72,6 +75,26 @@ public:
 	FFunKCustomNetworkEmulation Custom;
 };
 
+UCLASS()
+class UFunKNetworkVariationFunctionality : public UFunKTestFunctionality
+{
+	GENERATED_BODY()
+
+public:
+	virtual void OnAdded() override;
+	virtual void OnRemoved() override;
+	virtual FString GetReadableIdent() const override;
+
+private:
+	UPROPERTY()
+	UFunKNetworkVariationComponent* Spawner;
+	int32 Index = 0;
+
+	TArray<TKeyValuePair<TWeakObjectPtr<UNetDriver>, FPacketSimulationSettings>> InitialDriverSettings;
+	
+	friend UFunKNetworkVariationComponent;
+};
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class FUNK_API UFunKNetworkVariationComponent : public UFunKTestVariationComponent
 {
@@ -85,10 +108,7 @@ public:
 	TArray<FFunKNetworkEmulation> Emulations;
 
 	virtual int32 GetCount() override;
-	virtual void Begin(int32 index) override;
-	virtual bool IsReady() override;
-	virtual void Finish() override;
-	virtual FString GetName() override;
+	virtual UFunKTestFunctionality* GetFunctionality(int32 Index) override;
 
 	UFUNCTION(CallInEditor, BlueprintCallable, Category = "FunK|Setup")
 	static TArray<FString> GetProfileOptions();
@@ -96,4 +116,5 @@ public:
 private:
 	TArray<TKeyValuePair<TWeakObjectPtr<UNetDriver>, FPacketSimulationSettings>> InitialDriverSettings;
 
+	friend UFunKNetworkVariationFunctionality;
 };

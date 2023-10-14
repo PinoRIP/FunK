@@ -5,9 +5,11 @@
 #include "CoreMinimal.h"
 #include "FunKTestRootVariationComponent.h"
 #include "Components/ActorComponent.h"
+#include "Functionality/FunKTestFunctionality.h"
 #include "Util/FunKUtilTypes.h"
 #include "FunKActorScenarioVariationComponent.generated.h"
 
+class UFunKActorScenarioVariationComponent;
 class UFunKActorScenarioVariationSceneActorResetHandler;
 
 UENUM(BlueprintType)
@@ -100,6 +102,25 @@ public:
 	int32 AICount;
 };
 
+// Just a cheap wrapper for the old concept for now...
+
+UCLASS()
+class UFunKActorScenarioVariationFunctionality : public UFunKTestFunctionality
+{
+	GENERATED_BODY()
+
+public:
+	virtual void OnAdded() override;
+	virtual void OnRemoved() override;
+	virtual FString GetReadableIdent() const override;
+
+private:
+	UPROPERTY()
+	UFunKActorScenarioVariationComponent* Spawner;
+	int32 Index = 0;
+
+	friend UFunKActorScenarioVariationComponent;
+};
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class FUNK_API UFunKActorScenarioVariationComponent : public UFunKTestRootVariationComponent
@@ -116,10 +137,14 @@ private:
 
 public:
 	virtual int32 GetCount() override;
-	virtual void Begin(int32 index) override;
-	virtual bool IsReady() override;
-	virtual void Finish() override;
-	virtual FString GetName() override;
+	virtual UFunKTestFunctionality* GetFunctionality(int32 Index) override;
+	virtual bool IsReady(UFunKTestFunctionality* Instance, int32 Index) override;
+
+private:
+	virtual void Begin(int32 index);
+	virtual bool IsReady();
+	virtual void Finish();
+	virtual FString GetName() const;
 
 	virtual void GetLifetimeReplicatedProps( TArray< FLifetimeProperty > & OutLifetimeProps ) const override;
 
@@ -164,5 +189,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	bool IsAI();
+
+private:
+	friend UFunKActorScenarioVariationFunctionality;
 };
 

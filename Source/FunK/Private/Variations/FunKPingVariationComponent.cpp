@@ -8,28 +8,13 @@
 #include "Util/FunKUtilBlueprintFunctionLibrary.h"
 
 
-// Sets default values for this component's properties
-UFunKNetworkVariationComponent::UFunKNetworkVariationComponent()
+void UFunKNetworkVariationFunctionality::OnAdded()
 {
-}
-
-int32 UFunKNetworkVariationComponent::GetCount()
-{
-#if DO_ENABLE_NET_TEST
-	return Emulations.Num();
-#else
-	return 0;
-#endif
-}
-
-void UFunKNetworkVariationComponent::Begin(int32 index)
-{
-	Super::Begin(index);
-
+	
 	const EFunKNetLocation NetLocation = UFunKBlueprintFunctionLibrary::GetNetLocation(this);
 	if(NetLocation == EFunKNetLocation::Standalone) return;
 
-	const FFunKNetworkEmulation& Emulation = Emulations[GetIndex()];
+	const FFunKNetworkEmulation& Emulation = Spawner->Emulations[Index];
 	if(Emulation.EmulationTarget == EFunKNetworkEmulationTarget::Client && NetLocation == EFunKNetLocation::Server) return;
 	if(Emulation.EmulationTarget == EFunKNetworkEmulationTarget::Server && NetLocation == EFunKNetLocation::Client) return;
 	
@@ -71,15 +56,8 @@ void UFunKNetworkVariationComponent::Begin(int32 index)
 #endif
 }
 
-bool UFunKNetworkVariationComponent::IsReady()
+void UFunKNetworkVariationFunctionality::OnRemoved()
 {
-	return Super::IsReady();
-}
-
-void UFunKNetworkVariationComponent::Finish()
-{
-	Super::Finish();
-
 #if DO_ENABLE_NET_TEST
 	for (TKeyValuePair<TWeakObjectPtr<UNetDriver>, FPacketSimulationSettings>& InitialDriverSetting : InitialDriverSettings)
 	{
@@ -93,15 +71,36 @@ void UFunKNetworkVariationComponent::Finish()
 	InitialDriverSettings.Empty();
 }
 
-FString UFunKNetworkVariationComponent::GetName()
+FString UFunKNetworkVariationFunctionality::GetReadableIdent() const
 {
-	if (GetIndex() == INDEX_NONE) return Super::GetName();
+	if (Index == INDEX_NONE || !Spawner) return Super::GetName();
 	
-	const FFunKNetworkEmulation& Emulation = Emulations[GetIndex()];
+	const FFunKNetworkEmulation& Emulation = Spawner->Emulations[Index];
 	return Emulation.UseCustomSettings
 		? ("Custom " + Emulation.Custom.Name)
 		: ("Profile " + Emulation.Profile);
+}
 
+// Sets default values for this component's properties
+UFunKNetworkVariationComponent::UFunKNetworkVariationComponent()
+{
+}
+
+int32 UFunKNetworkVariationComponent::GetCount()
+{
+#if DO_ENABLE_NET_TEST
+	return Emulations.Num();
+#else
+	return 0;
+#endif
+}
+
+UFunKTestFunctionality* UFunKNetworkVariationComponent::GetFunctionality(int32 Index)
+{
+	UFunKNetworkVariationFunctionality* Functionality = NewObject<UFunKNetworkVariationFunctionality>(this);
+	Functionality->Index = Index;
+	Functionality->Spawner = this;
+	return Functionality;
 }
 
 TArray<FString> UFunKNetworkVariationComponent::GetProfileOptions()

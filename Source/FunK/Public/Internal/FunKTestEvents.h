@@ -7,6 +7,7 @@
 #include "UObject/Object.h"
 #include "FunKTestEvents.generated.h"
 
+class UFunKTestFunctionality;
 class AFunKTestBase;
 
 USTRUCT()
@@ -98,4 +99,23 @@ public:
 
 	UPROPERTY()
 	int32 PeerIndex = 0;
+};
+
+USTRUCT()
+struct FFunKTestNetworkedFunctionalitiesCreatedEvent
+{
+	GENERATED_BODY()
+
+public:
+	UPROPERTY()
+	int32 TestRunID = 0;
+
+	UPROPERTY()
+	int32 Stage = 0;
+
+	UPROPERTY()
+	AFunKTestBase* Test = nullptr;
+
+	UPROPERTY() 
+	TArray<UFunKTestFunctionality*> Functionalities;
 };

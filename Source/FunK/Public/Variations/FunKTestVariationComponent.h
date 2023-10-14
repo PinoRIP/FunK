@@ -7,6 +7,7 @@
 #include "FunKTestVariationComponent.generated.h"
 
 
+class UFunKTestFunctionality;
 class AFunKTestBase;
 
 UCLASS(ClassGroup=(Custom), Abstract)
@@ -19,18 +20,7 @@ public:
 	UFunKTestVariationComponent();
 
 	virtual int32 GetCount();
-	virtual void Begin(int32 index);
-	virtual bool IsReady();
-	virtual void Finish();
-	virtual FString GetName();
-
-	int32 GetIndex() const { return Index; }
-
-	AFunKTestBase* GetOwningTest() const;
-
-protected:
-	void Error(const FString& Message) const;
-	
-private:
-	int32 Index = INDEX_NONE;
+	virtual UFunKTestFunctionality* GetFunctionality(int32 Index);
+	virtual bool IsReady(UFunKTestFunctionality* Instance, int32 Index);
+	virtual void OnUsing(UFunKTestFunctionality* Instance);
 };

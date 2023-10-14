@@ -8,6 +8,7 @@
 #include "Components/BillboardComponent.h"
 #include "Components/TextRenderComponent.h"
 #include "Engine/DebugCameraController.h"
+#include "Functionality/FunKTestFunctionality.h"
 #include "InputSimulation/FunKInputSimulationSystem.h"
 #include "Internal/FunKTestEvents.h"
 #include "Internal/Events/FunKTestLifeTimeContext.h"
@@ -237,6 +238,9 @@ void AFunKTestBase::OnBeginStage(const FFunKTestStageBeginEvent& BeginEvent)
 		return;
 	}
 
+	
+	
+
 	IsCurrentStageTickDelegateSetup = CurrentStage->TickDelegate.IsBound();
 	OnInvokeStage();
 	
@@ -335,17 +339,45 @@ void AFunKTestBase::OnFinish(const FString& Message)
 {
 	OnTestFinish.Broadcast();
 
-	if(Variations.RootVariations)
-	{
-		Variations.RootVariations->Finish();
-	}
-	
-	if(CurrentVariationComponent)
-	{
-		CurrentVariationComponent->Finish();
-	}
+	ClearFunctionalities(TestFunctionalities);
 
 	EndAllInputSimulations();
+}
+
+void AFunKTestBase::OnNetworkedFunctionalitiesReceived(const FFunKTestNetworkedFunctionalitiesCreatedEvent& Event)
+{
+	if (Event.TestRunID != TestRunID || Event.Stage != CurrentStageIndex)
+	{
+		return;
+	}
+
+	if (TestFunctionalities.Num() != Event.Functionalities.Num())
+	{
+		Error("Functionality mismatch!");
+		return;
+	}
+
+	const FFunKTestVariations& TestVariations = GetTestVariations();
+	for (int i = 0; i < Event.Functionalities.Num(); ++i)
+	{
+		if(Event.Functionalities[i])
+		{
+			AddTestFunctionality(Event.Functionalities[i], i);
+
+			if(i == 0)
+			{
+				if (TestVariations.RootVariations)
+					TestVariations.RootVariations->OnUsing(Event.Functionalities[i]);
+				else if(CurrentVariationComponent)
+					CurrentVariationComponent->OnUsing(Event.Functionalities[i]);
+			}
+			else if (i == 1)
+			{
+				if(TestVariations.RootVariations && CurrentVariationComponent)
+					CurrentVariationComponent->OnUsing(Event.Functionalities[i]);
+			}
+		}
+	}
 }
 
 void AFunKTestBase::FinishStage()
@@ -374,6 +406,9 @@ void AFunKTestBase::FinishStage(EFunKStageResult StageResult, const FString& Mes
 
 void AFunKTestBase::OnFinishStage(EFunKStageResult StageResult, FString Message)
 {
+	FunctionalitiesOnFinishStage();
+	ClearFunctionalities(StageFunctionalities);
+	
 	FFunKTestStageFinishEvent Event;
 	Event.Stage = GetCurrentStageIndex();
 	Event.Result = StageResult;
@@ -601,6 +636,28 @@ void AFunKTestBase::Error(const FString& Message, const FString& Context) const
 	DispatchRaisedEvent(FillEnvironmentContext(FFunKEvent::Error(Message, Context).Ref()));
 }
 
+UFunKTestFunctionality* AFunKTestBase::MakeTestFunctionality(TSubclassOf<UFunKTestFunctionality> Class)
+{
+	return AddTestFunctionality(NewObject<UFunKTestFunctionality>(this, Class));
+}
+
+UFunKTestFunctionality* AFunKTestBase::MakeStageFunctionality(TSubclassOf<UFunKTestFunctionality> Class)
+{
+	return AddStageFunctionality(NewObject<UFunKTestFunctionality>(this, Class));
+}
+
+UFunKTestFunctionality* AFunKTestBase::AddTestFunctionality(UFunKTestFunctionality* Functionality)
+{
+	AddTestFunctionality(Functionality, INDEX_NONE);
+	return Functionality;
+}
+
+UFunKTestFunctionality* AFunKTestBase::AddStageFunctionality(UFunKTestFunctionality* Functionality)
+{
+	AddStageFunctionality(Functionality, INDEX_NONE);
+	return Functionality;
+}
+
 void AFunKTestBase::SetupStages()
 {
 	if (Stages.Stages.Num() > 0)
@@ -651,6 +708,13 @@ void AFunKTestBase::RegisterEvents(UFunKEventBusSubsystem* EventBusSubsystem)
 			Event.Test->Finish(Event.Result, Event.Message);
 		});
 	}
+	else
+	{
+		EventBusSubsystem->On<FFunKTestNetworkedFunctionalitiesCreatedEvent>([](const FFunKTestNetworkedFunctionalitiesCreatedEvent& Event)
+		{
+			Event.Test->OnNetworkedFunctionalitiesReceived(Event);
+		});
+	}
 	
 	EventBusSubsystem->On<FFunKTestBeginEvent>([](const FFunKTestBeginEvent& Event)
 	{
@@ -676,37 +740,14 @@ void AFunKTestBase::RegisterEvents(UFunKEventBusSubsystem* EventBusSubsystem)
 const FFunKTestVariations& AFunKTestBase::GetTestVariations()
 {
 	if(Variations.IsGathered) return Variations;
-
-	Variations.IsGathered = true;
-	auto WorldVariations = GetWorldSubsystem()->GetWorldVariations();
-	
-	Variations.Variations = WorldVariations.Variations;
-	
-	TArray<UFunKTestVariationComponent*> Array;
-	GetComponents<UFunKTestVariationComponent>(Array);
-		
-	Array.Sort([](const UFunKTestVariationComponent& ip1, const UFunKTestVariationComponent& ip2) {
-		return  ip1.GetFName().FastLess(ip2.GetFName());
-	});
-
-	for (UFunKTestVariationComponent* FunKTestVariationComponent : Array)
-	{
-		if(FunKTestVariationComponent->IsA(UFunKTestRootVariationComponent::StaticClass()))
-		{
-			if(Variations.RootVariations)
-			{
-				UE_LOG(FunKLog, Error, TEXT("Only one root variation component is allowed per test! %s"), *GetName())
-				continue;
-			}
-			
-			Variations.RootVariations = Cast<UFunKTestRootVariationComponent>(FunKTestVariationComponent);
-			continue;
-		}
-				
-		Variations.Variations.Add(FunKTestVariationComponent);
-	}
-
+	Variations = BuildTestVariations();
 	return Variations;
+}
+
+const FFunKTestVariations& AFunKTestBase::GetTestVariationsConst() const
+{
+	//TODO: just don't do this :)
+	return const_cast<AFunKTestBase*>(this)->GetTestVariations();
 }
 
 int32 AFunKTestBase::GetTestVariationCount()
@@ -746,28 +787,14 @@ void AFunKTestBase::ArrangeVariation()
 	IsVariationBegun = true;
 	
 	const FFunKTestVariations& TestVariations = GetTestVariations();
-	if(TestVariations.RootVariations)
-	{
-		TestVariations.RootVariations->Begin(CurrentRootVariation);
-	}
-
-	if(CurrentVariationComponent)
-	{
-		CurrentVariationComponent->Begin(CurrentVariation);
-	}
+	AddVariationComponentFunctionality(TestVariations.RootVariations);
+	AddVariationComponentFunctionality(CurrentVariationComponent);
 }
 
 void AFunKTestBase::ArrangeVariationTick(float DeltaTime)
 {
 	const FFunKTestVariations& TestVariations = GetTestVariations();
-	bool isReady = TestVariations.RootVariations ? TestVariations.RootVariations->IsReady() : true;
-
-	if(CurrentVariationComponent)
-	{
-		isReady = CurrentVariationComponent->IsReady() && isReady;
-	}
-
-	if(isReady)
+	if(IsVariationComponentFunctionalityReady(TestVariations.RootVariations, CurrentRootVariation) && IsVariationComponentFunctionalityReady(CurrentVariationComponent, CurrentVariation))
 	{
 		if(GetNetMode() != NM_DedicatedServer)
 			ViewObservationPoint();
@@ -796,6 +823,140 @@ void AFunKTestBase::ViewObservationPoint() const
 	}
 }
 
+void AFunKTestBase::FunctionalitiesOnBeginStage()
+{
+	for (UFunKTestFunctionality* Functionality : TestFunctionalities)
+	{
+		Functionality->OnBeginStage();
+	}
+}
+
+void AFunKTestBase::FunctionalitiesOnFinishStage()
+{
+	for (UFunKTestFunctionality* Functionality : TestFunctionalities)
+	{
+		Functionality->OnFinishStage();
+	}
+	
+	for (UFunKTestFunctionality* Functionality : StageFunctionalities)
+	{
+		Functionality->OnFinishStage();
+	}
+}
+
+void AFunKTestBase::AddVariationComponentFunctionality(UFunKTestVariationComponent* VariationComponent)
+{
+	if(VariationComponent == nullptr) return;
+	
+	UFunKTestFunctionality* Functionality = VariationComponent->GetFunctionality(CurrentRootVariation);
+	if(Functionality->IsSupportedForNetworking() && GetNetMode() == NM_Client)
+	{
+		TestFunctionalities.Add(nullptr);
+	}
+	else
+	{
+		AddTestFunctionality(Functionality);
+		VariationComponent->OnUsing(Functionality);
+	}
+}
+
+int32 AFunKTestBase::GetVariationComponentFunctionalityIndex(const UFunKTestVariationComponent* VariationComponent) const
+{
+	const FFunKTestVariations& TestVariations = GetTestVariationsConst();
+	return  TestVariations.RootVariations == nullptr || TestVariations.RootVariations == VariationComponent ? 0 : 1;	
+}
+
+FString AFunKTestBase::GetVariationComponentFunctionalityName(const UFunKTestVariationComponent* VariationComponent) const
+{
+	if(TestFunctionalities.Num() <= 0) return "";
+	
+	const int32 Index = GetVariationComponentFunctionalityIndex(VariationComponent);
+
+	if (TestFunctionalities.Num() <= Index) return "";
+	const UFunKTestFunctionality* Functionality = TestFunctionalities[Index];
+	if (!Functionality) return "";
+
+	return " - " + Functionality->GetReadableIdent();
+}
+
+bool AFunKTestBase::IsVariationComponentFunctionalityReady(UFunKTestVariationComponent* VariationComponent, int32 Index) const
+{
+	if (!VariationComponent) return true;
+	
+	const int32 FunctionalityIndex = GetVariationComponentFunctionalityIndex(VariationComponent);
+	UFunKTestFunctionality* Functionality = TestFunctionalities[FunctionalityIndex];
+	
+	return VariationComponent->IsReady(Functionality, Index);
+}
+
+void AFunKTestBase::AddTestFunctionality(UFunKTestFunctionality* Functionality, int32 Index)
+{
+	AddFunctionality(TestFunctionalities, Functionality, Index);
+}
+
+void AFunKTestBase::AddStageFunctionality(UFunKTestFunctionality* Functionality, int32 Index)
+{
+	AddFunctionality(StageFunctionalities, Functionality, Index);
+	Functionality->OnBeginStage();
+}
+
+void AFunKTestBase::AddFunctionality(TArray<UFunKTestFunctionality*>& Functionalities, UFunKTestFunctionality* Functionality, int32 Index)
+{
+	if(Index == INDEX_NONE)
+		Functionalities.Add(Functionality);
+	else
+		Functionalities[Index] = Functionality;
+
+	Functionality->Test = this;
+	Functionality->OnAdded();
+}
+
+void AFunKTestBase::ClearFunctionalities(TArray<UFunKTestFunctionality*>& Functionalities)
+{
+	for (UFunKTestFunctionality* Functionality : Functionalities)
+	{
+		Functionality->OnRemoved();
+		Functionality->Test = nullptr;
+	}
+	
+	Functionalities.Empty();
+}
+
+FFunKTestVariations AFunKTestBase::BuildTestVariations() const
+{
+	FFunKTestVariations NewVariations = FFunKTestVariations();
+	NewVariations.IsGathered = true;
+	const FFunKWorldVariations WorldVariations = GetWorldSubsystem()->GetWorldVariations();
+	
+	NewVariations.Variations = WorldVariations.Variations;
+	
+	TArray<UFunKTestVariationComponent*> Array;
+	GetComponents<UFunKTestVariationComponent>(Array);
+		
+	Array.Sort([](const UFunKTestVariationComponent& ip1, const UFunKTestVariationComponent& ip2) {
+		return  ip1.GetFName().FastLess(ip2.GetFName());
+	});
+
+	for (UFunKTestVariationComponent* FunKTestVariationComponent : Array)
+	{
+		if(FunKTestVariationComponent->IsA(UFunKTestRootVariationComponent::StaticClass()))
+		{
+			if(NewVariations.RootVariations)
+			{
+				UE_LOG(FunKLog, Error, TEXT("Only one root variation component is allowed per test! %s"), *GetName())
+				continue;
+			}
+			
+			NewVariations.RootVariations = Cast<UFunKTestRootVariationComponent>(FunKTestVariationComponent);
+			continue;
+		}
+				
+		NewVariations.Variations.Add(FunKTestVariationComponent);
+	}
+
+	return NewVariations;
+}
+
 void AFunKTestBase::GatherContext(FFunKEvent& Event) const
 {
 	if (TestRunID != 0)
@@ -812,12 +973,12 @@ void AFunKTestBase::GatherContext(FFunKEvent& Event) const
 	{
 		if(Variations.RootVariations && CurrentRootVariation != INDEX_NONE)
 		{
-			Event.AddToContext(Variations.RootVariations->GetName());
+			Event.AddToContext(Variations.RootVariations->GetName() + GetVariationComponentFunctionalityName(Variations.RootVariations));
 		}
 
 		if(CurrentVariationComponent && CurrentVariation != INDEX_NONE)
 		{
-			Event.AddToContext(CurrentVariationComponent->GetName());
+			Event.AddToContext(CurrentVariationComponent->GetName() + GetVariationComponentFunctionalityName(CurrentVariationComponent));
 		}
 	}
 

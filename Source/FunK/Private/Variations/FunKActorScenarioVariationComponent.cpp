@@ -11,6 +11,22 @@
 #include "Variations/FunKActorScenarioVariationSceneActorResetHandler.h"
 
 class UProperty;
+
+void UFunKActorScenarioVariationFunctionality::OnAdded()
+{
+	Spawner->Begin(Index);
+}
+
+void UFunKActorScenarioVariationFunctionality::OnRemoved()
+{
+	Spawner->Finish();
+}
+
+FString UFunKActorScenarioVariationFunctionality::GetReadableIdent() const
+{
+	return Spawner->GetName();
+}
+
 // Sets default values for this component's properties
 UFunKActorScenarioVariationComponent::UFunKActorScenarioVariationComponent()
 {
@@ -41,10 +57,21 @@ int32 UFunKActorScenarioVariationComponent::GetCount()
 	return Count;
 }
 
+UFunKTestFunctionality* UFunKActorScenarioVariationComponent::GetFunctionality(int32 Index)
+{
+	UFunKActorScenarioVariationFunctionality* Functionality = NewObject<UFunKActorScenarioVariationFunctionality>(this);
+	Functionality->Spawner = this;
+	Functionality->Index = Index;
+	return Functionality;
+}
+
+bool UFunKActorScenarioVariationComponent::IsReady(UFunKTestFunctionality* Instance, int32 Index)
+{
+	return Instance != nullptr && Cast<UFunKActorScenarioVariationFunctionality>(Instance) && IsReady();
+}
+
 void UFunKActorScenarioVariationComponent::Begin(int32 index)
 {
-	Super::Begin(index);
-	
 	const EFunKTestEnvironmentType Environment = GetEnvironment();
 	if(Environment == EFunKTestEnvironmentType::Standalone || Environment == EFunKTestEnvironmentType::DedicatedServer)
 	{
@@ -117,7 +144,7 @@ void UFunKActorScenarioVariationComponent::Finish()
 	AcquiredActors.Empty(AcquiredActors.Num());
 }
 
-FString UFunKActorScenarioVariationComponent::GetName()
+FString UFunKActorScenarioVariationComponent::GetName() const
 {
 	auto NetMode = GetNetMode();
 	if(NetMode == NM_Standalone)
