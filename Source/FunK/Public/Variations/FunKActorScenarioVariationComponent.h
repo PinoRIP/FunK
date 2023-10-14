@@ -148,10 +148,10 @@ private:
 	
 public:
 	UFUNCTION(BlueprintCallable)
-	virtual AActor* GetActor(int32 Index = 0);
+	virtual AActor* GetActor(int32 InIndex = 0);
 
 	UFUNCTION(BlueprintCallable)
-	virtual AActor* GetActorByOwnership(EFunKActorScenarioVariationOwnership Ownership, int32 Index = 0);
+	virtual AActor* GetActorByOwnership(EFunKActorScenarioVariationOwnership Ownership, int32 InIndex = 0);
 
 	UFUNCTION(BlueprintCallable)
 	EFunKActorScenarioVariationOwnership GetLocalOwnerships();

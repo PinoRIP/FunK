@@ -125,6 +125,8 @@ public:
 	UFunKTestRootVariationComponent* GetRootVariationComponent() const;
 	UFUNCTION(BlueprintCallable, Category="FunK")
 	UFunKTestVariationComponent* GeVariationComponent() const;
+
+	virtual void RaiseEvent(FFunKEvent& Event) const;
 	
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup|Timeout", AdvancedDisplay)
@@ -152,7 +154,6 @@ protected:
 	bool IsValidStageIndex(int32 StageIndex) const;
 
 	virtual void GatherContext(FFunKEvent& Event) const;
-	virtual void RaiseEvent(FFunKEvent& Event) const;
 
 	bool IsServer() const;
 	bool IsDriver() const;

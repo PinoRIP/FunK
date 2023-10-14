@@ -7,6 +7,8 @@
 #include "FunKTestVariationComponent.generated.h"
 
 
+class AFunKTestBase;
+
 UCLASS(ClassGroup=(Custom), Abstract)
 class FUNK_API UFunKTestVariationComponent : public UActorComponent
 {
@@ -21,4 +23,14 @@ public:
 	virtual bool IsReady();
 	virtual void Finish();
 	virtual FString GetName();
+
+	int32 GetIndex() const { return Index; }
+
+	AFunKTestBase* GetOwningTest() const;
+
+protected:
+	void Error(const FString& Message) const;
+	
+private:
+	int32 Index = INDEX_NONE;
 };

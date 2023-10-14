@@ -78,4 +78,9 @@ protected:
 	void BpAssert();
 	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="ActTick")
 	void BpAssertTick(float DeltaTime);
+
+	virtual void OnFinish(const FString& Message) override;
+
+	UFUNCTION(BlueprintNativeEvent, Category="FunK", DisplayName="Cleanup")
+	void BpCleanup();
 };

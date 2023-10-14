@@ -43,6 +43,8 @@ int32 UFunKActorScenarioVariationComponent::GetCount()
 
 void UFunKActorScenarioVariationComponent::Begin(int32 index)
 {
+	Super::Begin(index);
+	
 	const EFunKTestEnvironmentType Environment = GetEnvironment();
 	if(Environment == EFunKTestEnvironmentType::Standalone || Environment == EFunKTestEnvironmentType::DedicatedServer)
 	{
@@ -133,22 +135,22 @@ void UFunKActorScenarioVariationComponent::GetLifetimeReplicatedProps(TArray<FLi
 	DOREPLIFETIME( UFunKActorScenarioVariationComponent, AcquiredActors );
 }
 
-AActor* UFunKActorScenarioVariationComponent::GetActor(int32 Index)
+AActor* UFunKActorScenarioVariationComponent::GetActor(int32 InIndex)
 {
-	if(Index < 0 || Index >= AcquiredActors.Num()) return nullptr;
-	return AcquiredActors[Index];
+	if(InIndex < 0 || InIndex >= AcquiredActors.Num()) return nullptr;
+	return AcquiredActors[InIndex];
 }
 
-AActor* UFunKActorScenarioVariationComponent::GetActorByOwnership(EFunKActorScenarioVariationOwnership Ownership, int32 Index)
+AActor* UFunKActorScenarioVariationComponent::GetActorByOwnership(EFunKActorScenarioVariationOwnership Ownership, int32 InIndex)
 {
-	if(Index < 0 || Index >= AcquiredActors.Num()) return nullptr;
+	if(InIndex < 0 || InIndex >= AcquiredActors.Num()) return nullptr;
 	int32 OwnershipIndex = 0;
 
 	for (int i = 0; i < Actors.Num(); ++i)
 	{
 		if(Actors[i].Ownership == Ownership)
 		{
-			if(OwnershipIndex == Index) return AcquiredActors[i];
+			if(OwnershipIndex == InIndex) return AcquiredActors[i];
 			OwnershipIndex++;
 		}
 	}

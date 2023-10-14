@@ -136,3 +136,13 @@ void AFunKFunctionalTest::BpAssert_Implementation()
 void AFunKFunctionalTest::BpAssertTick_Implementation(float DeltaTime)
 {
 }
+
+void AFunKFunctionalTest::OnFinish(const FString& Message)
+{
+	BpCleanup();
+	Super::OnFinish(Message);
+}
+
+void AFunKFunctionalTest::BpCleanup_Implementation()
+{
+}
