@@ -5,7 +5,7 @@
 
 #include "FunKLogging.h"
 #include "Engine/TriggerBase.h"
-#include "Internal/FunKTestBase.h"
+#include "FunKTestBase.h"
 
 UFunKBlueprintAsyncWaitForTrigger* UFunKBlueprintAsyncWaitForTrigger::WaitFor(AFunKTestBase* Test, ATriggerBase* Trigger)
 {

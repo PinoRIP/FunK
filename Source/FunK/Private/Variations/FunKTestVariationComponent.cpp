@@ -3,9 +3,6 @@
 
 #include "Variations/FunKTestVariationComponent.h"
 
-#include "FunKLogging.h"
-#include "Internal/FunKTestBase.h"
-
 
 // Sets default values for this component's properties
 UFunKTestVariationComponent::UFunKTestVariationComponent()

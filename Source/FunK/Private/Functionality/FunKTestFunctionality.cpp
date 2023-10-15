@@ -4,8 +4,8 @@
 #include "Functionality/FunKTestFunctionality.h"
 
 #include "FunKLogging.h"
-#include "Internal/FunKTestBase.h"
-#include "Internal/Events/FunKEvent.h"
+#include "FunKTestBase.h"
+#include "Events/FunKEvent.h"
 
 AFunKTestBase* UFunKTestFunctionality::GetTest()
 {

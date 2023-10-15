@@ -4,7 +4,7 @@
 #include "FunKWorldTestController.h"
 #include "EngineUtils.h"
 #include "FunKFunctionalTest.h"
-#include "Internal/FunKSettingsObject.h"
+#include "FunKSettingsObject.h"
 
 //TODO: I kinda hate this
 

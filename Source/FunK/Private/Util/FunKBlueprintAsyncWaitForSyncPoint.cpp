@@ -4,8 +4,8 @@
 #include "Util/FunKBlueprintAsyncWaitForSyncPoint.h"
 #include "FunKLogging.h"
 #include "FunKWorldSubsystem.h"
-#include "Internal/FunKTestBase.h"
-#include "Internal/Events/FunKTestWaitForSyncPointReachedEvent.h"
+#include "FunKTestBase.h"
+#include "Events/FunKTestWaitForSyncPointReachedEvent.h"
 
 UFunKBlueprintAsyncWaitForSyncPoint* UFunKBlueprintAsyncWaitForSyncPoint::WaitFor(AFunKTestBase* Test, EFunKSyncTarget WaitFor)
 {

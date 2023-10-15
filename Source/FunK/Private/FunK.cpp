@@ -6,7 +6,7 @@
 #include "ISettingsModule.h"
 #include "ISettingsSection.h"
 #include "AssetRegistry/AssetRegistryModule.h"
-#include "Internal/FunKSettingsObject.h"
+#include "FunKSettingsObject.h"
 
 #define LOCTEXT_NAMESPACE "FFunKModule"
 

@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Internal/FunKTestBase.h"
-#include "Internal/Setup/FunKTimeLimit.h"
+#include "FunKTestBase.h"
+#include "Setup/FunKTimeLimit.h"
 #include "FunkFunctionalTest.generated.h"
 
 class AFunKWorldTestController;

@@ -2,8 +2,8 @@
 
 
 #include "Util/FunKAssertionBlueprintFunctionLibrary.h"
-#include "Internal/FunKTestBase.h"
-#include "Internal/Events/FunKEvent.h"
+#include "FunKTestBase.h"
+#include "Events/FunKEvent.h"
 #include "Misc/AutomationTest.h"
 
 bool UFunKAssertionBlueprintFunctionLibrary::AssertTrue(bool Condition, const FString& Message, UObject* Context)

@@ -3,8 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Internal/Util/FunKAnonymousBitmask.h"
-#include "Internal/EventBus/FunKEventBusSubsystem.h"
+#include "Util/FunKAnonymousBitmask.h"
+#include "EventBus/FunKEventBusSubsystem.h"
 #include "Kismet/BlueprintAsyncActionBase.h"
 #include "FunKBlueprintAsyncWaitForSyncPoint.generated.h"
 
