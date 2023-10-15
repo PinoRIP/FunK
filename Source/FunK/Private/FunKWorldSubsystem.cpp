@@ -10,6 +10,7 @@
 #include "Internal/FunKTestBase.h"
 #include "Internal/EventBus/FunKEventBusReplicationController.h"
 #include "Internal/EventBus/FunKEventBusSubsystem.h"
+#include "Kismet/GameplayStatics.h"
 #include "Variations/FunKSharedTestVariations.h"
 #include "Variations/FunKTestRootVariationComponent.h"
 #include "Variations/FunKTestVariationComponent.h"
@@ -18,7 +19,19 @@ AFunKWorldTestController* UFunKWorldSubsystem::GetLocalTestController()
 {
 	if(!LocalTestController)
 	{
-		LocalTestController = NewTestController();
+		for (TActorIterator<AFunKWorldTestController> It(GetWorld(), AFunKWorldTestController::StaticClass()); It; ++It)
+		{
+			if (LocalTestController)
+			{
+				UE_LOG(FunKLog, Error, TEXT("Only one AFunKWorldTestController per world allowed!"))
+				break;
+			}
+
+			LocalTestController = *It;
+		}
+
+		if(!LocalTestController)
+			LocalTestController = NewTestController();
 	}
 	
 	return LocalTestController;
