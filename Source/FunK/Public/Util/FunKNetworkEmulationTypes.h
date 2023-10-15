@@ -3,13 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Engine/NetDriver.h"
-#include "Functionality/FunKTestFunctionality.h"
-#include "Variations/FunKTestVariationComponent.h"
-#include "FunKNetworkVariationComponent.generated.h"
+#include "UObject/Object.h"
+#include "FunKNetworkEmulationTypes.generated.h"
 
-
-class UFunKNetworkVariationComponent;
 
 UENUM()
 enum class EFunKNetworkEmulationTarget
@@ -68,53 +64,23 @@ public:
 	UPROPERTY(EditAnywhere)
 	bool UseCustomSettings = false;
 	
-	UPROPERTY(EditAnywhere, meta = (GetOptions = "FunK.FunKPingVariationComponent.GetProfileOptions", EditCondition="!UseCustomSettings"))
+	UPROPERTY(EditAnywhere, meta = (GetOptions = "FunK.FunKNetworkEmulationTypesHelper.GetProfileOptions", EditCondition="!UseCustomSettings"))
 	FString Profile;
 	
 	UPROPERTY(EditAnywhere, meta=(EditCondition = "UseCustomSettings"))
 	FFunKCustomNetworkEmulation Custom;
 };
 
-UCLASS(NotBlueprintType)
-class UFunKNetworkVariationFunctionality : public UFunKTestFunctionality
+
+/**
+ * 
+ */
+UCLASS()
+class FUNK_API UFunKNetworkEmulationTypesHelper : public UObject
 {
 	GENERATED_BODY()
 
 public:
-	virtual void OnAdded() override;
-	virtual void OnRemoved() override;
-	virtual FString GetReadableIdent() const override;
-
-private:
-	UPROPERTY()
-	TWeakObjectPtr<UFunKNetworkVariationComponent> Spawner;
-	int32 Index = 0;
-
-	TArray<TKeyValuePair<TWeakObjectPtr<UNetDriver>, FPacketSimulationSettings>> InitialDriverSettings;
-	
-	friend UFunKNetworkVariationComponent;
-};
-
-UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class FUNK_API UFunKNetworkVariationComponent : public UFunKTestVariationComponent
-{
-	GENERATED_BODY()
-
-public:
-	// Sets default values for this component's properties
-	UFunKNetworkVariationComponent();
-
-	UPROPERTY(EditAnywhere, Category="FunK|Setup")
-	TArray<FFunKNetworkEmulation> Emulations;
-
-	virtual int32 GetCount() override;
-	virtual UFunKTestFunctionality* GetFunctionality(int32 Index) override;
-
 	UFUNCTION(CallInEditor, BlueprintCallable, Category = "FunK|Setup")
 	static TArray<FString> GetProfileOptions();
-
-private:
-	TArray<TKeyValuePair<TWeakObjectPtr<UNetDriver>, FPacketSimulationSettings>> InitialDriverSettings;
-
-	friend UFunKNetworkVariationFunctionality;
 };

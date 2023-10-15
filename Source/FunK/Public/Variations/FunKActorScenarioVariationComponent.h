@@ -104,7 +104,7 @@ public:
 
 // Just a cheap wrapper for the old concept for now...
 
-UCLASS(NotBlueprintType)
+UCLASS(NotBlueprintType, HideDropdown)
 class UFunKActorScenarioVariationFunctionality : public UFunKTestFunctionality
 {
 	GENERATED_BODY()

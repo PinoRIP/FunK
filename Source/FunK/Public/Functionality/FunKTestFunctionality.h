@@ -10,7 +10,7 @@ class AFunKTestBase;
 /**
  * 
  */
-UCLASS(Abstract)
+UCLASS(Abstract, HideDropdown)
 class FUNK_API UFunKTestFunctionality : public UObject
 {
 	GENERATED_BODY()
