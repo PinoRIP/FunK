@@ -5,7 +5,7 @@
 #include "CoreMinimal.h"
 #include "FunKTestRootVariationComponent.h"
 #include "Components/ActorComponent.h"
-#include "Functionality/FunKTestFunctionality.h"
+#include "FunKTestFragment.h"
 #include "Util/FunKUtilTypes.h"
 #include "FunKActorScenarioVariationComponent.generated.h"
 
@@ -105,7 +105,7 @@ public:
 // Just a cheap wrapper for the old concept for now...
 
 UCLASS(NotBlueprintType, HideDropdown)
-class UFunKActorScenarioVariationFunctionality : public UFunKTestFunctionality
+class UFunKActorScenarioVariationFragment : public UFunKTestFragment
 {
 	GENERATED_BODY()
 
@@ -137,8 +137,8 @@ private:
 
 public:
 	virtual int32 GetCount() override;
-	virtual UFunKTestFunctionality* GetFunctionality(int32 Index) override;
-	virtual bool IsReady(UFunKTestFunctionality* Instance, int32 Index) override;
+	virtual UFunKTestFragment* GetFragment(int32 Index) override;
+	virtual bool IsReady(UFunKTestFragment* Instance, int32 Index) override;
 
 private:
 	virtual void Begin(int32 index);
@@ -191,6 +191,6 @@ public:
 	bool IsAI();
 
 private:
-	friend UFunKActorScenarioVariationFunctionality;
+	friend UFunKActorScenarioVariationFragment;
 };
 

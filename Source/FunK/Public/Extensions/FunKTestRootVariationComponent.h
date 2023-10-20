@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Variations/FunKTestVariationComponent.h"
+#include "Extensions/FunKTestVariationComponent.h"
 #include "FunKTestRootVariationComponent.generated.h"
 
 

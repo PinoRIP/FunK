@@ -1,25 +1,26 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Variations/FunKSharedTestVariations.h"
+#include "Extensions/FunKTestVariationsWorldActor.h"
 
 
 // Sets default values
-AFunKSharedTestVariations::AFunKSharedTestVariations()
+AFunKTestVariationsWorldActor::AFunKTestVariationsWorldActor()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	bReplicates = true;
 }
 
 // Called when the game starts or when spawned
-void AFunKSharedTestVariations::BeginPlay()
+void AFunKTestVariationsWorldActor::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
 // Called every frame
-void AFunKSharedTestVariations::Tick(float DeltaTime)
+void AFunKTestVariationsWorldActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 }

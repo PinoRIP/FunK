@@ -8,15 +8,15 @@
 #include "Components/BillboardComponent.h"
 #include "Components/TextRenderComponent.h"
 #include "Engine/DebugCameraController.h"
-#include "Functionality/FunKTestFunctionality.h"
+#include "Extensions/FunKTestFragment.h"
 #include "InputSimulation/FunKInputSimulationSystem.h"
 #include "Events/FunKTestEvents.h"
 #include "Events/FunKTestLifeTimeContext.h"
 #include "Setup/FunKStagesSetup.h"
 #include "Net/UnrealNetwork.h"
 #include "UObject/ConstructorHelpers.h"
-#include "Variations/FunKTestRootVariationComponent.h"
-#include "Variations/FunKTestVariationComponent.h"
+#include "Extensions/FunKTestRootVariationComponent.h"
+#include "Extensions/FunKTestVariationComponent.h"
 
 int32 FFunKTestVariations::GetCount() const
 {
@@ -238,9 +238,7 @@ void AFunKTestBase::OnBeginStage(const FFunKTestStageBeginEvent& BeginEvent)
 		return;
 	}
 
-	
-	
-
+	OnBeginStageFragments();
 	IsCurrentStageTickDelegateSetup = CurrentStage->TickDelegate.IsBound();
 	OnInvokeStage();
 	
@@ -339,7 +337,7 @@ void AFunKTestBase::OnFinish(const FString& Message)
 {
 	OnTestFinish.Broadcast();
 
-	ClearFunctionalities(TestFunctionalities);
+	ClearFragments(TestFragments);
 
 	EndAllInputSimulations();
 }
@@ -351,9 +349,9 @@ void AFunKTestBase::OnNetworkedFunctionalitiesReceived(const FFunKTestNetworkedF
 		return;
 	}
 
-	if (TestFunctionalities.Num() != Event.Functionalities.Num())
+	if (TestFragments.Num() != Event.Functionalities.Num())
 	{
-		Error("Functionality mismatch!");
+		Error("Fragment mismatch!");
 		return;
 	}
 
@@ -362,7 +360,7 @@ void AFunKTestBase::OnNetworkedFunctionalitiesReceived(const FFunKTestNetworkedF
 	{
 		if(Event.Functionalities[i])
 		{
-			AddTestFunctionality(Event.Functionalities[i], i);
+			AddTestFragment(Event.Functionalities[i], i);
 
 			if(i == 0)
 			{
@@ -406,8 +404,8 @@ void AFunKTestBase::FinishStage(EFunKStageResult StageResult, const FString& Mes
 
 void AFunKTestBase::OnFinishStage(EFunKStageResult StageResult, FString Message)
 {
-	FunctionalitiesOnFinishStage();
-	ClearFunctionalities(StageFunctionalities);
+	OnFinishStageFragments();
+	ClearFragments(StageFragments);
 	
 	FFunKTestStageFinishEvent Event;
 	Event.Stage = GetCurrentStageIndex();
@@ -636,40 +634,26 @@ void AFunKTestBase::Error(const FString& Message, const FString& Context) const
 	DispatchRaisedEvent(FillEnvironmentContext(FFunKEvent::Error(Message, Context).Ref()));
 }
 
-UFunKTestFunctionality* AFunKTestBase::MakeTestFunctionality(TSubclassOf<UFunKTestFunctionality> Class)
+UFunKTestFragment* AFunKTestBase::AddTestFragment(UFunKTestFragment* Fragment)
 {
-	UFunKTestFunctionality* Functionality = AddTestFunctionality(NewObject<UFunKTestFunctionality>(this, Class));
-
-	if(Functionality->IsSupportedForNetworking())
+	if(Fragment->IsSupportedForNetworking())
 	{
-		UE_LOG(FunKLog, Warning, TEXT("MakeTestFunctionality does not support networked functionalities!"))
+		UE_LOG(FunKLog, Warning, TEXT("Directly added test fragments don't support networked functionalities! (yet?)"))
 	}
-
-	return Functionality;
+	
+	AddTestFragment(Fragment, INDEX_NONE);
+	return Fragment;
 }
 
-UFunKTestFunctionality* AFunKTestBase::MakeStageFunctionality(TSubclassOf<UFunKTestFunctionality> Class)
+UFunKTestFragment* AFunKTestBase::AddStageFragment(UFunKTestFragment* Fragment)
 {
-	UFunKTestFunctionality* Functionality = AddStageFunctionality(NewObject<UFunKTestFunctionality>(this, Class));
-
-	if(Functionality->IsSupportedForNetworking())
+	if(Fragment->IsSupportedForNetworking())
 	{
-		UE_LOG(FunKLog, Warning, TEXT("MakeStageFunctionality does not support networked functionalities!"))
+		UE_LOG(FunKLog, Warning, TEXT("Directly added test fragments don't support networked functionalities! (yet?)"))
 	}
-
-	return Functionality;
-}
-
-UFunKTestFunctionality* AFunKTestBase::AddTestFunctionality(UFunKTestFunctionality* Functionality)
-{
-	AddTestFunctionality(Functionality, INDEX_NONE);
-	return Functionality;
-}
-
-UFunKTestFunctionality* AFunKTestBase::AddStageFunctionality(UFunKTestFunctionality* Functionality)
-{
-	AddStageFunctionality(Functionality, INDEX_NONE);
-	return Functionality;
+	
+	AddStageFragment(Fragment, INDEX_NONE);
+	return Fragment;
 }
 
 void AFunKTestBase::SetupStages()
@@ -770,24 +754,16 @@ int32 AFunKTestBase::GetTestVariationCount()
 	return TestVariations.GetCount();
 }
 
-int32 AFunKTestBase::GetRootVariation() const
-{
-	return CurrentRootVariation;
-}
-
-int32 AFunKTestBase::GetVariation() const
-{
-	return CurrentVariation;
-}
-
-UFunKTestRootVariationComponent* AFunKTestBase::GetRootVariationComponent() const
-{
-	return Variations.RootVariations;
-}
-
-UFunKTestVariationComponent* AFunKTestBase::GeVariationComponent() const
-{
-	return CurrentVariationComponent;
+FFunKTestVariation AFunKTestBase::GetCurrentVariation()
+{	
+	return FFunKTestVariation(
+		CurrentVariationComponent,
+		GetVariationComponentFragment(CurrentVariationComponent),
+		GetVariationComponentFragmentIndex(CurrentVariationComponent),
+		Variations.RootVariations,
+		GetVariationComponentFragment(Variations.RootVariations),
+		GetVariationComponentFragmentIndex(Variations.RootVariations)
+	);
 }
 
 void AFunKTestBase::EndAllInputSimulations() const
@@ -801,14 +777,14 @@ void AFunKTestBase::ArrangeVariation()
 	IsVariationBegun = true;
 	
 	const FFunKTestVariations& TestVariations = GetTestVariations();
-	AddVariationComponentFunctionality(TestVariations.RootVariations);
-	AddVariationComponentFunctionality(CurrentVariationComponent);
+	AddVariationComponentFragment(TestVariations.RootVariations);
+	AddVariationComponentFragment(CurrentVariationComponent);
 }
 
 void AFunKTestBase::ArrangeVariationTick(float DeltaTime)
 {
 	const FFunKTestVariations& TestVariations = GetTestVariations();
-	if(IsVariationComponentFunctionalityReady(TestVariations.RootVariations, CurrentRootVariation) && IsVariationComponentFunctionalityReady(CurrentVariationComponent, CurrentVariation))
+	if(IsVariationComponentReady(TestVariations.RootVariations, CurrentRootVariation) && IsVariationComponentReady(CurrentVariationComponent, CurrentVariation))
 	{
 		if(GetNetMode() != NM_DedicatedServer)
 			ViewObservationPoint();
@@ -837,103 +813,107 @@ void AFunKTestBase::ViewObservationPoint() const
 	}
 }
 
-void AFunKTestBase::FunctionalitiesOnBeginStage()
+void AFunKTestBase::OnBeginStageFragments()
 {
-	for (UFunKTestFunctionality* Functionality : TestFunctionalities)
+	for (UFunKTestFragment* Fragment : TestFragments)
 	{
-		Functionality->OnBeginStage();
+		Fragment->OnBeginStage();
 	}
 }
 
-void AFunKTestBase::FunctionalitiesOnFinishStage()
+void AFunKTestBase::OnFinishStageFragments()
 {
-	for (UFunKTestFunctionality* Functionality : TestFunctionalities)
+	for (UFunKTestFragment* Fragment : TestFragments)
 	{
-		Functionality->OnFinishStage();
+		Fragment->OnFinishStage();
 	}
 	
-	for (UFunKTestFunctionality* Functionality : StageFunctionalities)
+	for (UFunKTestFragment* Fragment : StageFragments)
 	{
-		Functionality->OnFinishStage();
+		Fragment->OnFinishStage();
 	}
 }
 
-void AFunKTestBase::AddVariationComponentFunctionality(UFunKTestVariationComponent* VariationComponent)
+void AFunKTestBase::AddVariationComponentFragment(UFunKTestVariationComponent* VariationComponent)
 {
 	if(VariationComponent == nullptr) return;
 	
-	UFunKTestFunctionality* Functionality = VariationComponent->GetFunctionality(CurrentRootVariation);
-	if(Functionality->IsSupportedForNetworking() && GetNetMode() == NM_Client)
+	UFunKTestFragment* Fragment = VariationComponent->GetFragment(CurrentRootVariation);
+	if(Fragment->IsSupportedForNetworking() && GetNetMode() == NM_Client)
 	{
-		TestFunctionalities.Add(nullptr);
+		TestFragments.Add(nullptr);
 	}
 	else
 	{
-		AddTestFunctionality(Functionality);
-		VariationComponent->OnUsing(Functionality);
+		AddTestFragment(Fragment, INDEX_NONE);
+		VariationComponent->OnUsing(Fragment);
 	}
 }
 
-int32 AFunKTestBase::GetVariationComponentFunctionalityIndex(const UFunKTestVariationComponent* VariationComponent) const
+int32 AFunKTestBase::GetVariationComponentFragmentIndex(const UFunKTestVariationComponent* VariationComponent) const
 {
+	if (VariationComponent == nullptr) return INDEX_NONE;
 	const FFunKTestVariations& TestVariations = GetTestVariationsConst();
-	return  TestVariations.RootVariations == nullptr || TestVariations.RootVariations == VariationComponent ? 0 : 1;	
+	return TestVariations.RootVariations == nullptr || TestVariations.RootVariations == VariationComponent ? 0 : 1;	
 }
 
-FString AFunKTestBase::GetVariationComponentFunctionalityName(const UFunKTestVariationComponent* VariationComponent) const
+FString AFunKTestBase::GetVariationComponentFragmentName(const UFunKTestVariationComponent* VariationComponent) const
 {
-	if(TestFunctionalities.Num() <= 0) return "";
-	
-	const int32 Index = GetVariationComponentFunctionalityIndex(VariationComponent);
-
-	if (TestFunctionalities.Num() <= Index) return "";
-	const UFunKTestFunctionality* Functionality = TestFunctionalities[Index];
-	if (!Functionality) return "";
-
-	return " - " + Functionality->GetReadableIdent();
+	const UFunKTestFragment* Fragment = GetVariationComponentFragment(VariationComponent);
+	return Fragment ? Fragment->GetReadableIdent() : "";
 }
 
-bool AFunKTestBase::IsVariationComponentFunctionalityReady(UFunKTestVariationComponent* VariationComponent, int32 Index) const
+UFunKTestFragment* AFunKTestBase::GetVariationComponentFragment(const UFunKTestVariationComponent* VariationComponent) const
+{
+	if(TestFragments.Num() <= 0) return nullptr;
+	
+	const int32 Index = GetVariationComponentFragmentIndex(VariationComponent);
+
+	if (TestFragments.Num() <= Index) return nullptr;
+	return TestFragments[Index];
+}
+
+bool AFunKTestBase::IsVariationComponentReady(UFunKTestVariationComponent* VariationComponent, int32 Index) const
 {
 	if (!VariationComponent) return true;
 	
-	const int32 FunctionalityIndex = GetVariationComponentFunctionalityIndex(VariationComponent);
-	UFunKTestFunctionality* Functionality = TestFunctionalities[FunctionalityIndex];
+	const int32 FragmentIndex = GetVariationComponentFragmentIndex(VariationComponent);
+	UFunKTestFragment* Fragment = TestFragments[FragmentIndex];
 	
-	return VariationComponent->IsReady(Functionality, Index);
+	return VariationComponent->IsReady(Fragment, Index);
 }
 
-void AFunKTestBase::AddTestFunctionality(UFunKTestFunctionality* Functionality, int32 Index)
+void AFunKTestBase::AddTestFragment(UFunKTestFragment* Fragment, int32 Index)
 {
-	AddFunctionality(TestFunctionalities, Functionality, Index);
+	AddFragment(TestFragments, Fragment, Index);
 }
 
-void AFunKTestBase::AddStageFunctionality(UFunKTestFunctionality* Functionality, int32 Index)
+void AFunKTestBase::AddStageFragment(UFunKTestFragment* Fragment, int32 Index)
 {
-	AddFunctionality(StageFunctionalities, Functionality, Index);
-	Functionality->OnBeginStage();
+	AddFragment(StageFragments, Fragment, Index);
+	Fragment->OnBeginStage();
 }
 
-void AFunKTestBase::AddFunctionality(TArray<UFunKTestFunctionality*>& Functionalities, UFunKTestFunctionality* Functionality, int32 Index)
+void AFunKTestBase::AddFragment(TArray<UFunKTestFragment*>& Fragments, UFunKTestFragment* Fragment, int32 Index)
 {
 	if(Index == INDEX_NONE)
-		Functionalities.Add(Functionality);
+		Fragments.Add(Fragment);
 	else
-		Functionalities[Index] = Functionality;
+		Fragments[Index] = Fragment;
 
-	Functionality->Test = this;
-	Functionality->OnAdded();
+	Fragment->Test = this;
+	Fragment->OnAdded();
 }
 
-void AFunKTestBase::ClearFunctionalities(TArray<UFunKTestFunctionality*>& Functionalities)
+void AFunKTestBase::ClearFragments(TArray<UFunKTestFragment*>& Fragments)
 {
-	for (UFunKTestFunctionality* Functionality : Functionalities)
+	for (UFunKTestFragment* Fragment : Fragments)
 	{
-		Functionality->OnRemoved();
-		Functionality->Test = nullptr;
+		Fragment->OnRemoved();
+		Fragment->Test = nullptr;
 	}
 	
-	Functionalities.Empty();
+	Fragments.Empty();
 }
 
 FFunKTestVariations AFunKTestBase::BuildTestVariations() const
@@ -987,12 +967,12 @@ void AFunKTestBase::GatherContext(FFunKEvent& Event) const
 	{
 		if(Variations.RootVariations && CurrentRootVariation != INDEX_NONE)
 		{
-			Event.AddToContext(Variations.RootVariations->GetName() + GetVariationComponentFunctionalityName(Variations.RootVariations));
+			Event.AddToContext(Variations.RootVariations->GetName() + GetVariationComponentFragmentName(Variations.RootVariations));
 		}
 
 		if(CurrentVariationComponent && CurrentVariation != INDEX_NONE)
 		{
-			Event.AddToContext(CurrentVariationComponent->GetName() + GetVariationComponentFunctionalityName(CurrentVariationComponent));
+			Event.AddToContext(CurrentVariationComponent->GetName() + GetVariationComponentFragmentName(CurrentVariationComponent));
 		}
 	}
 

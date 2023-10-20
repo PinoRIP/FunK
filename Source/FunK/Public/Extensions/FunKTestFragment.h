@@ -4,14 +4,14 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
-#include "FunKTestFunctionality.generated.h"
+#include "FunKTestFragment.generated.h"
 
 class AFunKTestBase;
 /**
  * 
  */
 UCLASS(Abstract, HideDropdown)
-class FUNK_API UFunKTestFunctionality : public UObject
+class FUNK_API UFunKTestFragment : public UObject
 {
 	GENERATED_BODY()
 

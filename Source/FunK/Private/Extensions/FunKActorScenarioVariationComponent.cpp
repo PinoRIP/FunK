@@ -1,28 +1,26 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Variations/FunKActorScenarioVariationComponent.h"
+#include "Extensions//FunKActorScenarioVariationComponent.h"
 #include "FunKLogging.h"
 #include "GameFramework/PlayerController.h"
-#include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
-#include "UObject/UnrealTypePrivate.h"
 #include "Util/FunKUtilBlueprintFunctionLibrary.h"
-#include "Variations/FunKActorScenarioVariationSceneActorResetHandler.h"
+#include "Extensions/FunKActorScenarioVariationSceneActorResetHandler.h"
 
 class UProperty;
 
-void UFunKActorScenarioVariationFunctionality::OnAdded()
+void UFunKActorScenarioVariationFragment::OnAdded()
 {
 	Spawner->Begin(Index);
 }
 
-void UFunKActorScenarioVariationFunctionality::OnRemoved()
+void UFunKActorScenarioVariationFragment::OnRemoved()
 {
 	Spawner->Finish();
 }
 
-FString UFunKActorScenarioVariationFunctionality::GetReadableIdent() const
+FString UFunKActorScenarioVariationFragment::GetReadableIdent() const
 {
 	return Spawner->GetName();
 }
@@ -57,17 +55,17 @@ int32 UFunKActorScenarioVariationComponent::GetCount()
 	return Count;
 }
 
-UFunKTestFunctionality* UFunKActorScenarioVariationComponent::GetFunctionality(int32 Index)
+UFunKTestFragment* UFunKActorScenarioVariationComponent::GetFragment(int32 Index)
 {
-	UFunKActorScenarioVariationFunctionality* Functionality = NewObject<UFunKActorScenarioVariationFunctionality>(this);
-	Functionality->Spawner = this;
-	Functionality->Index = Index;
-	return Functionality;
+	UFunKActorScenarioVariationFragment* Fragment = NewObject<UFunKActorScenarioVariationFragment>(this);
+	Fragment->Spawner = this;
+	Fragment->Index = Index;
+	return Fragment;
 }
 
-bool UFunKActorScenarioVariationComponent::IsReady(UFunKTestFunctionality* Instance, int32 Index)
+bool UFunKActorScenarioVariationComponent::IsReady(UFunKTestFragment* Instance, int32 Index)
 {
-	return Instance != nullptr && Cast<UFunKActorScenarioVariationFunctionality>(Instance) && IsReady();
+	return Instance != nullptr && Cast<UFunKActorScenarioVariationFragment>(Instance) && IsReady();
 }
 
 void UFunKActorScenarioVariationComponent::Begin(int32 index)

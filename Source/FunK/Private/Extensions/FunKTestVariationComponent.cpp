@@ -1,7 +1,7 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Variations/FunKTestVariationComponent.h"
+#include "Extensions/FunKTestVariationComponent.h"
 
 
 // Sets default values for this component's properties
@@ -14,17 +14,17 @@ int32 UFunKTestVariationComponent::GetCount()
 	return 0;
 }
 
-UFunKTestFunctionality* UFunKTestVariationComponent::GetFunctionality(int32 Index)
+UFunKTestFragment* UFunKTestVariationComponent::GetFragment(int32 Index)
 {
 	check(false)
 	return nullptr;
 }
 
-bool UFunKTestVariationComponent::IsReady(UFunKTestFunctionality* Instance, int32 Index)
+bool UFunKTestVariationComponent::IsReady(UFunKTestFragment* Instance, int32 Index)
 {
 	return Instance != nullptr;
 }
 
-void UFunKTestVariationComponent::OnUsing(UFunKTestFunctionality* Instance)
+void UFunKTestVariationComponent::OnUsing(UFunKTestFragment* Instance)
 {
 }

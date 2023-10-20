@@ -10,9 +10,9 @@
 #include "FunKTestBase.h"
 #include "EventBus/FunKEventBusReplicationController.h"
 #include "EventBus/FunKEventBusSubsystem.h"
-#include "Variations/FunKSharedTestVariations.h"
-#include "Variations/FunKTestRootVariationComponent.h"
-#include "Variations/FunKTestVariationComponent.h"
+#include "Extensions/FunKTestVariationsWorldActor.h"
+#include "Extensions/FunKTestRootVariationComponent.h"
+#include "Extensions/FunKTestVariationComponent.h"
 
 AFunKWorldTestController* UFunKWorldSubsystem::GetLocalTestController()
 {
@@ -115,19 +115,19 @@ AFunKWorldTestController* UFunKWorldSubsystem::NewTestController() const
 
 void UFunKWorldSubsystem::GatherVariations(FFunKWorldVariations& OutVariations) const
 {
-	TArray<AFunKSharedTestVariations*> SharedTestVariationActors;
-	for (TActorIterator<AFunKSharedTestVariations> ActorItr(GetWorld(), AFunKSharedTestVariations::StaticClass(), EActorIteratorFlags::AllActors); ActorItr; ++ActorItr)
+	TArray<AFunKTestVariationsWorldActor*> SharedTestVariationActors;
+	for (TActorIterator<AFunKTestVariationsWorldActor> ActorItr(GetWorld(), AFunKTestVariationsWorldActor::StaticClass(), EActorIteratorFlags::AllActors); ActorItr; ++ActorItr)
 	{
 		SharedTestVariationActors.Add(*ActorItr);
 	}
 
-	SharedTestVariationActors.Sort([](const AFunKSharedTestVariations& ip1, const AFunKSharedTestVariations& ip2) {
+	SharedTestVariationActors.Sort([](const AFunKTestVariationsWorldActor& ip1, const AFunKTestVariationsWorldActor& ip2) {
 		return  ip1.GetName() < ip2.GetName();
 	});
 
 	OutVariations.Variations.Empty();
 	OutVariations.VariationCount = 0;
-	for (const AFunKSharedTestVariations* SharedTestVariationActor : SharedTestVariationActors)
+	for (const AFunKTestVariationsWorldActor* SharedTestVariationActor : SharedTestVariationActors)
 	{
 		TArray<UFunKTestVariationComponent*> Array;
 		SharedTestVariationActor->GetComponents<UFunKTestVariationComponent>(Array);

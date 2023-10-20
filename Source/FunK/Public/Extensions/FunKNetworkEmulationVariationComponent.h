@@ -3,9 +3,9 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Functionality/FunKTestFunctionality.h"
+#include "FunKTestFragment.h"
 #include "Util/FunKNetworkEmulationTypes.h"
-#include "Variations/FunKTestVariationComponent.h"
+#include "Extensions/FunKTestVariationComponent.h"
 #include "FunKNetworkEmulationVariationComponent.generated.h"
 
 
@@ -26,5 +26,5 @@ public:
 	TArray<FFunKNetworkEmulation> Emulations;
 
 	virtual int32 GetCount() override;
-	virtual UFunKTestFunctionality* GetFunctionality(int32 Index) override;
+	virtual UFunKTestFragment* GetFragment(int32 Index) override;
 };

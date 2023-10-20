@@ -1,14 +1,14 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Functionality/FunKNetworkEmulationFunctionality.h"
+#include "Extensions/FunKNetworkEmulationFragment.h"
 #include "Util/FunKNetworkEmulationTypes.h"
 #include "Util/FunKUtilBlueprintFunctionLibrary.h"
 #include "Util/FunKUtilTypes.h"
 #include "Engine/NetDriver.h"
 
 
-void UFunKNetworkEmulationFunctionality::OnAdded()
+void UFunKNetworkEmulationFragment::OnAdded()
 {
 	const EFunKNetLocation NetLocation = UFunKBlueprintFunctionLibrary::GetNetLocation(this);
 	if(NetLocation == EFunKNetLocation::Standalone) return;
@@ -55,7 +55,7 @@ void UFunKNetworkEmulationFunctionality::OnAdded()
 #endif
 }
 
-void UFunKNetworkEmulationFunctionality::OnRemoved()
+void UFunKNetworkEmulationFragment::OnRemoved()
 {
 #if DO_ENABLE_NET_TEST
 	for (TKeyValuePair<TWeakObjectPtr<UNetDriver>, FPacketSimulationSettings>& InitialDriverSetting : InitialDriverSettings)
@@ -70,7 +70,7 @@ void UFunKNetworkEmulationFunctionality::OnRemoved()
 	InitialDriverSettings.Empty();
 }
 
-FString UFunKNetworkEmulationFunctionality::GetReadableIdent() const
+FString UFunKNetworkEmulationFragment::GetReadableIdent() const
 {
 	const FFunKNetworkEmulation& Emulation = NetworkEmulation;
 	return Emulation.UseCustomSettings

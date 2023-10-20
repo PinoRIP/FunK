@@ -3,16 +3,16 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "FunKTestFunctionality.h"
+#include "FunKTestFragment.h"
 #include "Util/FunKNetworkEmulationTypes.h"
 #include "Engine/NetDriver.h"
-#include "FunKNetworkEmulationFunctionality.generated.h"
+#include "FunKNetworkEmulationFragment.generated.h"
 
 /**
  * 
  */
 UCLASS(NotBlueprintType)
-class UFunKNetworkEmulationFunctionality : public UFunKTestFunctionality
+class UFunKNetworkEmulationFragment : public UFunKTestFragment
 {
 	GENERATED_BODY()
 

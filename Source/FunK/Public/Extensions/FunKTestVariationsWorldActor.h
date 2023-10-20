@@ -4,18 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
-#include "FunKSharedTestVariations.generated.h"
+#include "FunKTestVariationsWorldActor.generated.h"
 
 class UFunKTestVariationComponent;
 
 UCLASS()
-class FUNK_API AFunKSharedTestVariations : public AActor
+class FUNK_API AFunKTestVariationsWorldActor : public AActor
 {
 	GENERATED_BODY()
 
 public:
 	// Sets default values for this actor's properties
-	AFunKSharedTestVariations();
+	AFunKTestVariationsWorldActor();
 
 protected:
 	// Called when the game starts or when spawned

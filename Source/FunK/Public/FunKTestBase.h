@@ -11,7 +11,7 @@
 #include "Util/FunKAnonymousBitmask.h"
 #include "FunKTestBase.generated.h"
 
-class UFunKTestFunctionality;
+class UFunKTestFragment;
 class UFunKTestRootVariationComponent;
 class UFunKTestVariationComponent;
 struct FFunKStagesSetup;
@@ -38,6 +38,45 @@ public:
 	int32 GetCount() const;
 	int32 GetVariationsCount() const;
 	int32 GetRootVariationsCount() const;
+};
+
+USTRUCT(BlueprintType)
+struct FFunKTestVariation
+{
+	GENERATED_BODY()
+
+public:
+	FFunKTestVariation()
+		: FFunKTestVariation(nullptr, nullptr, INDEX_NONE, nullptr, nullptr, INDEX_NONE)
+	{}
+	
+	FFunKTestVariation(UFunKTestVariationComponent* InVariation, UFunKTestFragment* InFragment, int32 InIndex, UFunKTestRootVariationComponent* InRoot, UFunKTestFragment* InRootFragment, int32 InRootIndex)
+		: Variation(InVariation)
+		, Fragment(InFragment)
+		, Index(InIndex)
+		, Root(InRoot)
+		, RootFragment(InRootFragment)
+		, RootIndex(InRootIndex)
+	{
+	}
+	
+	UPROPERTY(BlueprintReadOnly)
+	UFunKTestVariationComponent* Variation;
+
+	UPROPERTY(BlueprintReadOnly)
+	UFunKTestFragment* Fragment;
+	
+	UPROPERTY(BlueprintReadOnly)
+	int32 Index;
+	
+	UPROPERTY(BlueprintReadOnly)
+	UFunKTestRootVariationComponent* Root;
+
+	UPROPERTY(BlueprintReadOnly)
+	UFunKTestFragment* RootFragment;
+	
+	UPROPERTY(BlueprintReadOnly)
+	int32 RootIndex;
 };
 
 /**
@@ -117,15 +156,8 @@ public:
 	const FFunKTestVariations& GetTestVariationsConst() const;
 	int32 GetTestVariationCount();
 
-	UFUNCTION(BlueprintCallable, Category="FunK")
-	int32 GetRootVariation() const;
-	UFUNCTION(BlueprintCallable, Category="FunK")
-	int32 GetVariation() const;
-
-	UFUNCTION(BlueprintCallable, Category="FunK")
-	UFunKTestRootVariationComponent* GetRootVariationComponent() const;
-	UFUNCTION(BlueprintCallable, Category="FunK")
-	UFunKTestVariationComponent* GeVariationComponent() const;
+	UFUNCTION(BlueprintCallable)
+	FFunKTestVariation GetCurrentVariation();
 
 	virtual void RaiseEvent(FFunKEvent& Event) const;
 	
@@ -169,18 +201,12 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category="FunK")
 	void Error(const FString& Message, const FString& Context = "") const;
+	
+	UFUNCTION(BlueprintCallable, Category="FunK")
+	UFunKTestFragment* AddTestFragment(UFunKTestFragment* Fragment);
 
 	UFUNCTION(BlueprintCallable, Category="FunK")
-	UFunKTestFunctionality* MakeTestFunctionality(TSubclassOf<UFunKTestFunctionality> Class);
-
-	UFUNCTION(BlueprintCallable, Category="FunK")
-	UFunKTestFunctionality* MakeStageFunctionality(TSubclassOf<UFunKTestFunctionality> Class);
-
-	UFUNCTION(BlueprintCallable, Category="FunK")
-	UFunKTestFunctionality* AddTestFunctionality(UFunKTestFunctionality* Functionality);
-
-	UFUNCTION(BlueprintCallable, Category="FunK")
-	UFunKTestFunctionality* AddStageFunctionality(UFunKTestFunctionality* Functionality);
+	UFunKTestFragment* AddStageFragment(UFunKTestFragment* Fragment);
 
 private:
 	int32 TestRunID;
@@ -193,10 +219,10 @@ private:
 	int32 CurrentRootVariation = INDEX_NONE;
 
 	UPROPERTY(Transient)
-	TArray<UFunKTestFunctionality*> TestFunctionalities;
+	TArray<UFunKTestFragment*> TestFragments;
 
 	UPROPERTY(Transient)
-	TArray<UFunKTestFunctionality*> StageFunctionalities;
+	TArray<UFunKTestFragment*> StageFragments;
 	
 	UPROPERTY(Transient)
 	UFunKTestVariationComponent* CurrentVariationComponent = nullptr;
@@ -243,16 +269,17 @@ private:
 
 	void ViewObservationPoint() const;
 
-	void FunctionalitiesOnBeginStage();
-	void FunctionalitiesOnFinishStage();
-	void AddVariationComponentFunctionality(UFunKTestVariationComponent* VariationComponent);
-	int32 GetVariationComponentFunctionalityIndex(const UFunKTestVariationComponent* VariationComponent) const;
-	FString GetVariationComponentFunctionalityName(const UFunKTestVariationComponent* VariationComponent) const;
-	bool IsVariationComponentFunctionalityReady(UFunKTestVariationComponent* VariationComponent, int32 Index) const;
-	void AddTestFunctionality(UFunKTestFunctionality* Functionality, int32 Index);
-	void AddStageFunctionality(UFunKTestFunctionality* Functionality, int32 Index);
-	void AddFunctionality(TArray<UFunKTestFunctionality*>& Functionalities, UFunKTestFunctionality* Functionality, int32 Index = INDEX_NONE);
-	static void ClearFunctionalities(TArray<UFunKTestFunctionality*>& Functionalities);
+	void OnBeginStageFragments();
+	void OnFinishStageFragments();
+	void AddVariationComponentFragment(UFunKTestVariationComponent* VariationComponent);
+	int32 GetVariationComponentFragmentIndex(const UFunKTestVariationComponent* VariationComponent) const;
+	FString GetVariationComponentFragmentName(const UFunKTestVariationComponent* VariationComponent) const;
+	UFunKTestFragment* GetVariationComponentFragment(const UFunKTestVariationComponent* VariationComponent) const;
+	bool IsVariationComponentReady(UFunKTestVariationComponent* VariationComponent, int32 Index) const;
+	void AddTestFragment(UFunKTestFragment* Fragment, int32 Index);
+	void AddStageFragment(UFunKTestFragment* Fragment, int32 Index);
+	void AddFragment(TArray<UFunKTestFragment*>& Fragments, UFunKTestFragment* Fragment, int32 Index = INDEX_NONE);
+	static void ClearFragments(TArray<UFunKTestFragment*>& Fragments);
 
 	FFunKTestVariations BuildTestVariations() const;
 public:
@@ -283,4 +310,5 @@ private:
 	
 	
 	friend class UFunKAssertionBlueprintFunctionLibrary;
+	friend class UFunKTestFragmentBlueprintFunctionLibrary;
 };

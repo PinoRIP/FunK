@@ -1,9 +1,9 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Variations/FunKNetworkEmulationVariationComponent.h"
+#include "Extensions/FunKNetworkEmulationVariationComponent.h"
 #include "Engine/NetDriver.h"
-#include "Functionality/FunKNetworkEmulationFunctionality.h"
+#include "Extensions/FunKNetworkEmulationFragment.h"
 
 
 // Sets default values for this component's properties
@@ -20,11 +20,11 @@ int32 UFunKNetworkEmulationVariationComponent::GetCount()
 #endif
 }
 
-UFunKTestFunctionality* UFunKNetworkEmulationVariationComponent::GetFunctionality(int32 Index)
+UFunKTestFragment* UFunKNetworkEmulationVariationComponent::GetFragment(int32 Index)
 {
-	UFunKNetworkEmulationFunctionality* Functionality = NewObject<UFunKNetworkEmulationFunctionality>(this);
-	Functionality->NetworkEmulation = Emulations[Index];
-	return Functionality;
+	UFunKNetworkEmulationFragment* Fragment = NewObject<UFunKNetworkEmulationFragment>(this);
+	Fragment->NetworkEmulation = Emulations[Index];
+	return Fragment;
 }
 
 

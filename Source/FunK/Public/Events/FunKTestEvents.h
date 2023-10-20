@@ -7,7 +7,7 @@
 #include "UObject/Object.h"
 #include "FunKTestEvents.generated.h"
 
-class UFunKTestFunctionality;
+class UFunKTestFragment;
 class AFunKTestBase;
 
 USTRUCT()
@@ -117,5 +117,5 @@ public:
 	AFunKTestBase* Test = nullptr;
 
 	UPROPERTY() 
-	TArray<UFunKTestFunctionality*> Functionalities;
+	TArray<UFunKTestFragment*> Functionalities;
 };
