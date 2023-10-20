@@ -180,8 +180,6 @@ protected:
 	virtual void OnFinishStage(EFunKStageResult StageResult, FString Message);
 	virtual void OnFinish(const FString& Message);
 
-	virtual void OnNetworkedFunctionalitiesReceived(const FFunKTestNetworkedFunctionalitiesCreatedEvent& Event);
-
 	virtual void SetupStages(FFunKStagesSetup& stages);
 	const FFunKStage* GetStage(int32 StageIndex) const;
 	virtual bool IsExecutingStage(const FFunKStage& stage) const;
@@ -269,6 +267,8 @@ private:
 
 	void ViewObservationPoint() const;
 
+
+	virtual void OnNetworkedFragmentsReceived(const FFunKTestNetworkedFragmentsCreatedEvent& Event);
 	void OnBeginStageFragments();
 	void OnFinishStageFragments();
 	void AddVariationComponentFragment(UFunKTestVariationComponent* VariationComponent);

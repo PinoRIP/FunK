@@ -342,37 +342,37 @@ void AFunKTestBase::OnFinish(const FString& Message)
 	EndAllInputSimulations();
 }
 
-void AFunKTestBase::OnNetworkedFunctionalitiesReceived(const FFunKTestNetworkedFunctionalitiesCreatedEvent& Event)
+void AFunKTestBase::OnNetworkedFragmentsReceived(const FFunKTestNetworkedFragmentsCreatedEvent& Event)
 {
 	if (Event.TestRunID != TestRunID || Event.Stage != CurrentStageIndex)
 	{
 		return;
 	}
 
-	if (TestFragments.Num() != Event.Functionalities.Num())
+	if (TestFragments.Num() != Event.Fragments.Num())
 	{
 		Error("Fragment mismatch!");
 		return;
 	}
 
 	const FFunKTestVariations& TestVariations = GetTestVariations();
-	for (int i = 0; i < Event.Functionalities.Num(); ++i)
+	for (int i = 0; i < Event.Fragments.Num(); ++i)
 	{
-		if(Event.Functionalities[i])
+		if(Event.Fragments[i])
 		{
-			AddTestFragment(Event.Functionalities[i], i);
+			AddTestFragment(Event.Fragments[i], i);
 
 			if(i == 0)
 			{
 				if (TestVariations.RootVariations)
-					TestVariations.RootVariations->OnUsing(Event.Functionalities[i]);
+					TestVariations.RootVariations->OnUsing(Event.Fragments[i]);
 				else if(CurrentVariationComponent)
-					CurrentVariationComponent->OnUsing(Event.Functionalities[i]);
+					CurrentVariationComponent->OnUsing(Event.Fragments[i]);
 			}
 			else if (i == 1)
 			{
 				if(TestVariations.RootVariations && CurrentVariationComponent)
-					CurrentVariationComponent->OnUsing(Event.Functionalities[i]);
+					CurrentVariationComponent->OnUsing(Event.Fragments[i]);
 			}
 		}
 	}
@@ -638,7 +638,7 @@ UFunKTestFragment* AFunKTestBase::AddTestFragment(UFunKTestFragment* Fragment)
 {
 	if(Fragment->IsSupportedForNetworking())
 	{
-		UE_LOG(FunKLog, Warning, TEXT("Directly added test fragments don't support networked functionalities! (yet?)"))
+		UE_LOG(FunKLog, Warning, TEXT("Directly added test fragments don't support networking! (yet?)"))
 	}
 	
 	AddTestFragment(Fragment, INDEX_NONE);
@@ -649,7 +649,7 @@ UFunKTestFragment* AFunKTestBase::AddStageFragment(UFunKTestFragment* Fragment)
 {
 	if(Fragment->IsSupportedForNetworking())
 	{
-		UE_LOG(FunKLog, Warning, TEXT("Directly added test fragments don't support networked functionalities! (yet?)"))
+		UE_LOG(FunKLog, Warning, TEXT("Directly added test fragments don't support networking! (yet?)"))
 	}
 	
 	AddStageFragment(Fragment, INDEX_NONE);
@@ -708,9 +708,9 @@ void AFunKTestBase::RegisterEvents(UFunKEventBusSubsystem* EventBusSubsystem)
 	}
 	else
 	{
-		EventBusSubsystem->On<FFunKTestNetworkedFunctionalitiesCreatedEvent>([](const FFunKTestNetworkedFunctionalitiesCreatedEvent& Event)
+		EventBusSubsystem->On<FFunKTestNetworkedFragmentsCreatedEvent>([](const FFunKTestNetworkedFragmentsCreatedEvent& Event)
 		{
-			Event.Test->OnNetworkedFunctionalitiesReceived(Event);
+			Event.Test->OnNetworkedFragmentsReceived(Event);
 		});
 	}
 	

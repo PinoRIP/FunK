@@ -102,7 +102,7 @@ public:
 };
 
 USTRUCT()
-struct FFunKTestNetworkedFunctionalitiesCreatedEvent
+struct FFunKTestNetworkedFragmentsCreatedEvent
 {
 	GENERATED_BODY()
 
@@ -117,5 +117,5 @@ public:
 	AFunKTestBase* Test = nullptr;
 
 	UPROPERTY() 
-	TArray<UFunKTestFragment*> Functionalities;
+	TArray<UFunKTestFragment*> Fragments;
 };
