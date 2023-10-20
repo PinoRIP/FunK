@@ -7,7 +7,9 @@
 #include "Extensions/FunKTestVariationComponent.h"
 #include "FunKTestRootVariationComponent.generated.h"
 
-
+/*
+ * With root variation components test & variations can be repeated multiple times. Only one root component can be used per test & root components can't be shard via. "AFunKTestVariationsWorldActor".
+ */
 UCLASS(ClassGroup=(Custom), Abstract)
 class FUNK_API UFunKTestRootVariationComponent : public UFunKTestVariationComponent
 {

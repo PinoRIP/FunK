@@ -7,7 +7,7 @@
 #include "FunKActorScenarioVariationSceneActorResetHandler.generated.h"
 
 /**
- * 
+ * Handler to reset a level actor.
  */
 UCLASS(Abstract)
 class FUNK_API UFunKActorScenarioVariationSceneActorResetHandler : public UObject

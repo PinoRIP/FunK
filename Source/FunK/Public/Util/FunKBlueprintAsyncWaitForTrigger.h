@@ -22,7 +22,8 @@ class FUNK_API UFunKBlueprintAsyncWaitForTrigger : public UBlueprintAsyncActionB
 private:
 	UPROPERTY(BlueprintAssignable)
 	FFunKTriggerTriggered OnTriggered;
-	
+
+	// Wait for an actor to trigger the given trigger
 	UFUNCTION(BlueprintCallable, meta = (HidePin = "Test", DefaultToSelf = "Test", BlueprintInternalUseOnly = "true"), Category = "AsyncNode", DisplayName="WaitFor (Trigger)")
 	static UFunKBlueprintAsyncWaitForTrigger* WaitFor(AFunKTestBase* Test, ATriggerBase* Trigger);
 	

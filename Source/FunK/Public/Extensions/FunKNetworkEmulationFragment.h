@@ -9,7 +9,7 @@
 #include "FunKNetworkEmulationFragment.generated.h"
 
 /**
- * 
+ * Fragment that changes the net driver settings to emulate networking quality. After the fragment is removed the settings will be restored.
  */
 UCLASS(NotBlueprintType)
 class UFunKNetworkEmulationFragment : public UFunKTestFragment

@@ -6,13 +6,19 @@
 #include "FunKEventBusSubsystem.h"
 #include "FunKEventBusRegistrationContainer.generated.h"
 
+/*
+ * Container that holds multiple registrations.
+ */
 USTRUCT()
 struct FFunKEventBusRegistrationContainer
 {
 	GENERATED_BODY()
 
 public:
+	// Unregisters all registrations
 	void Unregister();
+
+	// Adds a registration to the container
 	void Add(const FFunKEventBusRegistration& Registration);
 
 private:

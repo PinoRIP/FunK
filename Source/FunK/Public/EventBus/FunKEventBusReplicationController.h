@@ -19,6 +19,9 @@ public:
 	TArray<AFunKEventBusReplicationController*> Controllers;
 };
 
+/*
+ * Controller that is owned by the player controllers and relays events for the EventBusSubsystem
+ */
 UCLASS()
 class FUNK_API AFunKEventBusReplicationController : public AActor
 {
@@ -30,17 +33,22 @@ public:
 
 	virtual void GetLifetimeReplicatedProps( TArray< FLifetimeProperty > & OutLifetimeProps ) const override;
 
+	// Gets the amount of controllers ready to relay events
 	int32 GetActiveController() const { return ActiveController; }
+
+	// Gets the amount of controllers
 	int32 GetControllerNumber() const { return ControllerNumber; }
+
+	// Returns true given the server is a dedicated server (works on clients)
 	bool GetIsServerDedicated() const { return IsServerDedicated; }
 	
 protected:
-	bool IsControllerLocallyReady() const;
-
-	void CheckControllerReady();
-
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	
+	virtual void OnRep_Owner() override;
+
+private:
+	bool IsControllerLocallyReady() const;
 
 	UFUNCTION(Server, Reliable)
 	void ServerSendMessage(const FFunKEventBusMessage& message);
@@ -56,9 +64,7 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void ServerControllerReady();
-
-	virtual void OnRep_Owner() override;
-
+	
 	void NotifyReplicationControllerRemoved(AFunKEventBusReplicationController* ReplicationController);
 
 	bool ReportProxiedCallbackResponse(AFunKEventBusReplicationController* ReplicationController, FGuid callbackId);
@@ -77,6 +83,8 @@ private:
 	TMap<FGuid, FFunKCallbackProxyState> ProxiedCallbacks;
 
 	bool IsControllerReadinessSend = false;
+	
+	void CheckControllerReady();
 
 	friend class UFunKEventBusSubsystem;
 };

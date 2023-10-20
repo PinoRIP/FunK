@@ -47,7 +47,7 @@ EFunKClient UFunKBlueprintFunctionLibrary::GetClients(const UObject* WorldContex
 	const auto netMode = GetNetMode(WorldContext);
 	if (netMode == EFunKNetMode::Standalone)
 	{
-		return EFunKClient::First;
+		return EFunKClient::Host;
 	}
 	
 	if (netMode == EFunKNetMode::ListenServer)

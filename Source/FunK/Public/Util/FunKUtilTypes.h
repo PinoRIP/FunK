@@ -49,8 +49,13 @@ enum class EFunKClient : uint8
 UENUM(BlueprintType)
 enum class EFunKTestEnvironmentType : uint8
 {
+	/** The tests are executed for standalone */
 	Standalone,
+
+	/** The tests are executed for dedicated server */
 	DedicatedServer,
+
+	/** The tests are executed for listen server */
 	ListenServer,
 
 	MAX UMETA(Hidden),
@@ -59,8 +64,13 @@ enum class EFunKTestEnvironmentType : uint8
 UENUM(BlueprintType)
 enum class EFunKNetLocation : uint8
 {
+	/** The execution is on standalone */
 	Standalone,
+
+	/** The execution is on Listen/Dedicated server*/
 	Server,
+
+	/** The execution is on a client*/
 	Client,
 
 	MAX UMETA(Hidden),

@@ -58,22 +58,26 @@ struct FFunKNetworkEmulation
 	GENERATED_BODY()
 
 public:
+	// Where the emulation should take effect
 	UPROPERTY(EditAnywhere, meta = (DisplayName = "Emulation Target"))
 	EFunKNetworkEmulationTarget EmulationTarget = EFunKNetworkEmulationTarget::Server;
 
+	// Create custom settings instead of using configured profiles
 	UPROPERTY(EditAnywhere)
 	bool UseCustomSettings = false;
-	
+
+	// Network emulation profile
 	UPROPERTY(EditAnywhere, meta = (GetOptions = "FunK.FunKNetworkEmulationTypesHelper.GetProfileOptions", EditCondition="!UseCustomSettings"))
 	FString Profile;
-	
+
+	// Custom settings
 	UPROPERTY(EditAnywhere, meta=(EditCondition = "UseCustomSettings"))
 	FFunKCustomNetworkEmulation Custom;
 };
 
 
 /**
- * 
+ * This is just a helper that provides the "GetOptions"-Function used in "FFunKNetworkEmulation".
  */
 UCLASS()
 class FUNK_API UFunKNetworkEmulationTypesHelper : public UObject

@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "FunKAnonymousBitmask.generated.h"
 
+// Bitmask with variable length
 USTRUCT()
 struct FUNK_API FFunKAnonymousBitmask
 {

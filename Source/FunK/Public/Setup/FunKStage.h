@@ -9,6 +9,7 @@
 DECLARE_DELEGATE(FFunKStageFunction);
 DECLARE_DELEGATE_OneParam(FFunKStageTickFunction, float);
 
+// Structure that holds the references & configuration to one stages
 USTRUCT(BlueprintType)
 struct FUNK_API FFunKStage
 {

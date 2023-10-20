@@ -7,6 +7,7 @@
 
 class AFunKTestBase;
 
+// Event that is used to sync peers at a "wait for" sync-point
 USTRUCT()
 struct FFunKTestWaitForSyncPointReachedEvent
 {

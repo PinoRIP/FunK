@@ -97,7 +97,9 @@ public:
 };
 
 /**
- * 
+ * Eventbus system to send events from anywhere to anywhere.
+ * An event triggered an client A will be received on the Server, Client A & Client B.
+ * Events are structs that are differentiated by the struct type.
  */
 UCLASS()
 class FUNK_API UFunKEventBusSubsystem : public UWorldSubsystem
@@ -107,33 +109,46 @@ class FUNK_API UFunKEventBusSubsystem : public UWorldSubsystem
 public:
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;
 
+	// The lambda will be triggered when the struct is received.
 	template <typename TStruct>
 	FFunKEventBusRegistration On(TFunction<void(const TStruct& Struct)> ReceivingLambda);
 
+	// The lambda will be triggered when the struct is received. When an event of this type has already been received the lambda will be invoked instantly with the last received version.
 	template <typename TStruct>
 	FFunKEventBusRegistration At(TFunction<void(const TStruct& Struct)> ReceivingLambda);
 
+	// The system has already received an event of this type.
 	template <typename TStruct>
 	bool Has();
 
+	// Raises the event
 	template <typename TStruct>
 	void Raise(const TStruct& eventStruct);
 
+	// Raises the event. After all receiving lambdas have been executed the callback lambda will be called.
 	template <typename TStruct>
 	void Raise(const TStruct& eventStruct, TFunction<void()> callback);
 
+	// Gets the last version of a given event.
 	template <typename TStruct>
 	const TStruct* Last();
 
+	// Returns true when the event bus system has any registered handler lambdas
 	bool AnyHandler() const;
 
+	// Returns true when the event bus owns a local replication controller
 	bool HasLocalReplicationController() const;
 
+	// Gets the local replication controller
 	AFunKEventBusReplicationController* GetLocalController() const { return LocalController; }
 
+	// Gets the amount of existing replication controllers (every peer except the server has one).
 	int32 GetReplicationControllerCount() const;
+
+	// Gets the amount of replication controllers that are ready to relay events.
 	int32 GetReadyReplicationControllerCount() const;
 
+	// Gets all replication controllers (sever only)
 	void GetReplicationControllers(TArray<AFunKEventBusReplicationController*>& Array);
 	
 private:

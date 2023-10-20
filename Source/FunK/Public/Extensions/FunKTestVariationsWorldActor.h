@@ -8,6 +8,10 @@
 
 class UFunKTestVariationComponent;
 
+/*
+ * This actor can be spawned in a test world. TestVariationComponents added to this actor will then be used as variations for all tests in that world.
+ * RootVariations can't be used that way.
+ */
 UCLASS()
 class FUNK_API AFunKTestVariationsWorldActor : public AActor
 {

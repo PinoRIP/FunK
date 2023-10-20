@@ -12,7 +12,9 @@
 class UFunKNetworkEmulationVariationComponent;
 
 
-
+/*
+ * Variations for multiple network qualities.
+ */
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class FUNK_API UFunKNetworkEmulationVariationComponent : public UFunKTestVariationComponent
 {

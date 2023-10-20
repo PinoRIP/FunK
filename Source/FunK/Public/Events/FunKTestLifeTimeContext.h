@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 
+// Context values for test lifetime events
 class FunKTestLifeTimeContext
 {
 public:

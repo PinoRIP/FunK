@@ -4,6 +4,11 @@
 #include "Extensions/FunKTestVariationComponent.h"
 
 
+FString UFunKTestVariationNoFragment::GetReadableIdent() const
+{
+	return "No fragment";
+}
+
 // Sets default values for this component's properties
 UFunKTestVariationComponent::UFunKTestVariationComponent()
 {
@@ -16,8 +21,7 @@ int32 UFunKTestVariationComponent::GetCount()
 
 UFunKTestFragment* UFunKTestVariationComponent::GetFragment(int32 Index)
 {
-	check(false)
-	return nullptr;
+	return NewObject<UFunKTestVariationNoFragment>();
 }
 
 bool UFunKTestVariationComponent::IsReady(UFunKTestFragment* Instance, int32 Index)

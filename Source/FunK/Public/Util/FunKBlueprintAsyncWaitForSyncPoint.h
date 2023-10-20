@@ -34,6 +34,7 @@ public:
 	UPROPERTY(BlueprintAssignable)
 	FFunKSyncPointReady OnSyncPointReady;
 
+	// Wait for all network peers to reach this synchronization point (or be finished)
 	UFUNCTION(BlueprintCallable, meta = (HidePin = "Test", DefaultToSelf = "Test", BlueprintInternalUseOnly = "true"), Category = "AsyncNode", DisplayName="WaitFor (Sync point)")
 	static UFunKBlueprintAsyncWaitForSyncPoint* WaitFor(AFunKTestBase* Test, EFunKSyncTarget WaitFor);
 

@@ -122,6 +122,9 @@ private:
 	friend UFunKActorScenarioVariationComponent;
 };
 
+/*
+ * Variation component that handles actors.
+ */
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class FUNK_API UFunKActorScenarioVariationComponent : public UFunKTestRootVariationComponent
 {

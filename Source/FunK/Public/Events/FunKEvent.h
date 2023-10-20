@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "FunKEvent.generated.h"
 
+// Type of the event (Error will fail the test)
 UENUM()
 enum class EFunKEventType : uint8
 {
@@ -14,7 +15,7 @@ enum class EFunKEventType : uint8
 };
 
 /**
- * 
+ * Event that will appear in the test report/summery
  */
 USTRUCT()
 struct FFunKEvent

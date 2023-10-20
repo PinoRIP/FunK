@@ -6,6 +6,7 @@
 #include "FunKStage.h"
 #include "FunKStages.generated.h"
 
+// Structure that holds the references & configuration to all stages
 USTRUCT(BlueprintType)
 struct FUNK_API FFunKStages
 {

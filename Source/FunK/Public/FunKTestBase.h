@@ -80,7 +80,7 @@ public:
 };
 
 /**
- * 
+ * Base class for any kind of test
  */
 UCLASS(Abstract, NotBlueprintable)
 class FUNK_API AFunKTestBase : public AActor
@@ -266,8 +266,7 @@ private:
 	void ArrangeVariationTick(float DeltaTime);
 
 	void ViewObservationPoint() const;
-
-
+	
 	virtual void OnNetworkedFragmentsReceived(const FFunKTestNetworkedFragmentsCreatedEvent& Event);
 	void OnBeginStageFragments();
 	void OnFinishStageFragments();
@@ -307,8 +306,7 @@ private:
 	UPROPERTY()
 	TObjectPtr<class UTextRenderComponent> TestName;
 #endif
-	
-	
+		
 	friend class UFunKAssertionBlueprintFunctionLibrary;
 	friend class UFunKTestFragmentBlueprintFunctionLibrary;
 };

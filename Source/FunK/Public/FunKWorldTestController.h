@@ -11,6 +11,9 @@ class AFunKTestBase;
 class UFunKTestRunner;
 class UFunKWorldTestExecution;
 
+/*
+ * Controller that executes the given tests in the world it has been spawned in.
+ */
 UCLASS()
 class FUNK_API AFunKWorldTestController : public AActor
 {

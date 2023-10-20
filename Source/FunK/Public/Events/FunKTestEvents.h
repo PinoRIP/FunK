@@ -10,6 +10,7 @@
 class UFunKTestFragment;
 class AFunKTestBase;
 
+// Event that is used to begin a test
 USTRUCT()
 struct FFunKTestBeginEvent
 {
@@ -29,12 +30,14 @@ public:
 	AFunKTestBase* Test = nullptr;
 };
 
+// Event that is used to request the beginning of a test
 USTRUCT()
 struct FFunKTestRequestBeginEvent : public FFunKTestBeginEvent
 {
 	GENERATED_BODY()
 };
 
+// Event that is used to begin a stage
 USTRUCT()
 struct FFunKTestStageBeginEvent
 {
@@ -51,6 +54,7 @@ public:
 	AFunKTestBase* Test = nullptr;
 };
 
+// Event that is used to finish a test
 USTRUCT()
 struct FFunKTestFinishEvent
 {
@@ -70,12 +74,14 @@ public:
 	AFunKTestBase* Test = nullptr;
 };
 
+// Event that is used to request the finishing of a test
 USTRUCT()
 struct FFunKTestRequestFinishEvent : public FFunKTestFinishEvent
 {
 	GENERATED_BODY()
 };
 
+// Event that is used to finish a stage
 USTRUCT()
 struct FFunKTestStageFinishEvent
 {
@@ -101,6 +107,7 @@ public:
 	int32 PeerIndex = 0;
 };
 
+// Event that is used to sync networked fragments
 USTRUCT()
 struct FFunKTestNetworkedFragmentsCreatedEvent
 {

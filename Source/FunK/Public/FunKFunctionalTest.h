@@ -14,6 +14,9 @@ struct FFunKVariationCount
 	int32 Root = 0;
 };
 
+/*
+ * Functional test class
+ */
 UCLASS(Blueprintable)
 class FUNK_API AFunKFunctionalTest : public AFunKTestBase
 {
