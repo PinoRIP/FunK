@@ -31,12 +31,19 @@ class FUNK_API UFunKWorldSubsystem : public UWorldSubsystem
 	GENERATED_BODY()
 
 public:
+	// Gets the local test controller (spawns one if none is existing)
 	AFunKWorldTestController* GetLocalTestController();
 
+	// Gets the local peer index
 	int32 GetPeerIndex() const;
+
+	// Gets the amount of peers (Connected UE instances)
 	int32 GetPeerCount() const;
+
+	// true when the server is dedicated (works on clients)
 	bool IsServerDedicated() const;
 
+	// Gets the informations about all shared variations.
 	const FFunKWorldVariations& GetWorldVariations();
 
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;

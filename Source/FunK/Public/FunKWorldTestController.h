@@ -32,10 +32,14 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	// Executes the test by name
 	virtual void ExecuteTestByName(FString TestName);
+
+	// Executes all test in the world the controller has been spawned in
 	virtual void ExecuteAllTests();
 
-	virtual bool IsFinished() const;
+	// true when all test executions have ended 
+	bool IsFinished() const;
 	
 private:
 	UPROPERTY()
