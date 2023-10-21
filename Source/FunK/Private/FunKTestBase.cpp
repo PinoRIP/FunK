@@ -152,7 +152,7 @@ void AFunKTestBase::NextStage()
 		Finish(EFunKTestResult::Succeeded, "");
 		return;
 	}
-
+	
 	FFunKTestStageBeginEvent StageBeginEvent;
 	StageBeginEvent.Stage = NextStageIndex;
 	StageBeginEvent.TestRunID = TestRunID;
@@ -390,6 +390,8 @@ void AFunKTestBase::FinishStage(EFunKStageResult StageResult, const FString& Mes
 		return;
 	}
 
+	if(IsLocalStageFinished) return;
+
 	IsLocalStageFinished = true;
 
 	FString ResultMessage = Message;
@@ -586,7 +588,7 @@ void AFunKTestBase::OnFinishStage(const FFunKTestStageFinishEvent& StageFinishEv
 		Error("Stage finish event received from invalid stage", "Event stage: " + FString::FromInt(StageFinishEvent.Stage));
 		return;
 	}
-
+	
 	PeerBitMask.Set(StageFinishEvent.PeerIndex);
 	OnPeerStageFinishing.Broadcast(StageFinishEvent.PeerIndex);
 
@@ -665,6 +667,25 @@ void AFunKTestBase::SetupStages()
 
 	FFunKStagesSetup stagesFluentSetup = FFunKStagesSetup(&Stages, this);
 	SetupStages(stagesFluentSetup);
+
+	if (Stages.Stages.Num() <= 0)
+	{
+		UE_LOG(FunKLog, Error, TEXT("SetupStages ended without stages %s"), *GetName())
+		return;
+	}
+
+	for (FFunKStage& Stage : Stages.Stages)
+	{
+		if (Stage.Name == "ArrangeVariation")
+		{
+			Stage.IsLatent = true;
+			if(IsDedicatedServerModeTest())
+				Stage.IsOnDedicatedServer = Stage.IsOnDedicatedServerClient = true;
+
+			if (IsListenServerModeTest())
+				Stage.IsOnListenServer = Stage.IsOnListenServerClient = true;
+		}
+	}
 }
 
 bool AFunKTestBase::IsValidStageIndex(int32 StageIndex) const
@@ -869,7 +890,7 @@ UFunKTestFragment* AFunKTestBase::GetVariationComponentFragment(const UFunKTestV
 	
 	const int32 Index = GetVariationComponentFragmentIndex(VariationComponent);
 
-	if (TestFragments.Num() <= Index) return nullptr;
+	if (TestFragments.Num() <= Index || Index < 0) return nullptr;
 	return TestFragments[Index];
 }
 

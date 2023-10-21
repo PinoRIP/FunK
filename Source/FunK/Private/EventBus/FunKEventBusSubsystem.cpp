@@ -83,7 +83,10 @@ void UFunKEventBusSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 		FGameModeEvents::GameModePostLoginEvent.AddUObject(this, &UFunKEventBusSubsystem::OnConnect);
 		FGameModeEvents::GameModeLogoutEvent.AddUObject(this, &UFunKEventBusSubsystem::OnDisconnect);
 
-		for (FConstPlayerControllerIterator Iterator = InWorld.GetPlayerControllerIterator(); Iterator; ++Iterator)
+		FConstPlayerControllerIterator Iterator = InWorld.GetPlayerControllerIterator();
+		if(netMode == NM_ListenServer) ++Iterator; // Playable server doesn't need a replication controller
+
+		for (; Iterator; ++Iterator)
 		{
 			RegisterController(Iterator->Get());
 		}
