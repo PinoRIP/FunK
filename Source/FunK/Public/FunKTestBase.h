@@ -378,5 +378,5 @@ private:
 #endif
 		
 	friend class UFunKAssertionBlueprintFunctionLibrary;
-	friend class UFunKTestFragmentBlueprintFunctionLibrary;
+	friend class UFunKFragmentBlueprintFunctionLibrary;
 };
