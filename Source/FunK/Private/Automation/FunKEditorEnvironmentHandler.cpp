@@ -7,6 +7,8 @@
 #include "Captures/FunKFailedPieStartCapture.h"
 #include "Captures/FunKNewProcessCapture.h"
 #include "FunK.h"
+#include "FunKLogging.h"
+#include "FunKWorldSubsystem.h"
 #include "Editor/EditorPerformanceSettings.h"
 #include "EventBus/FunKEventBusSubsystem.h"
 
@@ -74,8 +76,7 @@ bool UFunKEditorEnvironmentHandler::IsEnvironmentRunning(const FFunKTestInstruct
 		return false;
 	}
 
-	const ENetMode NetMode = GetCurrentPieWorldContext()->World()->GetNetMode();
-	if(NetMode == NM_Client || (NetMode == NM_Standalone && !Instructions.IsStandaloneTest()) || (NetMode == NM_ListenServer && !Instructions.IsListenServerTest()) || (NetMode == NM_DedicatedServer && !Instructions.IsDedicatedServerTest()))
+	if(IsWrongEnvironmentType(Instructions))
 	{
 		isWrongEnvironmentRunning = true;
 		return true;
@@ -95,6 +96,27 @@ bool UFunKEditorEnvironmentHandler::IsEnvironmentRunning(const FFunKTestInstruct
 	}
 
 	return true;
+}
+
+bool UFunKEditorEnvironmentHandler::IsWrongEnvironmentType(const FFunKTestInstructions& Instructions)
+{
+	const UWorld* PotentialWorld = GetCurrentPieWorldContext()->World();
+	const ENetMode NetMode = GetCurrentPieWorldContext()->World()->GetNetMode();
+	if (NetMode == NM_Standalone && Instructions.IsStandaloneTest()) return false;
+	if (NetMode == NM_ListenServer && Instructions.IsListenServerTest()) return false;
+	if (NetMode == NM_DedicatedServer && Instructions.IsDedicatedServerTest()) return false;
+	if (NetMode != NM_Client) return true;
+	if (Instructions.IsStandaloneTest()) return true;
+	
+	const UFunKWorldSubsystem* subsystem = PotentialWorld->GetSubsystem<UFunKWorldSubsystem>();
+	if (!subsystem)
+	{
+		UE_LOG(FunKLog, Error, TEXT("Missing FunK world subsystem"))
+		return true;
+	}
+
+	if (subsystem->IsServerDedicated() && Instructions.IsDedicatedServerTest()) return false;
+	return Instructions.IsListenServerTest();
 }
 
 FString UFunKEditorEnvironmentHandler::GetCurrentPieWorldPackageName()

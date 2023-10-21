@@ -31,6 +31,7 @@ private:
 	UWorld* World;
 	
 	bool IsEnvironmentRunning(const FFunKTestInstructions& Instructions, bool& isWrongEnvironmentRunning);
+	bool IsWrongEnvironmentType(const FFunKTestInstructions& Instructions);
 	FString GetCurrentPieWorldPackageName();
 	const FWorldContext* GetCurrentPieWorldContext();
 	bool IsHoldingSubprocesses() const;
