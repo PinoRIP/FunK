@@ -446,8 +446,8 @@ const FFunKStage* AFunKTestBase::GetCurrentStage() const
 
 bool AFunKTestBase::IsBpEventImplemented(const FName& Name) const
 {
-	const UFunction* function = FindFunction(Name);
-	return function && function->IsInBlueprint();
+	const UFunction* Function = FindFunction(Name);
+	return Function && Function->IsInBlueprint();
 }
 
 void AFunKTestBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -478,18 +478,18 @@ void AFunKTestBase::OnConstruction(const FTransform& Transform)
 #endif
 }
 
-void AFunKTestBase::BuildTestRegistry(FString& append) const
+void AFunKTestBase::BuildTestRegistry(FString& Append) const
 {
 	// Only include enabled tests in the list of functional tests to run.
 	if (IsEnabled && (IsStandaloneModeTest() || IsDedicatedServerModeTest() || IsListenServerModeTest()))
 	{
-		append.Append(GetActorLabel() + TEXT("|") +
+		Append.Append(GetActorLabel() + TEXT("|") +
 			(IsStandaloneModeTest() ? FFunKModule::FunkStandaloneParameter : TEXT("")) +
 			(IsDedicatedServerModeTest() ? FFunKModule::FunkDedicatedParameter : TEXT("")) +
 			(IsListenServerModeTest() ? FFunKModule::FunkListenParameter : TEXT("")) +
 			":" + GetName()
 		);
-		append.Append(TEXT(";"));
+		Append.Append(TEXT(";"));
 	}
 }
 
@@ -521,9 +521,9 @@ void AFunKTestBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
-void AFunKTestBase::SetupStages(FFunKStagesSetup& stages)
+void AFunKTestBase::SetupStages(FFunKStagesSetup& StageSetup)
 {
-	stages.AddNamedLatentStage<AFunKTestBase>("ArrangeVariation", &AFunKTestBase::ArrangeVariation)
+	StageSetup.AddNamedLatentStage<AFunKTestBase>("ArrangeVariation", &AFunKTestBase::ArrangeVariation)
 		.WithTickDelegate<AFunKTestBase>(&AFunKTestBase::ArrangeVariationTick)
 		.UpdateTimeLimit(ArrangeVariationTimeLimit);
 }
@@ -957,8 +957,8 @@ FFunKTestVariations AFunKTestBase::BuildTestVariations() const
 	TArray<UFunKTestVariationComponent*> Array;
 	GetComponents<UFunKTestVariationComponent>(Array);
 		
-	Array.Sort([](const UFunKTestVariationComponent& ip1, const UFunKTestVariationComponent& ip2) {
-		return  ip1.GetFName().FastLess(ip2.GetFName());
+	Array.Sort([](const UFunKTestVariationComponent& A, const UFunKTestVariationComponent& B) {
+		return  A.GetFName().FastLess(B.GetFName());
 	});
 
 	for (UFunKTestVariationComponent* FunKTestVariationComponent : Array)

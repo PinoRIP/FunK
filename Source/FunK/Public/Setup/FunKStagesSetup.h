@@ -1,5 +1,6 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
+// ReSharper disable CppUE4CodingStandardNamingViolationWarning: Macros posing as functions
 #pragma once
 
 #include "CoreMinimal.h"

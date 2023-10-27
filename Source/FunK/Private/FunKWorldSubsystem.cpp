@@ -139,8 +139,8 @@ void UFunKWorldSubsystem::GatherVariations(FFunKWorldVariations& OutVariations) 
 		TArray<UFunKTestVariationComponent*> Array;
 		SharedTestVariationActor->GetComponents<UFunKTestVariationComponent>(Array);
 		
-		Array.Sort([](const UFunKTestVariationComponent& ip1, const UFunKTestVariationComponent& ip2) {
-			return  ip1.GetFName().FastLess(ip2.GetFName());
+		Array.Sort([](const UFunKTestVariationComponent& A, const UFunKTestVariationComponent& B) {
+			return  A.GetFName().FastLess(B.GetFName());
 		});
 
 		for (UFunKTestVariationComponent* FunKTestVariationComponent : Array)

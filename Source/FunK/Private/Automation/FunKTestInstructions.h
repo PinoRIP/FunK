@@ -17,12 +17,12 @@ struct FFunKTestInstructions
 		: FFunKTestInstructions(FString(), FString(), FString(), FString())
 	{ }
 
-	FFunKTestInstructions(FString mapObjectPath, FString mapPackageName, FString mapTestName, FString params)
+	FFunKTestInstructions(FString InMapObjectPath, FString InMapPackageName, FString InMapTestName, FString InParams)
 	{
-		MapObjectPath = mapObjectPath;
-		MapPackageName = mapPackageName;
-		MapTestName = mapTestName;
-		Params = params;
+		MapObjectPath = InMapObjectPath;
+		MapPackageName = InMapPackageName;
+		MapTestName = InMapTestName;
+		Params = InParams;
 	}
 	
 	FString MapObjectPath;

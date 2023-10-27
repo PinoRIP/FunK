@@ -24,31 +24,31 @@ public:
 	template <typename UserClass, typename... VarTypes>
 	inline FFunKStage& EmplaceStage(const FName& StageName, const int32 Index, UserClass* InUserObject, typename TMemFunPtrType<false, UserClass, void ( VarTypes...)>::Type InFunc, VarTypes... Vars)
 	{
-		FFunKStage& stage = EmplaceStage(StageName, Index);
-		stage.StartDelegate.BindUObject(InUserObject, InFunc, Vars...);
-		return stage;
+		FFunKStage& Stage = EmplaceStage(StageName, Index);
+		Stage.StartDelegate.BindUObject(InUserObject, InFunc, Vars...);
+		return Stage;
 	}
 	
 	template <typename UserClass, typename... VarTypes>
 	inline FFunKStage& EmplaceLatentStage(const FName& StageName, int32 Index, UserClass* InUserObject, typename TMemFunPtrType<false, UserClass, void ( VarTypes...)>::Type InFunc, VarTypes... Vars)
 	{
-		FFunKStage& stage = EmplaceStage(StageName, Index, InUserObject, InFunc, Vars...);
-		stage.IsLatent = true;
-		return stage;
+		FFunKStage& Stage = EmplaceStage(StageName, Index, InUserObject, InFunc, Vars...);
+		Stage.IsLatent = true;
+		return Stage;
 	}
 
 private:
 	FFunKStage& EmplaceStage(const FName& StageName, const int32 Index)
 	{
-		FFunKStage& stage = Stages.EmplaceAt_GetRef(Index, FFunKStage());
-		stage.Name = StageName;
+		FFunKStage& Stage = Stages.EmplaceAt_GetRef(Index, FFunKStage());
+		Stage.Name = StageName;
 
-		OnStandaloneCount = OnStandaloneCount + (stage.IsOnStandalone ? 1 : 0);
-		OnDedicatedServerCount = OnDedicatedServerCount + (stage.IsOnDedicatedServer ? 1 : 0);
-		OnDedicatedServerClientCount = OnDedicatedServerClientCount + (stage.IsOnDedicatedServerClient ? 1 : 0);
-		OnListenServerCount = OnListenServerCount + (stage.IsOnListenServer ? 1 : 0);
-		OnListenServerClientCount = OnListenServerClientCount + (stage.IsOnListenServerClient ? 1 : 0);
+		OnStandaloneCount = OnStandaloneCount + (Stage.IsOnStandalone ? 1 : 0);
+		OnDedicatedServerCount = OnDedicatedServerCount + (Stage.IsOnDedicatedServer ? 1 : 0);
+		OnDedicatedServerClientCount = OnDedicatedServerClientCount + (Stage.IsOnDedicatedServerClient ? 1 : 0);
+		OnListenServerCount = OnListenServerCount + (Stage.IsOnListenServer ? 1 : 0);
+		OnListenServerClientCount = OnListenServerClientCount + (Stage.IsOnListenServerClient ? 1 : 0);
 		
-		return stage;
+		return Stage;
 	}
 };

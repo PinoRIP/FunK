@@ -10,9 +10,9 @@ UFunKTestRunner* UFunKEngineSubsystem::StartTestRunner()
 	return SetupTestRun(EFunKTestRunnerType::LocalInProc);
 }
 
-UFunKTestRunner* UFunKEngineSubsystem::ConnectTestRunner(bool isRemote)
+UFunKTestRunner* UFunKEngineSubsystem::ConnectTestRunner(const bool IsRemote)
 {
-	return SetupTestRun(isRemote ? EFunKTestRunnerType::RemoteExt : EFunKTestRunnerType::LocalExt);
+	return SetupTestRun(IsRemote ? EFunKTestRunnerType::RemoteExt : EFunKTestRunnerType::LocalExt);
 }
 
 UFunKTestRunner* UFunKEngineSubsystem::GetTestRunner() const

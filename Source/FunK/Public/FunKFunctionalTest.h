@@ -62,8 +62,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="FunK|Setup|Assert", meta=(EditCondition="LatentAssert"))
 	FFunKTimeLimit AssertTimeLimit;
 
-	virtual void SetupStages(FFunKStagesSetup& stages) override final;
-	virtual void SetupFunctionalTestStages(FFunKStagesSetup& stages);
+	virtual void SetupStages(FFunKStagesSetup& StageSetup) override final;
+	virtual void SetupFunctionalTestStages(FFunKStagesSetup& StageSetup);
 
 	void InvokeAssume();
 	void InvokeArrange();

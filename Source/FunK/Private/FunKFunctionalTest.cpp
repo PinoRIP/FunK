@@ -13,11 +13,11 @@ AFunKFunctionalTest::AFunKFunctionalTest()
 	AssertTimeLimit.Message = FText::FromString("Assertion time limit reached");
 }
 
-void AFunKFunctionalTest::SetupStages(FFunKStagesSetup& stages)
+void AFunKFunctionalTest::SetupStages(FFunKStagesSetup& StageSetup)
 {
-	SetupFunctionalTestStages(stages);
+	SetupFunctionalTestStages(StageSetup);
 
-	auto Iterator = stages.GetStageSetupBaseIterator();
+	auto Iterator = StageSetup.GetStageSetupBaseIterator();
 	while (Iterator.Next())
 	{
 		Iterator.Get()
@@ -29,14 +29,14 @@ void AFunKFunctionalTest::SetupStages(FFunKStagesSetup& stages)
 	}
 }
 
-void AFunKFunctionalTest::SetupFunctionalTestStages(FFunKStagesSetup& stages)
+void AFunKFunctionalTest::SetupFunctionalTestStages(FFunKStagesSetup& StageSetup)
 {
-	stages
+	StageSetup
 		.AddNamedStage<AFunKFunctionalTest>("Assume", &AFunKFunctionalTest::InvokeAssume);
 
-	Super::SetupStages(stages);
+	Super::SetupStages(StageSetup);
 	
-	stages.AddNamedLatentStage<AFunKFunctionalTest>("Arrange", &AFunKFunctionalTest::InvokeArrange)
+	StageSetup.AddNamedLatentStage<AFunKFunctionalTest>("Arrange", &AFunKFunctionalTest::InvokeArrange)
 		.UpdateTimeLimit(ArrangeTimeLimit)
 		.WithOptionalBpTickDelegate(AFunKFunctionalTest, BpArrangeTick)
 	
@@ -46,13 +46,13 @@ void AFunKFunctionalTest::SetupFunctionalTestStages(FFunKStagesSetup& stages)
 
 	if (LatentAssert)
 	{
-		stages.AddNamedLatentStage<AFunKFunctionalTest>("Assert", &AFunKFunctionalTest::InvokeAssert)
+		StageSetup.AddNamedLatentStage<AFunKFunctionalTest>("Assert", &AFunKFunctionalTest::InvokeAssert)
 			.UpdateTimeLimit(AssertTimeLimit)
 			.WithOptionalBpTickDelegate(AFunKFunctionalTest, BpAssertTick);
 	}
 	else
 	{
-		stages.AddNamedStage<AFunKFunctionalTest>("Assert", &AFunKFunctionalTest::InvokeAssert);
+		StageSetup.AddNamedStage<AFunKFunctionalTest>("Assert", &AFunKFunctionalTest::InvokeAssert);
 	}
 }
 

@@ -144,7 +144,7 @@ public:
 	virtual bool IsReady(UFunKTestFragment* Instance, int32 Index) override;
 
 private:
-	virtual void Begin(int32 index);
+	virtual void Begin(int32 Index);
 	virtual bool IsReady();
 	virtual void Finish();
 	virtual FString GetLogName() const override;

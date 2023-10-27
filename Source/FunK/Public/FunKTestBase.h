@@ -233,7 +233,7 @@ protected:
 	virtual void OnFinish(const FString& Message);
 
 	// Called to configure the stages
-	virtual void SetupStages(FFunKStagesSetup& stages);
+	virtual void SetupStages(FFunKStagesSetup& StageSetup);
 
 	// Gets a specific stage
 	const FFunKStage* GetStage(int32 StageIndex) const;
@@ -364,7 +364,7 @@ public:
 	virtual void GetAssetRegistryTags(TArray<FAssetRegistryTag>& OutTags) const override;
 #endif // WITH_EDITOR
 
-	void BuildTestRegistry(FString& append) const;
+	void BuildTestRegistry(FString& Append) const;
 	bool IsBpEventImplemented(const FName& Name) const;
 
 protected:

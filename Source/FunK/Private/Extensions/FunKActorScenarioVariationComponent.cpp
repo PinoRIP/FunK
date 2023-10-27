@@ -68,7 +68,7 @@ bool UFunKActorScenarioVariationComponent::IsReady(UFunKTestFragment* Instance, 
 	return Instance != nullptr && Cast<UFunKActorScenarioVariationFragment>(Instance) && IsReady();
 }
 
-void UFunKActorScenarioVariationComponent::Begin(int32 index)
+void UFunKActorScenarioVariationComponent::Begin(const int32 Index)
 {
 	const EFunKTestEnvironmentType Environment = GetEnvironment();
 	if (Environment == EFunKTestEnvironmentType::Standalone || Environment == EFunKTestEnvironmentType::DedicatedServer)
@@ -77,7 +77,7 @@ void UFunKActorScenarioVariationComponent::Begin(int32 index)
 	}
 	else
 	{
-		Mode = index == 0 ? EFunKActorScenarioMode::ClientToServer : index == 1 ? EFunKActorScenarioMode::ServerToClient : EFunKActorScenarioMode::ClientToClient;
+		Mode = Index == 0 ? EFunKActorScenarioMode::ClientToServer : Index == 1 ? EFunKActorScenarioMode::ServerToClient : EFunKActorScenarioMode::ClientToClient;
 	}
 
 	const ENetMode NetMode = GetNetMode();

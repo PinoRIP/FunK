@@ -131,29 +131,29 @@ private:
 	
 	static FString GetComparisonName(EFunKAssertionComparisonMethod Comparison);
 	template <typename T>
-	static bool PerformComparison(const T& lhs, const T& rhs, EFunKAssertionComparisonMethod comparison)
+	static bool PerformComparison(const T& A, const T& B, const EFunKAssertionComparisonMethod Comparison)
 	{
-		switch (comparison)
+		switch (Comparison)
 		{
 		case EFunKAssertionComparisonMethod::EqualTo:
-			return lhs == rhs;
+			return A == B;
 
 		case EFunKAssertionComparisonMethod::NotEqualTo:
-			return lhs != rhs;
+			return A != B;
 
 		case EFunKAssertionComparisonMethod::GreaterThanOrEqualTo:
-			return lhs >= rhs;
+			return A >= B;
 
 		case EFunKAssertionComparisonMethod::LessThanOrEqualTo:
-			return lhs <= rhs;
+			return A <= B;
 
 		case EFunKAssertionComparisonMethod::GreaterThan:
-			return lhs > rhs;
+			return A > B;
 
 		case EFunKAssertionComparisonMethod::LessThan:
-			return lhs < rhs;
+			return A < B;
 		default:
-			UE_LOG(FunKLog, Error, TEXT("Invalid comparison method: %s"), *GetComparisonName(comparison));
+			UE_LOG(FunKLog, Error, TEXT("Invalid comparison method: %s"), *GetComparisonName(Comparison));
 			return false;
 		}
 	}

@@ -4,24 +4,24 @@
 #include "Util/FunKConsoleBlueprintLibrary.h"
 #include "FunKLogging.h"
 
-#define GetConsoleVar(Name, IsValid, Default) IConsoleVariable* Variable = GetVariable(Name, IsValid); if (!IsValid) return Default;
-#define ProxyGetConsoleVariable(Name, Func) bool IsValid = false; auto Result = Func(Name, IsValid); if (!IsValid) UE_LOG(FunKLog, Warning, TEXT("Invalid console variable %s"), *Name); return Result;
-#define ProxySetConsoleVariable(Name, Value, Func) bool IsValid = false; auto Result = Func(Name, Value, IsValid); if (!IsValid) UE_LOG(FunKLog, Warning, TEXT("Invalid console variable %s"), *Name); return Result;
+#define GET_CONSOLE_VAR(Name, IsValid, Default) IConsoleVariable* Variable = GetVariable(Name, IsValid); if (!IsValid) return Default;
+#define PROXY_GET_CONSOLE_VARIABLE(Name, Func) bool IsValid = false; auto Result = Func(Name, IsValid); if (!IsValid) UE_LOG(FunKLog, Warning, TEXT("Invalid console variable %s"), *Name); return Result;
+#define PROXY_SET_CONSOLE_VARIABLE(Name, Value, Func) bool IsValid = false; auto Result = Func(Name, Value, IsValid); if (!IsValid) UE_LOG(FunKLog, Warning, TEXT("Invalid console variable %s"), *Name); return Result;
 
 FString UFunKConsoleBlueprintLibrary::GetConsoleVariable(const FString& Name, bool& IsValid)
 {
-	GetConsoleVar(Name, IsValid, "");
+	GET_CONSOLE_VAR(Name, IsValid, "");
 	return Variable->GetString();	
 }
 
 FString UFunKConsoleBlueprintLibrary::GetConsoleVariable(const FString& Name)
 {
-	ProxyGetConsoleVariable(Name, GetConsoleVariable);
+	PROXY_GET_CONSOLE_VARIABLE(Name, GetConsoleVariable);
 }
 
 FString UFunKConsoleBlueprintLibrary::SetConsoleVariable(const FString& Name, const FString& Value, bool& IsValid)
 {
-	GetConsoleVar(Name, IsValid, "");
+	GET_CONSOLE_VAR(Name, IsValid, "");
 
 	FString OldValue = Variable->GetString();
 
@@ -32,23 +32,23 @@ FString UFunKConsoleBlueprintLibrary::SetConsoleVariable(const FString& Name, co
 
 FString UFunKConsoleBlueprintLibrary::SetConsoleVariable(const FString& Name, const FString& Value)
 {
-	ProxySetConsoleVariable(Name, Value, SetConsoleVariable);
+	PROXY_SET_CONSOLE_VARIABLE(Name, Value, SetConsoleVariable);
 }
 
 float UFunKConsoleBlueprintLibrary::GetConsoleVariableFloat(const FString& Name, bool& IsValid)
 {
-	GetConsoleVar(Name, IsValid, 0.f);
+	GET_CONSOLE_VAR(Name, IsValid, 0.f);
 	return Variable->GetFloat();	
 }
 
 float UFunKConsoleBlueprintLibrary::GetConsoleVariableFloat(const FString& Name)
 {
-	ProxyGetConsoleVariable(Name, GetConsoleVariableFloat);
+	PROXY_GET_CONSOLE_VARIABLE(Name, GetConsoleVariableFloat);
 }
 
 float UFunKConsoleBlueprintLibrary::SetConsoleVariableFloat(const FString& Name, float Value, bool& IsValid)
 {
-	GetConsoleVar(Name, IsValid, 0.f);
+	GET_CONSOLE_VAR(Name, IsValid, 0.f);
 
 	const float OldValue = Variable->GetFloat();
 
@@ -59,23 +59,23 @@ float UFunKConsoleBlueprintLibrary::SetConsoleVariableFloat(const FString& Name,
 
 float UFunKConsoleBlueprintLibrary::SetConsoleVariableFloat(const FString& Name, float Value)
 {
-	ProxySetConsoleVariable(Name, Value, SetConsoleVariableFloat);
+	PROXY_SET_CONSOLE_VARIABLE(Name, Value, SetConsoleVariableFloat);
 }
 
 bool UFunKConsoleBlueprintLibrary::GetConsoleVariableBool(const FString& Name, bool& IsValid)
 {
-	GetConsoleVar(Name, IsValid, false);
+	GET_CONSOLE_VAR(Name, IsValid, false);
 	return Variable->GetBool();	
 }
 
 bool UFunKConsoleBlueprintLibrary::GetConsoleVariableBool(const FString& Name)
 {
-	ProxyGetConsoleVariable(Name, GetConsoleVariableBool);
+	PROXY_GET_CONSOLE_VARIABLE(Name, GetConsoleVariableBool);
 }
 
 bool UFunKConsoleBlueprintLibrary::SetConsoleVariableBool(const FString& Name, bool Value, bool& IsValid)
 {
-	GetConsoleVar(Name, IsValid, false);
+	GET_CONSOLE_VAR(Name, IsValid, false);
 
 	const bool OldValue = Variable->GetBool();
 
@@ -86,23 +86,23 @@ bool UFunKConsoleBlueprintLibrary::SetConsoleVariableBool(const FString& Name, b
 
 bool UFunKConsoleBlueprintLibrary::SetConsoleVariableBool(const FString& Name, bool Value)
 {
-	ProxySetConsoleVariable(Name, Value, SetConsoleVariableBool);
+	PROXY_SET_CONSOLE_VARIABLE(Name, Value, SetConsoleVariableBool);
 }
 
 int32 UFunKConsoleBlueprintLibrary::GetConsoleVariableInt(const FString& Name, bool& IsValid)
 {
-	GetConsoleVar(Name, IsValid, 0);
+	GET_CONSOLE_VAR(Name, IsValid, 0);
 	return Variable->GetInt();	
 }
 
 int32 UFunKConsoleBlueprintLibrary::GetConsoleVariableInt(const FString& Name)
 {
-	ProxyGetConsoleVariable(Name, GetConsoleVariableInt);
+	PROXY_GET_CONSOLE_VARIABLE(Name, GetConsoleVariableInt);
 }
 
 int32 UFunKConsoleBlueprintLibrary::SetConsoleVariableInt(const FString& Name, int32 Value, bool& IsValid)
 {
-	GetConsoleVar(Name, IsValid, 0);
+	GET_CONSOLE_VAR(Name, IsValid, 0);
 
 	const int32 OldValue = Variable->GetInt();
 
@@ -113,7 +113,7 @@ int32 UFunKConsoleBlueprintLibrary::SetConsoleVariableInt(const FString& Name, i
 
 int32 UFunKConsoleBlueprintLibrary::SetConsoleVariableInt(const FString& Name, int32 Value)
 {
-	ProxySetConsoleVariable(Name, Value, SetConsoleVariableInt);
+	PROXY_SET_CONSOLE_VARIABLE(Name, Value, SetConsoleVariableInt);
 }
 
 IConsoleVariable* UFunKConsoleBlueprintLibrary::GetVariable(const FString& Name, bool& IsValid)
