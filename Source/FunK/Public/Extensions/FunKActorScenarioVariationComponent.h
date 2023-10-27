@@ -10,7 +10,7 @@
 #include "FunKActorScenarioVariationComponent.generated.h"
 
 class UFunKActorScenarioVariationComponent;
-class UFunKActorScenarioVariationSceneActorResetHandler;
+class UFunKSceneActorResetHandler;
 
 UENUM(BlueprintType)
 enum class EFunKActorScenarioVariationOwnership : uint8
@@ -60,7 +60,7 @@ public:
 	AActor* Actor = nullptr;
 
 	UPROPERTY(EditAnywhere, meta=(EditCondition="Actor"))
-	TSubclassOf<UFunKActorScenarioVariationSceneActorResetHandler> ResetHandlerClass;
+	TSubclassOf<UFunKSceneActorResetHandler> ResetHandlerClass;
 
 	operator bool() const
 	{
@@ -173,6 +173,9 @@ private:
 
 	UPROPERTY(Transient)
 	TArray<AActor*> InitialActorStates;
+
+	UPROPERTY(Transient)
+	TMap<AActor*, UFunKSceneActorResetHandler*> ResetHandlers;
 	
 public:
 	UFUNCTION(BlueprintCallable)

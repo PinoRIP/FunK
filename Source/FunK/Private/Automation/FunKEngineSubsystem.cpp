@@ -62,7 +62,7 @@ UFunKTestRunner* UFunKEngineSubsystem::SetupTestRun(EFunKTestRunnerType RunType)
 {
 	EndTestRun();
 
-	const UClass* TestRunnerClass = GetDefault<UFunKSettingsObject>()->Settings.TestRunnerClassOverride.Get();
+	const UClass* TestRunnerClass = nullptr; // GetDefault<UFunKSettingsObject>()->Settings.TestRunnerClassOverride.Get();
 	ActiveTestRun = TestRunnerClass
 		? NewObject<UFunKTestRunner>(this, TestRunnerClass)
 		: NewObject<UFunKTestRunner>(this);

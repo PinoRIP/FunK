@@ -6,9 +6,8 @@
 #include "GameFramework/PlayerController.h"
 #include "Net/UnrealNetwork.h"
 #include "Util/FunKUtilBlueprintFunctionLibrary.h"
-#include "Extensions/FunKActorScenarioVariationSceneActorResetHandler.h"
+#include "Extensions/FunKSceneActorResetHandler.h"
 
-class UProperty;
 
 void UFunKActorScenarioVariationFragment::OnAdded()
 {
@@ -207,6 +206,11 @@ AActor* UFunKActorScenarioVariationComponent::GetSceneActor(const FFunKActorScen
 
 	//Actor->FinishSpawning(VariationActor.SceneActor->GetTransform());
 
+	UFunKSceneActorResetHandler* Handler = NewObject<UFunKSceneActorResetHandler>(this, VariationActor.SceneActor.ResetHandlerClass);
+	Handler->Capture(VariationActor.SceneActor.Actor);
+
+	ResetHandlers.Add(VariationActor.SceneActor.Actor, Handler);
+	
 	//InitialActorStates.Add(Actor);
 	return VariationActor.SceneActor.Actor;
 }
@@ -279,8 +283,10 @@ void UFunKActorScenarioVariationComponent::ReleaseSceneActor(AActor* Actor, cons
 	
 	// Actor->Reset();
 
-	const UFunKActorScenarioVariationSceneActorResetHandler* Handler = NewObject<UFunKActorScenarioVariationSceneActorResetHandler>();
-	Handler->Reset(Actor);	
+	UFunKSceneActorResetHandler* Handler = ResetHandlers[Actor];
+	Handler->Reset(Actor);
+
+	ResetHandlers.Remove(Actor);
 }
 
 //void UFunKActorScenarioVariationComponent::CopyPropertiesFromTo(UObject* From, UObject* To)

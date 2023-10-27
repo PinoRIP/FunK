@@ -33,8 +33,8 @@ public:
 	TSubclassOf<AFunKWorldTestController> WorldTestControllerClassOverride;
 
 	// Test runner used
-	UPROPERTY(config, EditAnywhere, Category = Global)
-	TSubclassOf<UFunKTestRunner> TestRunnerClassOverride;
+	// UPROPERTY(config, EditAnywhere, Category = Global)
+	// TSubclassOf<UFunKTestRunner> TestRunnerClassOverride;
 
 	// Run under one process (Is more performant but less "realistic"?)
 	UPROPERTY(config, EditAnywhere, Category = Global)

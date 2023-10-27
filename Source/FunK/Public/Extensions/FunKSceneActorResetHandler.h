@@ -4,16 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
-#include "FunKActorScenarioVariationSceneActorResetHandler.generated.h"
+#include "FunKSceneActorResetHandler.generated.h"
 
 /**
  * Handler to reset a level actor.
  */
 UCLASS(Abstract)
-class FUNK_API UFunKActorScenarioVariationSceneActorResetHandler : public UObject
+class FUNK_API UFunKSceneActorResetHandler : public UObject
 {
 	GENERATED_BODY()
 
 public:
-	virtual void Reset(AActor* Actor) const;
+	virtual void Capture(AActor* Actor);
+	virtual void Reset(AActor* Actor);
 };
