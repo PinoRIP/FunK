@@ -19,7 +19,7 @@ class UFunKNetworkEmulationFragment : public UFunKTestFragment
 public:
 	virtual void OnAdded() override;
 	virtual void OnRemoved() override;
-	virtual FString GetReadableIdent() const override;
+	virtual FString GetLogName() const override;
 	
 	UPROPERTY()
 	FFunKNetworkEmulation NetworkEmulation;

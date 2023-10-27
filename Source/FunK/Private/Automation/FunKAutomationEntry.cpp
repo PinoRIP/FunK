@@ -48,7 +48,7 @@ bool FFunKAutomationEntryRuntime::RunTest(const FString& Parameters)
 	
 	FString MapObjectPath, MapPackageName, MapTestName, Params;
 	ParseTestMapInfo(Parameters, MapObjectPath, MapPackageName, MapTestName, Params);
-	FFunKTestInstructions Instructions(MapObjectPath, MapPackageName, MapTestName, Params);
+	const FFunKTestInstructions Instructions(MapObjectPath, MapPackageName, MapTestName, Params);
 		
 	if (!EngineSubsystem->IsRunning())
 	{

@@ -235,7 +235,7 @@ private:
 struct FUNK_API FFunKLatentStageSetupPrivateAccessHelper
 {
 	/**
-	 * This should never be called directly. This is a helper for the "WithOptionalBpTickDelegate"-Makro for "FFunKLatentStageSetup"
+	 * This should never be called directly. This is a helper for the "WithOptionalBpTickDelegate"-Macro for "FFunKLatentStageSetup"
 	 */
 	template <typename UserClass, typename... VarTypes>
 	FORCEINLINE static FFunKLatentStageSetup& WithOptionalBpTickDelegateImpl(FFunKLatentStageSetup& Setup, const FName& Name, typename TMemFunPtrType<false, UserClass, void (float, VarTypes...)>::Type InFunc, VarTypes... Vars)

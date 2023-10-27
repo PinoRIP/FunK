@@ -161,7 +161,7 @@ bool UFunKAssertionBlueprintFunctionLibrary::AssertMatrixNotEqual(FMatrix Actual
 	return Assert([Actual, NotExpected, Tolerance]() { return !Actual.Equals(NotExpected, Tolerance); }, BuildMessage(What, NotExpected.ToString(), Actual.ToString(), EFunKAssertionComparisonMethod::NotEqualTo), Context);
 }
 
-bool UFunKAssertionBlueprintFunctionLibrary::Assert(const TFunctionRef<bool()>& Assertion, const FString& Message, UObject* Context, int32 StackOffset)
+bool UFunKAssertionBlueprintFunctionLibrary::Assert(const TFunctionRef<bool()>& Assertion, const FString& Message, UObject* Context, const int32 StackOffset)
 {
 	const bool bResult = Assertion();
 
@@ -189,18 +189,18 @@ bool UFunKAssertionBlueprintFunctionLibrary::Assert(const TFunctionRef<bool()>& 
 	return bResult;
 }
 
-FString UFunKAssertionBlueprintFunctionLibrary::GetComparisonName(EFunKAssertionComparisonMethod comparison)
+FString UFunKAssertionBlueprintFunctionLibrary::GetComparisonName(EFunKAssertionComparisonMethod Comparison)
 {
 	const UEnum* Enum = StaticEnum<EFunKAssertionComparisonMethod>();
-	return Enum->GetNameStringByValue(static_cast<uint8>(comparison));
+	return Enum->GetNameStringByValue(static_cast<uint8>(Comparison));
 }
 
-FString UFunKAssertionBlueprintFunctionLibrary::BuildMessage(const FString& What, const FString& Expected, const FString& Actual, EFunKAssertionComparisonMethod ComparisonMethod, const FString Ext)
+FString UFunKAssertionBlueprintFunctionLibrary::BuildMessage(const FString& What, const FString& Expected, const FString& Actual, const EFunKAssertionComparisonMethod ComparisonMethod, const FString& Ext)
 {
 	return FString::Printf(TEXT("%s: expected %s to be %s%s%s"), *What, *Actual, (ComparisonMethod == EFunKAssertionComparisonMethod::None ? TEXT("") : *GetComparisonName(ComparisonMethod)), *Expected, *Ext);
 }
 
-FString UFunKAssertionBlueprintFunctionLibrary::GetObjectName(UObject* object)
+FString UFunKAssertionBlueprintFunctionLibrary::GetObjectName(const UObject* Object)
 {
-	return object ? object->GetName() : "NULL";
+	return Object ? Object->GetName() : "NULL";
 }

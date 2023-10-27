@@ -20,16 +20,16 @@ public:
 		FEditorDelegates::BeginStandaloneLocalPlay.RemoveAll(this);
 	}
 
-	void GetProcessIds(TArray<uint32>& processIDs) const { processIDs = ProcessIDs; }
+	void GetProcessIds(TArray<uint32>& InProcessIDs) const { InProcessIDs = ProcessIDs; }
 	bool IsValid() const { return IsAnyProcessIdSet; }
 	
 private:
 	TArray<uint32> ProcessIDs;
 	bool IsAnyProcessIdSet;
 
-	void Callback(uint32 newProcessId)
+	void Callback(const uint32 NewProcessId)
 	{
 		IsAnyProcessIdSet = true;
-		ProcessIDs.Add(newProcessId);
+		ProcessIDs.Add(NewProcessId);
 	}
 };

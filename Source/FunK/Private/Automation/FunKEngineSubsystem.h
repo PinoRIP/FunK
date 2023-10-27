@@ -36,7 +36,7 @@ public:
 
 	static bool IsSeparateTestingProcess();
 
-	static void FunKDebug(FString msg);
+	static void FunKDebug(const FString& Msg);
 
 private:
 	UPROPERTY()

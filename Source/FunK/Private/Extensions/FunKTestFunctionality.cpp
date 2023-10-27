@@ -40,7 +40,7 @@ void UFunKTestFragment::OnRemoved()
 {
 }
 
-FString UFunKTestFragment::GetReadableIdent() const
+FString UFunKTestFragment::GetLogName() const
 {
 	return "";
 }

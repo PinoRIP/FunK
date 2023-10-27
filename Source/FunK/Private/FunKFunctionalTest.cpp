@@ -44,7 +44,7 @@ void AFunKFunctionalTest::SetupFunctionalTestStages(FFunKStagesSetup& stages)
 		.UpdateTimeLimit(ActTimeLimit)
 		.WithOptionalBpTickDelegate(AFunKFunctionalTest, BpActTick);
 
-	if(LatentAssert)
+	if (LatentAssert)
 	{
 		stages.AddNamedLatentStage<AFunKFunctionalTest>("Assert", &AFunKFunctionalTest::InvokeAssert)
 			.UpdateTimeLimit(AssertTimeLimit)
@@ -58,7 +58,7 @@ void AFunKFunctionalTest::SetupFunctionalTestStages(FFunKStagesSetup& stages)
 
 void AFunKFunctionalTest::InvokeAssume()
 {
-	if(!Assume())
+	if (!Assume())
 	{
 		FinishStage(EFunKStageResult::Skipped, "Assumption not met");
 	}
@@ -66,7 +66,7 @@ void AFunKFunctionalTest::InvokeAssume()
 
 void AFunKFunctionalTest::InvokeArrange()
 {
-	if(Arrange())
+	if (Arrange())
 	{
 		FinishStage();
 	}
@@ -74,7 +74,7 @@ void AFunKFunctionalTest::InvokeArrange()
 
 void AFunKFunctionalTest::InvokeAssert()
 {
-	if(Assert() || !LatentAssert)
+	if (Assert() || !LatentAssert)
 	{
 		FinishStage();
 	}
@@ -92,7 +92,7 @@ bool AFunKFunctionalTest::BpAssume_Implementation()
 
 bool AFunKFunctionalTest::Arrange()
 {
-	if(IsBpEventImplemented(GET_FUNCTION_NAME_CHECKED(AFunKFunctionalTest, BpArrange)))
+	if (IsBpEventImplemented(GET_FUNCTION_NAME_CHECKED(AFunKFunctionalTest, BpArrange)))
 	{
 		BpArrange();
 		return false;
@@ -120,7 +120,7 @@ void AFunKFunctionalTest::BpActTick_Implementation(float DeltaTime)
 
 bool AFunKFunctionalTest::Assert()
 {
-	if(IsBpEventImplemented(GET_FUNCTION_NAME_CHECKED(AFunKFunctionalTest, BpAssert)))
+	if (IsBpEventImplemented(GET_FUNCTION_NAME_CHECKED(AFunKFunctionalTest, BpAssert)))
 	{
 		BpAssert();
 		return false;

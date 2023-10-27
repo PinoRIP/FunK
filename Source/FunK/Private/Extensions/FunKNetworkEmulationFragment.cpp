@@ -74,7 +74,7 @@ void UFunKNetworkEmulationFragment::OnRemoved()
 	InitialDriverSettings.Empty();
 }
 
-FString UFunKNetworkEmulationFragment::GetReadableIdent() const
+FString UFunKNetworkEmulationFragment::GetLogName() const
 {
 	const FFunKNetworkEmulation& Emulation = NetworkEmulation;
 	return Emulation.UseCustomSettings

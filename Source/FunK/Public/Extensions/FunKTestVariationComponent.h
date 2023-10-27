@@ -20,7 +20,7 @@ class UFunKTestVariationNoFragment : public UFunKTestFragment
 	GENERATED_BODY()
 
 public:
-	virtual FString GetReadableIdent() const override;
+	virtual FString GetLogName() const override;
 };
 
 /*
@@ -47,4 +47,6 @@ public:
 
 	// Callback when a fragment is in use. (When the fragment is networked, on clients this will be the replicated version instead the one provided by "GetFragment")
 	virtual void OnUsing(UFunKTestFragment* Instance);
+
+	virtual FString GetLogName() const;
 };

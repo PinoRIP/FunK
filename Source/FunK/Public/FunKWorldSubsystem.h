@@ -43,7 +43,7 @@ public:
 	// true when the server is dedicated (works on clients)
 	bool IsServerDedicated() const;
 
-	// Gets the informations about all shared variations.
+	// Gets the information about all shared variations.
 	const FFunKWorldVariations& GetWorldVariations();
 
 	virtual void OnWorldBeginPlay(UWorld& InWorld) override;

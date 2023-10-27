@@ -86,5 +86,6 @@ class FUNK_API UFunKNetworkEmulationTypesHelper : public UObject
 
 public:
 	UFUNCTION(CallInEditor, BlueprintCallable, Category = "FunK|Setup")
+	// ReSharper disable once CppUEBlueprintCallableFunctionUnused
 	static TArray<FString> GetProfileOptions();
 };

@@ -4,7 +4,7 @@
 #include "Extensions/FunKTestVariationComponent.h"
 
 
-FString UFunKTestVariationNoFragment::GetReadableIdent() const
+FString UFunKTestVariationNoFragment::GetLogName() const
 {
 	return "No fragment";
 }
@@ -31,4 +31,9 @@ bool UFunKTestVariationComponent::IsReady(UFunKTestFragment* Instance, int32 Ind
 
 void UFunKTestVariationComponent::OnUsing(UFunKTestFragment* Instance)
 {
+}
+
+FString UFunKTestVariationComponent::GetLogName() const
+{
+	return GetName();
 }

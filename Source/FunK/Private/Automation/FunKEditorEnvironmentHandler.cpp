@@ -96,15 +96,25 @@ bool UFunKEditorEnvironmentHandler::IsEnvironmentRunning(const FFunKTestInstruct
 	return true;
 }
 
-bool UFunKEditorEnvironmentHandler::IsWrongEnvironmentType(const FFunKTestInstructions& Instructions)
+bool UFunKEditorEnvironmentHandler::IsWrongEnvironmentType(const FFunKTestInstructions& Instructions) const
 {
 	const UWorld* PotentialWorld = GetCurrentPieWorldContext()->World();
 	const ENetMode NetMode = GetCurrentPieWorldContext()->World()->GetNetMode();
-	if (NetMode == NM_Standalone && Instructions.IsStandaloneTest()) return false;
-	if (NetMode == NM_ListenServer && Instructions.IsListenServerTest()) return false;
-	if (NetMode == NM_DedicatedServer && Instructions.IsDedicatedServerTest()) return false;
-	if (NetMode != NM_Client) return true;
-	if (Instructions.IsStandaloneTest()) return true;
+	
+	if (NetMode == NM_Standalone && Instructions.IsStandaloneTest())
+		return false;
+	
+	if (NetMode == NM_ListenServer && Instructions.IsListenServerTest())
+		return false;
+	
+	if (NetMode == NM_DedicatedServer && Instructions.IsDedicatedServerTest())
+		return false;
+	
+	if (NetMode != NM_Client)
+		return true;
+	
+	if (Instructions.IsStandaloneTest())
+		return true;
 	
 	const UFunKWorldSubsystem* Subsystem = PotentialWorld->GetSubsystem<UFunKWorldSubsystem>();
 	if (!Subsystem)
@@ -170,7 +180,7 @@ bool UFunKEditorEnvironmentHandler::StartEnvironment(const FFunKTestInstructions
 	Params.GlobalMapOverride = Instructions.MapPackageName;
 	Params.AdditionalStandaloneCommandLineParameters = FFunKModule::FunkTestStartParameter;
 
-	if (FProperty* Property = ULevelEditorPlaySettings::StaticClass()->FindPropertyByName(FName("ServerMapNameOverride")))
+	if (const FProperty* Property = ULevelEditorPlaySettings::StaticClass()->FindPropertyByName(FName("ServerMapNameOverride")))
 	{
 		Property->SetValue_InContainer(Params.EditorPlaySettings, &Instructions.MapPackageName);
 	}

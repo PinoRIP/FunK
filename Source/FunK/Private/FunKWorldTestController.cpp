@@ -43,7 +43,7 @@ void AFunKWorldTestController::Tick(float DeltaTime)
 	else if (!IsWaitingForTimeout)
 	{
 		const FFunKStage* Stage = CurrentTest->GetCurrentStage();
-		if(Stage && !Stage->TimeLimit.IsLimitless() && Stage->TimeLimit.IsTimeout(CurrentTest->GetCurrentStageExecutionTime()))
+		if (Stage && !Stage->TimeLimit.IsLimitless() && Stage->TimeLimit.IsTimeout(CurrentTest->GetCurrentStageExecutionTime()))
 		{
 			CurrentTest->FinishTest(Stage->TimeLimit.Result, Stage->TimeLimit.Message.ToString());
 			IsWaitingForTimeout = true;
@@ -71,7 +71,7 @@ void AFunKWorldTestController::ExecuteTestByName(FString TestName)
 	for (TActorIterator<AFunKTestBase> ActorItr(GetWorld(), AFunKTestBase::StaticClass(), EActorIteratorFlags::AllActors); ActorItr; ++ActorItr)
 	{
 		AFunKTestBase* FunctionalTest = *ActorItr;
-		if(TestName == FunctionalTest->GetName())
+		if (TestName == FunctionalTest->GetName())
 		{
 			Tests.Add(FunctionalTest);
 			ExecuteTests();
@@ -101,7 +101,9 @@ bool AFunKWorldTestController::IsFinished() const
 void AFunKWorldTestController::ExecuteTests()
 {
 	TestRunID = FMath::Rand();
-	if(TestRunID == 0) TestRunID = 1;
+	
+	if (TestRunID == 0)
+		TestRunID = 1;
 	
 	Seed = FMath::Rand();
 	
@@ -110,17 +112,17 @@ void AFunKWorldTestController::ExecuteTests()
 
 bool AFunKWorldTestController::Next()
 {
-	if(LastTest)
+	if (LastTest)
 	{
 		CurrentVariation++;
-		if(LastTest->GetTestVariationCount() > CurrentVariation)
+		if (LastTest->GetTestVariationCount() > CurrentVariation)
 		{
 			CurrentTest = LastTest;
 			return true;
 		}
 	}
 	
-	if(Tests.Num() <= 0)
+	if (Tests.Num() <= 0)
 	{
 		End();
 		return false;
@@ -128,13 +130,15 @@ bool AFunKWorldTestController::Next()
 	
 	IsWaitingForTimeout = false;
 	CurrentTestStageWaitingTime = 0;
-	const int32 last = Tests.Num() - 1;
-	AFunKTestBase* NextTest = Tests[last];
-	if(NextTest->IsRunning()) return false;
+	
+	const int32 Last = Tests.Num() - 1;
+	AFunKTestBase* NextTest = Tests[Last];
+	if (NextTest->IsRunning())
+		return false;
 	
 	CurrentTest = NextTest;
 	CurrentVariation = 0;
-	Tests.RemoveAt(last);
+	Tests.RemoveAt(Last);
 	
 	return true;
 }

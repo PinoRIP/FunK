@@ -39,7 +39,7 @@ class FUNK_API UFunKTestRunner : public UObject
 	GENERATED_BODY()
 
 public:
-	virtual void Init(UFunKEngineSubsystem* FunKEngineSubsystem, EFunKTestRunnerType RunType);
+	virtual void Init(UFunKEngineSubsystem* FunKEngineSubsystem, EFunKTestRunnerType InType);
 	
 	virtual bool Start(const FFunKTestInstructions& Instructions);
 	virtual bool Update();
@@ -48,7 +48,7 @@ public:
 	virtual void RaiseInfoEvent(const FString& Message, const FString& Context = "") const;
 	virtual void RaiseWarningEvent(const FString& Message, const FString& Context = "") const;
 	virtual void RaiseErrorEvent(const FString& Message, const FString& Context = "") const;
-	virtual void RaiseEvent(const FFunKEvent& raisedEvent) const;
+	virtual void RaiseEvent(const FFunKEvent& RaisedEvent) const;
 
 	bool IsRunning() const;
 	EFunKTestRunnerType GetType() const { return Type; }
@@ -57,7 +57,7 @@ public:
 	AFunKWorldTestController* GetCurrentWorldController() const;
 	
 protected:
-	virtual void UpdateState(EFunKTestRunnerState newState);
+	virtual void UpdateState(EFunKTestRunnerState NewState);
 	
 private:
 	EFunKTestRunnerType Type = EFunKTestRunnerType::None;

@@ -362,16 +362,16 @@ void AFunKTestBase::OnNetworkedFragmentsReceived(const FFunKTestNetworkedFragmen
 		{
 			AddTestFragment(Event.Fragments[i], i);
 
-			if(i == 0)
+			if (i == 0)
 			{
 				if (TestVariations.RootVariations)
 					TestVariations.RootVariations->OnUsing(Event.Fragments[i]);
-				else if(CurrentVariationComponent)
+				else if (CurrentVariationComponent)
 					CurrentVariationComponent->OnUsing(Event.Fragments[i]);
 			}
 			else if (i == 1)
 			{
-				if(TestVariations.RootVariations && CurrentVariationComponent)
+				if (TestVariations.RootVariations && CurrentVariationComponent)
 					CurrentVariationComponent->OnUsing(Event.Fragments[i]);
 			}
 		}
@@ -386,11 +386,10 @@ void AFunKTestBase::FinishStage()
 void AFunKTestBase::FinishStage(EFunKStageResult StageResult, const FString& Message)
 {
 	if (Result != EFunKTestResult::None)
-	{
 		return;
-	}
 
-	if(IsLocalStageFinished) return;
+	if (IsLocalStageFinished)
+		return;
 
 	IsLocalStageFinished = true;
 
@@ -404,7 +403,7 @@ void AFunKTestBase::FinishStage(EFunKStageResult StageResult, const FString& Mes
 	OnFinishStage(StageResult, Message);
 }
 
-void AFunKTestBase::OnFinishStage(EFunKStageResult StageResult, FString Message)
+void AFunKTestBase::OnFinishStage(const EFunKStageResult StageResult, FString Message)
 {
 	OnFinishStageFragments();
 	ClearFragments(StageFragments);
@@ -808,9 +807,9 @@ void AFunKTestBase::ArrangeVariation()
 void AFunKTestBase::ArrangeVariationTick(float DeltaTime)
 {
 	const FFunKTestVariations& TestVariations = GetTestVariations();
-	if(IsVariationComponentReady(TestVariations.RootVariations, CurrentRootVariation) && IsVariationComponentReady(CurrentVariationComponent, CurrentVariation))
+	if (IsVariationComponentReady(TestVariations.RootVariations, CurrentRootVariation) && IsVariationComponentReady(CurrentVariationComponent, CurrentVariation))
 	{
-		if(GetNetMode() != NM_DedicatedServer)
+		if (GetNetMode() != NM_DedicatedServer)
 			ViewObservationPoint();
 		
 		FinishStage();
@@ -888,7 +887,7 @@ int32 AFunKTestBase::GetVariationComponentFragmentIndex(const UFunKTestVariation
 FString AFunKTestBase::GetVariationComponentFragmentName(const UFunKTestVariationComponent* VariationComponent) const
 {
 	const UFunKTestFragment* Fragment = GetVariationComponentFragment(VariationComponent);
-	return Fragment ? Fragment->GetReadableIdent() : "";
+	return Fragment ? Fragment->GetLogName() : "";
 }
 
 UFunKTestFragment* AFunKTestBase::GetVariationComponentFragment(const UFunKTestVariationComponent* VariationComponent) const
@@ -1040,7 +1039,7 @@ void AFunKTestBase::SetCurrentVariation(int32 Variation)
 		for (UFunKTestVariationComponent* VariationComponent : TestVariations.Variations)
 		{
 			const int32 VariationCount = VariationComponent->GetCount();
-			if(VariationCount > CurrentVariation)
+			if (VariationCount > CurrentVariation)
 			{
 				CurrentVariationComponent = VariationComponent;
 				return;

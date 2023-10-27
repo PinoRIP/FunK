@@ -42,7 +42,7 @@ public:
 		: Type(InType)
 		, Message(InMessage)
 	{
-		if(!InContext.IsEmpty())
+		if (!InContext.IsEmpty())
 			Context.Add(InContext);
 	}
 

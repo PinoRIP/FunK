@@ -84,7 +84,7 @@ void UFunKEventBusSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 		FGameModeEvents::GameModeLogoutEvent.AddUObject(this, &UFunKEventBusSubsystem::OnDisconnect);
 
 		FConstPlayerControllerIterator Iterator = InWorld.GetPlayerControllerIterator();
-		if(NetMode == NM_ListenServer)
+		if (NetMode == NM_ListenServer)
 			++Iterator; // Playable server doesn't need a replication controller
 
 		for (; Iterator; ++Iterator)
@@ -146,7 +146,7 @@ void UFunKEventBusSubsystem::CheckCallback(FGuid CallbackId, AFunKEventBusReplic
 		return;
 	
 	FFunKEventCallbackState* CallbackState = Callbacks.Find(CallbackId);
-	if(!CallbackState)
+	if (!CallbackState)
 		return;
 
 	if (FromController)
@@ -198,6 +198,7 @@ void UFunKEventBusSubsystem::OnConnect(AGameModeBase* GameMode, APlayerControlle
 	RegisterController(NewPlayer);
 }
 
+// ReSharper disable once CppParameterMayBeConstPtrOrRef
 void UFunKEventBusSubsystem::OnDisconnect(AGameModeBase* GameMode, AController* Controller)
 {
 	DeregisterController(Controller);
@@ -255,11 +256,11 @@ void UFunKEventBusSubsystem::DeregisterController(const AController* Controller)
 	for (int i = 0; i < ReplicationControllers.Num(); ++i)
 	{
 		const FReplicationControllerState& ReplicationControllerToRemove = ReplicationControllers[i];
-		if(ReplicationControllerToRemove.Reference->GetOwner() == Controller)
+		if (ReplicationControllerToRemove.Reference->GetOwner() == Controller)
 		{
 			for (const FReplicationControllerState& ReplicationControllerToNotify : ReplicationControllers)
 			{
-				if(ReplicationControllerToNotify.Reference != ReplicationControllerToRemove.Reference)
+				if (ReplicationControllerToNotify.Reference != ReplicationControllerToRemove.Reference)
 				{
 					ReplicationControllerToNotify.Reference->NotifyReplicationControllerRemoved(ReplicationControllerToRemove.Reference);
 				}
@@ -287,7 +288,7 @@ bool UFunKEventBusSubsystem::HasHandler(const int32 Key)
 void UFunKEventBusSubsystem::SendMessage(FFunKEventBusMessage& Message, TOptional<TFunction<void()>>& Callback)
 {
 	FFunKEventCallbackState* CallbackState = nullptr;
-	if(Callback.IsSet())
+	if (Callback.IsSet())
 	{
 		FGuid ID = FGuid::NewGuid();
 		CallbackState = &Callbacks.Emplace(ID);

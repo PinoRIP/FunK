@@ -8,11 +8,11 @@
 
 class UFunKSettingsObject;
 
-void UFunKTestRunner::Init(UFunKEngineSubsystem* funKEngineSubsystem, EFunKTestRunnerType RunType)
+void UFunKTestRunner::Init(UFunKEngineSubsystem* InFunKEngineSubsystem, const EFunKTestRunnerType InType)
 {
-	Type = RunType;
-	FunKEngineSubsystem = funKEngineSubsystem;
-	EnvironmentHandler = RunType == EFunKTestRunnerType::LocalInProc
+	Type = InType;
+	FunKEngineSubsystem = InFunKEngineSubsystem;
+	EnvironmentHandler = InType == EFunKTestRunnerType::LocalInProc
 		? NewObject<UFunKEditorEnvironmentHandler>()
 		: nullptr;
 
@@ -30,38 +30,38 @@ bool UFunKTestRunner::Start(const FFunKTestInstructions& Instructions)
 
 bool UFunKTestRunner::Update()
 {
-	if(Type != EFunKTestRunnerType::LocalInProc)
+	if (Type != EFunKTestRunnerType::LocalInProc)
 	{
 		RaiseErrorEvent("The tests can currently only be started via. Editor!", "UFunKTestRunner::Update");
 		return true;
 	}
 	
-	if(State != EFunKTestRunnerState::ExecutingTest)
+	if (State != EFunKTestRunnerState::ExecutingTest)
 	{
-		if(State <= EFunKTestRunnerState::Ended)
+		if (State <= EFunKTestRunnerState::Ended)
 		{
 			RaiseErrorEvent("The test run is not active!", "UFunKTestRunner::Update");
 			return true;
 		}
 
-		const EFunKEnvironmentWorldState environmentState = EnvironmentHandler->UpdateWorldState(ActiveTestInstructions);
-		if(environmentState == EFunKEnvironmentWorldState::CantStart)
+		const EFunKEnvironmentWorldState EnvironmentState = EnvironmentHandler->UpdateWorldState(ActiveTestInstructions);
+		if (EnvironmentState == EFunKEnvironmentWorldState::CantStart)
 		{
 			RaiseErrorEvent("Test environment could not be setup", "UFunKTestRunner::Update");
 			End();
 			return true;
 		}
 		
-		UpdateState(environmentState == EFunKEnvironmentWorldState::IsRunning ? EFunKTestRunnerState::Ready : EFunKTestRunnerState::EnvironmentSetup);
+		UpdateState(EnvironmentState == EFunKEnvironmentWorldState::IsRunning ? EFunKTestRunnerState::Ready : EFunKTestRunnerState::EnvironmentSetup);
 		
-		if(State == EFunKTestRunnerState::Ready)
+		if (State == EFunKTestRunnerState::Ready)
 		{
 			EventBusRegistration.Add(EnvironmentHandler->GetEventBus()->On<FFunKEvent>([this](const FFunKEvent& Event)
 			{
 				RaiseEvent(Event);
 			}));
 			
-			if(ActiveTestInstructions.MapTestName.Len() > 0)
+			if (ActiveTestInstructions.MapTestName.Len() > 0)
 			{
 				GetCurrentWorldController()->ExecuteTestByName(ActiveTestInstructions.MapTestName);
 			}
@@ -75,19 +75,19 @@ bool UFunKTestRunner::Update()
 	}
 	else
 	{
-		const AFunKWorldTestController* worldController = GetCurrentWorldController();
-		if(!worldController)
+		const AFunKWorldTestController* WorldController = GetCurrentWorldController();
+		if (!WorldController)
 		{
 			RaiseWarningEvent("Canceled test run: world is tearing down!", "UFunKTestRunner::Update");
 			UpdateState(EFunKTestRunnerState::EvaluatingTest);
 		}
-		else if(worldController->IsFinished())
+		else if (WorldController->IsFinished())
 		{
 			UpdateState(EFunKTestRunnerState::EvaluatingTest);
 		}
 	}
 
-	if(State == EFunKTestRunnerState::EvaluatingTest)
+	if (State == EFunKTestRunnerState::EvaluatingTest)
 	{
 		End();
 		return true;
@@ -117,17 +117,17 @@ void UFunKTestRunner::RaiseErrorEvent(const FString& Message, const FString& Con
 	RaiseEvent(FFunKEvent::Error(Message, Context));
 }
 
-void UFunKTestRunner::RaiseEvent(const FFunKEvent& raisedEvent) const
+void UFunKTestRunner::RaiseEvent(const FFunKEvent& RaisedEvent) const
 {
-	if(auto* AutomationEntryRuntime = FAutomationTestFramework::Get().GetCurrentTest())
+	if (auto* AutomationEntryRuntime = FAutomationTestFramework::Get().GetCurrentTest())
 	{	
-		EAutomationEventType type = raisedEvent.Type == EFunKEventType::Info
+		const EAutomationEventType EventType = RaisedEvent.Type == EFunKEventType::Info
 			? EAutomationEventType::Info
-			: raisedEvent.Type == EFunKEventType::Warning
+			: RaisedEvent.Type == EFunKEventType::Warning
 				? EAutomationEventType::Warning
 				: EAutomationEventType::Error;
 		
-		AutomationEntryRuntime->AddEvent(FAutomationEvent(type, raisedEvent.Message, raisedEvent.GetContext()));
+		AutomationEntryRuntime->AddEvent(FAutomationEvent(EventType, RaisedEvent.Message, RaisedEvent.GetContext()));
 	}
 }
 
@@ -146,7 +146,7 @@ AFunKWorldTestController* UFunKTestRunner::GetCurrentWorldController() const
 	return EnvironmentHandler->GetTestController();
 }
 
-void UFunKTestRunner::UpdateState(EFunKTestRunnerState newState)
+void UFunKTestRunner::UpdateState(const EFunKTestRunnerState NewState)
 {
-	State = newState;
+	State = NewState;
 }

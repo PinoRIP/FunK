@@ -112,7 +112,7 @@ class FUNK_API UFunKActorScenarioVariationFragment final : public UFunKTestFragm
 public:
 	virtual void OnAdded() override;
 	virtual void OnRemoved() override;
-	virtual FString GetReadableIdent() const override;
+	virtual FString GetLogName() const override;
 
 private:
 	UPROPERTY()
@@ -147,7 +147,7 @@ private:
 	virtual void Begin(int32 index);
 	virtual bool IsReady();
 	virtual void Finish();
-	virtual FString GetName() const;
+	virtual FString GetLogName() const override;
 
 	virtual void GetLifetimeReplicatedProps( TArray< FLifetimeProperty > & OutLifetimeProps ) const override;
 

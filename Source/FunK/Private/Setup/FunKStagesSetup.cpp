@@ -5,23 +5,23 @@
 
 int32 FFunKStageSetupBase::GetStageIndex() const
 {
-	if(!Stages)
+	if (!Stages)
 		return INDEX_NONE;
 	
-	const int32 count = Stages->Stages.Num();
-	for(int32 i = 0; count > i; i++)
+	const int32 Count = Stages->Stages.Num();
+	for (int32 i = 0; Count > i; i++)
 	{
-		if(&Stages->Stages[i] == Stage)
+		if (&Stages->Stages[i] == Stage)
 			return i;
 	}
 	return INDEX_NONE;
 }
 
-void FFunKStageSetupBase::Update(int32& Count, bool& OldValue, bool NewValue)
+void FFunKStageSetupBase::Update(int32& Count, bool& OldValue, const bool NewValue)
 {
-	if(!NewValue && OldValue)
+	if (!NewValue && OldValue)
 		Count--;
-	else if(!OldValue)
+	else if (!OldValue)
 		Count++;
 
 	OldValue = NewValue;
@@ -30,7 +30,7 @@ void FFunKStageSetupBase::Update(int32& Count, bool& OldValue, bool NewValue)
 // ReSharper disable once CppMemberFunctionMayBeConst - This being const makes resharper warn the caller when the return ist not used.
 FFunKLatentStageSetup FFunKStageSetup::MakeLatent()
 {
-	if(Stage)
+	if (Stage)
 		Stage->IsLatent = true;
 	
 	return FFunKLatentStageSetup(Stage, Stages, TestBase);
@@ -38,7 +38,7 @@ FFunKLatentStageSetup FFunKStageSetup::MakeLatent()
 
 int32 FFunKStagesSetup::Num() const
 {
-	if(Stages)
+	if (Stages)
 		return Stages->Stages.Num();
 
 	return 0;

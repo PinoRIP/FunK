@@ -21,11 +21,11 @@ UFunKBlueprintAsyncWaitForSyncPoint* UFunKBlueprintAsyncWaitForSyncPoint::WaitFo
 	{
 		SyncPointInstance->Bitmask = FFunKAnonymousBitmask(SyncPointInstance->Test->GetWorldSubsystem()->GetPeerCount());
 		SyncPointInstance->Bitmask.Set(SyncPointInstance->Test->GetStagePeerState());
-		if(WaitFor == EFunKSyncTarget::Client)
+		if (WaitFor == EFunKSyncTarget::Client)
 		{
 			SyncPointInstance->Bitmask.Set(0);
 		}
-		else if(WaitFor == EFunKSyncTarget::Server)
+		else if (WaitFor == EFunKSyncTarget::Server)
 		{
 			SyncPointInstance->Bitmask.SetAll();
 			SyncPointInstance->Bitmask.Clear(0);
@@ -33,7 +33,7 @@ UFunKBlueprintAsyncWaitForSyncPoint* UFunKBlueprintAsyncWaitForSyncPoint::WaitFo
 		
 		SyncPointInstance->Test->GetEventBusSubsystem()->On<FFunKTestWaitForSyncPointReachedEvent>([SyncPointInstance](const FFunKTestWaitForSyncPointReachedEvent& Event)
 		{
-			if(Event.Test == SyncPointInstance->Test)
+			if (Event.Test == SyncPointInstance->Test)
 			{
 				SyncPointInstance->Received(Event.PeerIndex);
 			}

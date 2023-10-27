@@ -19,7 +19,7 @@ void UFunKInputSimulationSystem::Tick(float DeltaTime)
 		{
 			for (TTuple<const UInputAction*, FFunKInputActionSimulationTick>& InputActionSimulation : ControllerInputSimulation.Value.InputActionSimulations)
 			{
-				if(InputActionSimulation.Value.AddedInputTime == GFrameCounter)
+				if (InputActionSimulation.Value.AddedInputTime == GFrameCounter)
 					continue;
 				
 				InjectInputForAction(ControllerInputSimulation.Key, InputActionSimulation.Key, InputActionSimulation.Value.Value);
@@ -27,7 +27,7 @@ void UFunKInputSimulationSystem::Tick(float DeltaTime)
 			
 			for (TTuple<FName, FFunKAxisInputSimulationTick>& AxisInputSimulation : ControllerInputSimulation.Value.AxisInputSimulations)
 			{
-				if(AxisInputSimulation.Value.AddedInputTime == GFrameCounter)
+				if (AxisInputSimulation.Value.AddedInputTime == GFrameCounter)
 					continue;
 				
 				InjectAxisInput(ControllerInputSimulation.Key, AxisInputSimulation.Value.Key, AxisInputSimulation.Value.AxisValue, DeltaTime);
@@ -148,7 +148,7 @@ void UFunKInputSimulationSystem::SimulateLegacyActionInput(const FName& ActionNa
 void UFunKInputSimulationSystem::SimulateLegacyControllerActionInput(APlayerController* PlayerController, const FName& ActionName, const EInputEvent InputEventType)
 {
 	const FKey* InputAxisKey = GetInputActionKey(ActionName);
-	if(!InputAxisKey)
+	if (!InputAxisKey)
 		return;
 
 	SimulatePlayerControllerKeyPressInput(PlayerController, *InputAxisKey, InputEventType);
@@ -162,7 +162,7 @@ void UFunKInputSimulationSystem::SimulateLegacyAxisInput(const FName& AxisName, 
 void UFunKInputSimulationSystem::SimulateLegacyControllerAxisInput(APlayerController* PlayerController, const FName& AxisName, const float AxisValue)
 {
 	const FKey* InputAxisKey = GetInputAxisKey(AxisName);
-	if(!InputAxisKey)
+	if (!InputAxisKey)
 		return;
 	
 	SimulateAxisInput(PlayerController, *InputAxisKey, AxisValue);
@@ -176,7 +176,7 @@ void UFunKInputSimulationSystem::EndSimulateLegacyAxisInput(const FName& AxisNam
 void UFunKInputSimulationSystem::EndSimulateLegacyControllerAxisInput(APlayerController* PlayerController, const FName& AxisName)
 {
 	const FKey* InputAxisKey = GetInputAxisKey(AxisName);
-	if(!InputAxisKey)
+	if (!InputAxisKey)
 		return;
 
 	EndSimulateControllerKeyAxisInput(PlayerController, InputAxisKey->GetFName());

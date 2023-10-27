@@ -1,7 +1,6 @@
 ﻿// Fill out your copyright notice in the Description page of Project Settings.
 
 #include "FunKEngineSubsystem.h"
-#include "FunKSettingsObject.h"
 #include "FunKTestRunner.h"
 #include "FunK.h"
 #include "FunKLogging.h"
@@ -28,7 +27,7 @@ bool UFunKEngineSubsystem::HasTestRunner() const
 
 void UFunKEngineSubsystem::EndTestRun()
 {
-	if(ActiveTestRun && ActiveTestRun->IsRunning())
+	if (ActiveTestRun && ActiveTestRun->IsRunning())
 	{
 		ActiveTestRun->End();
 		check(!ActiveTestRun->IsRunning())
@@ -72,8 +71,8 @@ UFunKTestRunner* UFunKEngineSubsystem::SetupTestRun(EFunKTestRunnerType RunType)
 	return ActiveTestRun;
 }
 
-void UFunKEngineSubsystem::FunKDebug(FString msg)
+void UFunKEngineSubsystem::FunKDebug(const FString& Msg)
 {
-	GEngine->AddOnScreenDebugMessage(-1, 15000, FColor::Red, (FString("SUBSYSTEM SAYS: ") + msg));
-	UE_LOG(FunKLog, Warning, TEXT("SUBSYSTEM SAYS: %s"), *msg);
+	GEngine->AddOnScreenDebugMessage(-1, 15000, FColor::Red, (FString("SUBSYSTEM SAYS: ") + Msg));
+	UE_LOG(FunKLog, Warning, TEXT("SUBSYSTEM SAYS: %s"), *Msg);
 }

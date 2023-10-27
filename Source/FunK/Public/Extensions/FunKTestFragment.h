@@ -30,7 +30,7 @@ public:
 	virtual void OnRemoved();
 
 	// Called to get a readable name for the fragment instance
-	virtual FString GetReadableIdent() const;
+	virtual FString GetLogName() const;
 
 protected:
 	// Gets the test the fragment is added to.
