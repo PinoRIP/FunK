@@ -7,7 +7,7 @@
 #include "FunKSceneActorLocationResetHandler.generated.h"
 
 /**
- * 
+ * Handler to reset a level actors position
  */
 UCLASS()
 class FUNK_API UFunKSceneActorLocationResetHandler : public UFunKSceneActorResetHandler

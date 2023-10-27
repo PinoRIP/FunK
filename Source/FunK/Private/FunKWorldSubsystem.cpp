@@ -16,7 +16,7 @@
 
 AFunKWorldTestController* UFunKWorldSubsystem::GetLocalTestController()
 {
-	if(!LocalTestController)
+	if (!LocalTestController)
 	{
 		for (TActorIterator<AFunKWorldTestController> It(GetWorld(), AFunKWorldTestController::StaticClass()); It; ++It)
 		{
@@ -29,7 +29,7 @@ AFunKWorldTestController* UFunKWorldSubsystem::GetLocalTestController()
 			LocalTestController = *It;
 		}
 
-		if(!LocalTestController)
+		if (!LocalTestController)
 			LocalTestController = NewTestController();
 	}
 	
@@ -38,51 +38,58 @@ AFunKWorldTestController* UFunKWorldSubsystem::GetLocalTestController()
 
 int32 UFunKWorldSubsystem::GetPeerIndex() const
 {
-	UWorld* world = GetWorld();
-	auto netMode = world->GetNetMode();
+	const UWorld* World = GetWorld();
 
-	if(netMode < NM_Client) return 0;
+	if (World->GetNetMode() < NM_Client)
+		return 0;
 
-	const UFunKEventBusSubsystem* funkEventSubsystem = world->GetSubsystem<UFunKEventBusSubsystem>();
-	if(!funkEventSubsystem) return INDEX_NONE;
+	const UFunKEventBusSubsystem* FunkEventSubsystem = World->GetSubsystem<UFunKEventBusSubsystem>();
+	if (!FunkEventSubsystem)
+		return INDEX_NONE;
 
-	const AFunKEventBusReplicationController* funkEventController = funkEventSubsystem->GetLocalController();
-	if(!funkEventController) return INDEX_NONE;
+	const AFunKEventBusReplicationController* FunkEventController = FunkEventSubsystem->GetLocalController();
+	if (!FunkEventController)
+		return INDEX_NONE;
 
-	return funkEventController->GetControllerNumber();
+	return FunkEventController->GetControllerNumber();
 }
 
 int32 UFunKWorldSubsystem::GetPeerCount() const
 {
-	UWorld* world = GetWorld();
-	auto netMode = world->GetNetMode();
-	if(netMode == NM_Standalone) return 1;
+	const UWorld* World = GetWorld();
 
-	const UFunKEventBusSubsystem* funkEventSubsystem = world->GetSubsystem<UFunKEventBusSubsystem>();
-	if(!funkEventSubsystem) return 1;
+	if (World->GetNetMode() == NM_Standalone)
+		return 1;
 
-	return funkEventSubsystem->GetReplicationControllerCount() + 1;
+	const UFunKEventBusSubsystem* FunkEventSubsystem = World->GetSubsystem<UFunKEventBusSubsystem>();
+	if (!FunkEventSubsystem)
+		return 1;
+
+	return FunkEventSubsystem->GetReplicationControllerCount() + 1;
 }
 
 bool UFunKWorldSubsystem::IsServerDedicated() const
 {
-	UWorld* world = GetWorld();
-	auto netMode = world->GetNetMode();
+	const UWorld* World = GetWorld();
+	const ENetMode NetMode = World->GetNetMode();
 
-	if(netMode < NM_Client) return netMode == NM_DedicatedServer;
+	if (NetMode < NM_Client)
+		return NetMode == NM_DedicatedServer;
 
-	const UFunKEventBusSubsystem* funkEventSubsystem = world->GetSubsystem<UFunKEventBusSubsystem>();
-	if(!funkEventSubsystem) return false;
+	const UFunKEventBusSubsystem* FunkEventSubsystem = World->GetSubsystem<UFunKEventBusSubsystem>();
+	if (!FunkEventSubsystem)
+		return false;
 
-	const AFunKEventBusReplicationController* funkEventController = funkEventSubsystem->GetLocalController();
-	if(!funkEventController) return false;
+	const AFunKEventBusReplicationController* FunkEventController = FunkEventSubsystem->GetLocalController();
+	if (!FunkEventController)
+		return false;
 
-	return funkEventController->GetIsServerDedicated();
+	return FunkEventController->GetIsServerDedicated();
 }
 
 const FFunKWorldVariations& UFunKWorldSubsystem::GetWorldVariations()
 {
-	if(!AreVariationsGathered)
+	if (!AreVariationsGathered)
 	{
 		GatherVariations(Variations);
 		AreVariationsGathered = true;
@@ -96,7 +103,7 @@ void UFunKWorldSubsystem::OnWorldBeginPlay(UWorld& InWorld)
 	Super::OnWorldBeginPlay(InWorld);
 
 	UFunKEventBusSubsystem* EventBusSubsystem = InWorld.GetSubsystem<UFunKEventBusSubsystem>();
-	if(!EventBusSubsystem)
+	if (!EventBusSubsystem)
 	{
 		UE_LOG(FunKLog, Error, TEXT("Missing event bus subsystem!"))
 		return;
@@ -121,8 +128,8 @@ void UFunKWorldSubsystem::GatherVariations(FFunKWorldVariations& OutVariations) 
 		SharedTestVariationActors.Add(*ActorItr);
 	}
 
-	SharedTestVariationActors.Sort([](const AFunKTestVariationsWorldActor& ip1, const AFunKTestVariationsWorldActor& ip2) {
-		return  ip1.GetName() < ip2.GetName();
+	SharedTestVariationActors.Sort([](const AFunKTestVariationsWorldActor& A, const AFunKTestVariationsWorldActor& B) {
+		return  A.GetName() < B.GetName();
 	});
 
 	OutVariations.Variations.Empty();
@@ -138,7 +145,7 @@ void UFunKWorldSubsystem::GatherVariations(FFunKWorldVariations& OutVariations) 
 
 		for (UFunKTestVariationComponent* FunKTestVariationComponent : Array)
 		{
-			if(FunKTestVariationComponent->IsA(UFunKTestRootVariationComponent::StaticClass()))
+			if (FunKTestVariationComponent->IsA(UFunKTestRootVariationComponent::StaticClass()))
 			{
 				UE_LOG(FunKLog, Error, TEXT("Root variation components are not allowed on shared test variations! %s"), *SharedTestVariationActor->GetName())
 				continue;

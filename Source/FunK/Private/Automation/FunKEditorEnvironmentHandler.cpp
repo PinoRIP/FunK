@@ -14,42 +14,40 @@
 
 EFunKEnvironmentWorldState UFunKEditorEnvironmentHandler::UpdateWorldState(const FFunKTestInstructions& Instructions)
 {
-	bool isWrongEnvironment = false;
-	const bool isEnvironmentRunning = IsEnvironmentRunning(Instructions, isWrongEnvironment);
-	if(!isEnvironmentRunning || isWrongEnvironment)
+	bool IsWrongEnvironment = false;
+	const bool IsEnvironmentCurrentlyRunning = IsEnvironmentRunning(Instructions, IsWrongEnvironment);
+	if (!IsEnvironmentCurrentlyRunning || IsWrongEnvironment)
 	{
-		if(!WaitsForWorld)
+		if (!WaitsForWorld)
 		{
-			if(isWrongEnvironment)
+			if (IsWrongEnvironment)
 			{
-				if(isEnvironmentRunning)
+				if (IsEnvironmentCurrentlyRunning)
 					GEditor->EndPlayMap();
 				
 				GEditor->EndPlayOnLocalPc();
 				StartedProcesses.Empty(StartedProcesses.Num());
 			}
 		
-			if(!StartEnvironment(Instructions))
-			{
+			if (!StartEnvironment(Instructions))
 				return EFunKEnvironmentWorldState::CantStart;
-			}
 		
 			WaitsForWorld = true;
 		}
 	}
 	else
 	{
-		if(WaitsForWorld)
+		if (WaitsForWorld)
 		{
-			if(!World) World = GetCurrentPieWorldContext()->World();
+			if (!World)
+				World = GetCurrentPieWorldContext()->World();
+			
             WaitsForWorld = !(World && World->HasBegunPlay());
 			WaitsForControllers = !WaitsForWorld;
 		}
-
-		if(WaitsForControllers)
-		{
+		
+		if (WaitsForControllers)
 			WaitsForControllers = GetEventBus()->GetReadyReplicationControllerCount() != GetTargetReplicationControllerCount(Instructions);
-		}
 	}
 	
 	return WaitsForWorld || WaitsForControllers
@@ -62,35 +60,35 @@ UWorld* UFunKEditorEnvironmentHandler::GetWorld()
 	return World;
 }
 
-bool UFunKEditorEnvironmentHandler::IsEnvironmentRunning(const FFunKTestInstructions& Instructions, bool& isWrongEnvironmentRunning)
+bool UFunKEditorEnvironmentHandler::IsEnvironmentRunning(const FFunKTestInstructions& Instructions, bool& IsWrongEnvironmentRunning)
 {
-	isWrongEnvironmentRunning = false;
+	IsWrongEnvironmentRunning = false;
 
-	const FFunKSettings& settings = GetDefault<UFunKSettingsObject>()->Settings;
-	const FString currentPieWorldPackageName = GetCurrentPieWorldPackageName();
-	const bool isNoLocalMapRunning = (currentPieWorldPackageName.IsEmpty() || currentPieWorldPackageName.Len() <= 0);
-	const bool isLocalProcessOnly = settings.RunTestUnderOneProcess || Instructions.IsStandaloneTest();
-	if(isNoLocalMapRunning)
+	const FFunKSettings& Settings = GetDefault<UFunKSettingsObject>()->Settings;
+	const FString CurrentPieWorldPackageName = GetCurrentPieWorldPackageName();
+	const bool IsNoLocalMapRunning = (CurrentPieWorldPackageName.IsEmpty() || CurrentPieWorldPackageName.Len() <= 0);
+	const bool LocalProcessOnly = Settings.RunTestUnderOneProcess || Instructions.IsStandaloneTest();
+	if (IsNoLocalMapRunning)
 	{
-		isWrongEnvironmentRunning = !isLocalProcessOnly && IsHoldingSubprocesses();
+		IsWrongEnvironmentRunning = !LocalProcessOnly && IsHoldingSubprocesses();
 		return false;
 	}
 
-	if(IsWrongEnvironmentType(Instructions))
+	if (IsWrongEnvironmentType(Instructions))
 	{
-		isWrongEnvironmentRunning = true;
+		IsWrongEnvironmentRunning = true;
 		return true;
 	}
 
-	isWrongEnvironmentRunning = currentPieWorldPackageName != Instructions.MapPackageName;
-	if(isWrongEnvironmentRunning || isLocalProcessOnly)
+	IsWrongEnvironmentRunning = CurrentPieWorldPackageName != Instructions.MapPackageName;
+	if (IsWrongEnvironmentRunning || LocalProcessOnly)
 		return true;
 
 	for (const uint32 StartedProcess : StartedProcesses)
 	{
-		if(!FPlatformProcess::IsApplicationRunning(StartedProcess))
+		if (!FPlatformProcess::IsApplicationRunning(StartedProcess))
 		{
-			isWrongEnvironmentRunning = true;
+			IsWrongEnvironmentRunning = true;
 			break;
 		}
 	}
@@ -108,21 +106,24 @@ bool UFunKEditorEnvironmentHandler::IsWrongEnvironmentType(const FFunKTestInstru
 	if (NetMode != NM_Client) return true;
 	if (Instructions.IsStandaloneTest()) return true;
 	
-	const UFunKWorldSubsystem* subsystem = PotentialWorld->GetSubsystem<UFunKWorldSubsystem>();
-	if (!subsystem)
+	const UFunKWorldSubsystem* Subsystem = PotentialWorld->GetSubsystem<UFunKWorldSubsystem>();
+	if (!Subsystem)
 	{
 		UE_LOG(FunKLog, Error, TEXT("Missing FunK world subsystem"))
 		return true;
 	}
 
-	if (subsystem->IsServerDedicated() && Instructions.IsDedicatedServerTest()) return false;
+	if (Subsystem->IsServerDedicated() && Instructions.IsDedicatedServerTest())
+		return false;
+	
 	return Instructions.IsListenServerTest();
 }
 
 FString UFunKEditorEnvironmentHandler::GetCurrentPieWorldPackageName()
 {
 	const FWorldContext* WorldContext = GetCurrentPieWorldContext();
-	if(!WorldContext) return "";
+	if (!WorldContext)
+		return "";
 
 	const FString WorldPackage = WorldContext->World()->GetOutermost()->GetName();
 	return UWorld::StripPIEPrefixFromPackageName(WorldPackage, WorldContext->World()->StreamingLevelsPrefix);
@@ -153,64 +154,61 @@ bool UFunKEditorEnvironmentHandler::IsHoldingSubprocesses() const
 
 bool UFunKEditorEnvironmentHandler::StartEnvironment(const FFunKTestInstructions& Instructions)
 {
-	FFunKFailedPieStartCapture FailHandler;
-	FFunKNewProcessCapture ProcessStartCapture;
+	const FFunKFailedPieStartCapture FailHandler;
+	const FFunKNewProcessCapture ProcessStartCapture;
 
-	UEditorPerformanceSettings* Settings = GetMutableDefault<UEditorPerformanceSettings>();
-	Settings->bThrottleCPUWhenNotForeground = false;
-	Settings->bMonitorEditorPerformance = false;
-	Settings->PostEditChange();
+	UEditorPerformanceSettings* EditorPerformanceSettings = GetMutableDefault<UEditorPerformanceSettings>();
+	EditorPerformanceSettings->bThrottleCPUWhenNotForeground = false;
+	EditorPerformanceSettings->bMonitorEditorPerformance = false;
+	EditorPerformanceSettings->PostEditChange();
 		
-	FRequestPlaySessionParams params;
-	params.EditorPlaySettings = NewObject<ULevelEditorPlaySettings>();
-	params.EditorPlaySettings->NewWindowHeight = 1080;
-	params.EditorPlaySettings->NewWindowWidth = 1920;
+	FRequestPlaySessionParams Params;
+	Params.EditorPlaySettings = NewObject<ULevelEditorPlaySettings>();
+	Params.EditorPlaySettings->NewWindowHeight = 1080;
+	Params.EditorPlaySettings->NewWindowWidth = 1920;
 	
-	params.GlobalMapOverride = Instructions.MapPackageName;
-	params.AdditionalStandaloneCommandLineParameters = FFunKModule::FunkTestStartParameter;
-	
-	// GEditor->EndPlayMap();
+	Params.GlobalMapOverride = Instructions.MapPackageName;
+	Params.AdditionalStandaloneCommandLineParameters = FFunKModule::FunkTestStartParameter;
 
-	FProperty* Property = ULevelEditorPlaySettings::StaticClass()->FindPropertyByName(FName("ServerMapNameOverride"));
-	if(Property)
+	if (FProperty* Property = ULevelEditorPlaySettings::StaticClass()->FindPropertyByName(FName("ServerMapNameOverride")))
 	{
-		Property->SetValue_InContainer(params.EditorPlaySettings, &Instructions.MapPackageName);
+		Property->SetValue_InContainer(Params.EditorPlaySettings, &Instructions.MapPackageName);
 	}
 	
 	//TODO: Maybe one day we want to integrate bAllowOnlineSubsystem...
-	const FFunKSettings& settings = GetDefault<UFunKSettingsObject>()->Settings;
+	const FFunKSettings& Settings = GetDefault<UFunKSettingsObject>()->Settings;
 
-	const bool isStandalone = Instructions.IsStandaloneTest();
-	if(isStandalone)
+	const bool IsStandalone = Instructions.IsStandaloneTest();
+	if (IsStandalone)
 	{
-		params.EditorPlaySettings->SetPlayNumberOfClients(1);
-		params.EditorPlaySettings->bLaunchSeparateServer = false;
-		params.EditorPlaySettings->SetPlayNetMode(EPlayNetMode::PIE_Standalone);
-		SetFpsSettings(params.EditorPlaySettings, settings, false);
+		Params.EditorPlaySettings->SetPlayNumberOfClients(1);
+		Params.EditorPlaySettings->bLaunchSeparateServer = false;
+		Params.EditorPlaySettings->SetPlayNetMode(EPlayNetMode::PIE_Standalone);
+		SetFpsSettings(Params.EditorPlaySettings, Settings, false);
 		
-		GEditor->RequestPlaySession(params);
+		GEditor->RequestPlaySession(Params);
 	}
 	else
 	{
-		if(Instructions.IsListenServerTest())
+		if (Instructions.IsListenServerTest())
 		{
-			params.EditorPlaySettings->SetPlayNumberOfClients(3);
-			params.EditorPlaySettings->bLaunchSeparateServer = false;
-			params.EditorPlaySettings->SetRunUnderOneProcess(settings.RunTestUnderOneProcess);
-			params.EditorPlaySettings->SetPlayNetMode(EPlayNetMode::PIE_ListenServer);
-			SetFpsSettings(params.EditorPlaySettings, settings, false);
+			Params.EditorPlaySettings->SetPlayNumberOfClients(3);
+			Params.EditorPlaySettings->bLaunchSeparateServer = false;
+			Params.EditorPlaySettings->SetRunUnderOneProcess(Settings.RunTestUnderOneProcess);
+			Params.EditorPlaySettings->SetPlayNetMode(EPlayNetMode::PIE_ListenServer);
+			SetFpsSettings(Params.EditorPlaySettings, Settings, false);
 			
-			GEditor->RequestPlaySession(params);
+			GEditor->RequestPlaySession(Params);
 		}
-		else if(Instructions.IsDedicatedServerTest())
+		else if (Instructions.IsDedicatedServerTest())
 		{
-			params.EditorPlaySettings->SetPlayNumberOfClients(2);
-			params.EditorPlaySettings->bLaunchSeparateServer = true;
-			params.EditorPlaySettings->SetRunUnderOneProcess(settings.RunTestUnderOneProcess);
-			params.EditorPlaySettings->SetPlayNetMode(EPlayNetMode::PIE_Client);
-			SetFpsSettings(params.EditorPlaySettings, settings, true);
+			Params.EditorPlaySettings->SetPlayNumberOfClients(2);
+			Params.EditorPlaySettings->bLaunchSeparateServer = true;
+			Params.EditorPlaySettings->SetRunUnderOneProcess(Settings.RunTestUnderOneProcess);
+			Params.EditorPlaySettings->SetPlayNetMode(EPlayNetMode::PIE_Client);
+			SetFpsSettings(Params.EditorPlaySettings, Settings, true);
 			
-			GEditor->RequestPlaySession(params);
+			GEditor->RequestPlaySession(Params);
 		}
 		else
 		{
@@ -220,37 +218,37 @@ bool UFunKEditorEnvironmentHandler::StartEnvironment(const FFunKTestInstructions
 
 	// Immediately launch the session 
 	GEditor->StartQueuedPlaySessionRequest();
-	if(!isStandalone && !settings.RunTestUnderOneProcess)
+	if (!IsStandalone && !Settings.RunTestUnderOneProcess)
 		ProcessStartCapture.GetProcessIds(StartedProcesses);
 	
-	return FailHandler.CanProceed() && (settings.RunTestUnderOneProcess || isStandalone || (ProcessStartCapture.IsValid() && StartedProcesses.Num() == 2));
+	return FailHandler.CanProceed() && (Settings.RunTestUnderOneProcess || IsStandalone || (ProcessStartCapture.IsValid() && StartedProcesses.Num() == 2));
 }
 
-void UFunKEditorEnvironmentHandler::SetFpsSettings(ULevelEditorPlaySettings* playSettings, const FFunKSettings& funkSettings, bool isDedicated)
+void UFunKEditorEnvironmentHandler::SetFpsSettings(ULevelEditorPlaySettings* PlaySettings, const FFunKSettings& FunkSettings, const bool IsDedicated)
 {
-	if(funkSettings.FixedTickFrameRates.Num() <= 0)
+	if (FunkSettings.FixedTickFrameRates.Num() <= 0)
 		return;
 
-	const int32 server = funkSettings.FixedTickFrameRates[0];
-	if(isDedicated)
-		playSettings->ServerFixedFPS = server;
+	const int32 ServerTickRate = FunkSettings.FixedTickFrameRates[0];
+	if (IsDedicated)
+		PlaySettings->ServerFixedFPS = ServerTickRate;
 	else
-		playSettings->ClientFixedFPS.Add(server);
+		PlaySettings->ClientFixedFPS.Add(ServerTickRate);
 
-	int32 client1 = server;
-	int32 client2 = server;
-	if(funkSettings.FixedTickFrameRates.Num() == 2)
+	int32 Client1TickRate = ServerTickRate;
+	int32 Client2TickRate = ServerTickRate;
+	if (FunkSettings.FixedTickFrameRates.Num() == 2)
 	{
-		client1 = client2 = funkSettings.FixedTickFrameRates[1];
+		Client1TickRate = Client2TickRate = FunkSettings.FixedTickFrameRates[1];
 	}
-	else if(funkSettings.FixedTickFrameRates.Num() > 2)
+	else if (FunkSettings.FixedTickFrameRates.Num() > 2)
 	{
-		client1 = funkSettings.FixedTickFrameRates[1];
-		client2 = funkSettings.FixedTickFrameRates[2];
+		Client1TickRate = FunkSettings.FixedTickFrameRates[1];
+		Client2TickRate = FunkSettings.FixedTickFrameRates[2];
 	}
 
-	playSettings->ClientFixedFPS.Add(client1);
-	playSettings->ClientFixedFPS.Add(client2);
+	PlaySettings->ClientFixedFPS.Add(Client1TickRate);
+	PlaySettings->ClientFixedFPS.Add(Client2TickRate);
 }
 
 int32 UFunKEditorEnvironmentHandler::GetTargetReplicationControllerCount(const FFunKTestInstructions& Instructions)

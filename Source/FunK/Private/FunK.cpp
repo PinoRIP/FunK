@@ -61,13 +61,13 @@ void FFunKModule::GetTests(bool bEditorOnlyTests, TArray<FString>& OutBeautified
 	if (!AssetRegistry.IsLoadingAssets())
 	{
 #if WITH_EDITOR
-		static bool bDidScan = false;
+		static bool IsScanned = false;
 
-		if (!GIsEditor && !bDidScan)
+		if (!GIsEditor && !IsScanned)
 		{
 			// For editor build -game, we need to do a full scan
 			AssetRegistry.SearchAllAssets(true);
-			bDidScan = true;
+			IsScanned = true;
 		}
 #endif
 
@@ -80,7 +80,7 @@ void FFunKModule::GetTests(bool bEditorOnlyTests, TArray<FString>& OutBeautified
 			FString PartialSuiteName = MapPackageName.RightChop(1).Replace(TEXT("/"), TEXT("."));
 			if (MapPackageName.StartsWith(TEXT("/Game/")))
 			{
-				// Remove "/Game/" from the name
+				// Remove "/Game/" path section from the name
 				PartialSuiteName = PartialSuiteName.RightChop(5);
 			}
 
@@ -161,21 +161,21 @@ bool FFunKModule::IsActive() const
 	return true;
 }
 
-void FFunKModule::OnWorldGetAssetTags(const UWorld* World, TArray<UObject::FAssetRegistryTag>& OutTags)
+void FFunKModule::OnWorldGetAssetTags(const UWorld* World, TArray<UObject::FAssetRegistryTag>& OutTags) const
 {
-	if(IsActive())
+	if (IsActive())
 	{
 		FString TestNames, TestNamesEditor;
 		for (TActorIterator<AFunKTestBase> ActorItr(World, AFunKTestBase::StaticClass(), EActorIteratorFlags::AllActors); ActorItr; ++ActorItr)
 		{
-			AFunKTestBase* FunctionalTest = *ActorItr;
+			const AFunKTestBase* FunctionalTest = *ActorItr;
 
 			if (!FunctionalTest->IsPackageExternal())
 			{
-				bool bIsEditorOnly = IsEditorOnlyObject(FunctionalTest);
+				const bool IsEditorOnly = IsEditorOnlyObject(FunctionalTest);
 
 				// Check if this class is editor only
-				FString& NamesAppend = bIsEditorOnly ? TestNamesEditor : TestNames;
+				FString& NamesAppend = IsEditorOnly ? TestNamesEditor : TestNames;
 				FunctionalTest->BuildTestRegistry(NamesAppend);
 			}
 		}
@@ -194,7 +194,7 @@ void FFunKModule::OnWorldGetAssetTags(const UWorld* World, TArray<UObject::FAsse
 
 void FFunKModule::GetTestMapAssets(const IAssetRegistry& AssetRegistry, TArray<FAssetData>& MapList) const
 {
-	const FFunKSettings& settings = GetDefault<UFunKSettingsObject>()->Settings;
+	const FFunKSettings& Settings = GetDefault<UFunKSettingsObject>()->Settings;
 
 	FARFilter Filter;
 	Filter.ClassPaths.Add(UWorld::StaticClass()->GetClassPathName());
@@ -202,28 +202,28 @@ void FFunKModule::GetTestMapAssets(const IAssetRegistry& AssetRegistry, TArray<F
 	Filter.bIncludeOnlyOnDiskAssets = true;
 	
 	TArray<FAssetData> AllMaps;
-	if(!AssetRegistry.GetAssets(Filter, /*out*/ AllMaps))
+	if (!AssetRegistry.GetAssets(Filter, /*out*/ AllMaps))
 		return;
 
-	if(settings.DiscoveryMethod == EFunKTestDiscoveryMethod::Search)
+	if (Settings.DiscoveryMethod == EFunKTestDiscoveryMethod::Search)
 	{
 		MapList = AllMaps;
 	}
-	else if(settings.DiscoveryMethod == EFunKTestDiscoveryMethod::Prefix)
+	else if (Settings.DiscoveryMethod == EFunKTestDiscoveryMethod::Prefix)
 	{
 		for (FAssetData& Map : AllMaps)
 		{
-			if(Map.AssetName.ToString().StartsWith(settings.Prefix))
+			if (Map.AssetName.ToString().StartsWith(Settings.Prefix))
 				MapList.Add(Map);
 		}
 	}
-	else if(settings.DiscoveryMethod == EFunKTestDiscoveryMethod::Worlds)
+	else if (Settings.DiscoveryMethod == EFunKTestDiscoveryMethod::Worlds)
 	{
-		for (const TSoftObjectPtr<UWorld>& World : settings.Worlds)
+		for (const TSoftObjectPtr<UWorld>& World : Settings.Worlds)
 		{
 			for (int i = 0; i < AllMaps.Num(); ++i)
 			{
-				if(World.ToSoftObjectPath() == AllMaps[i].ToSoftObjectPath())
+				if (World.ToSoftObjectPath() == AllMaps[i].ToSoftObjectPath())
 				{
 					MapList.Add(AllMaps[i]);
 					AllMaps.RemoveAt(i);
@@ -232,13 +232,13 @@ void FFunKModule::GetTestMapAssets(const IAssetRegistry& AssetRegistry, TArray<F
 			}
 		}
 	}
-	else if(settings.DiscoveryMethod == EFunKTestDiscoveryMethod::Paths)
+	else if (Settings.DiscoveryMethod == EFunKTestDiscoveryMethod::Paths)
 	{
-		for (const FString& Path : settings.Paths)
+		for (const FString& Path : Settings.Paths)
 		{
 			for (FAssetData& Map : AllMaps)
 			{
-				if(Map.PackageName.ToString().StartsWith(Path))
+				if (Map.PackageName.ToString().StartsWith(Path))
 					MapList.Add(Map);
 			}
 		}

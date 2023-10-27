@@ -11,10 +11,10 @@
 #include "Util/FunKAnonymousBitmask.h"
 #include "FunKTestBase.generated.h"
 
+struct FFunKStagesSetup;
 class UFunKTestFragment;
 class UFunKTestRootVariationComponent;
 class UFunKTestVariationComponent;
-struct FFunKStagesSetup;
 class UFunKWorldSubsystem;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FFunKTestFinishing);
@@ -239,7 +239,7 @@ protected:
 	const FFunKStage* GetStage(int32 StageIndex) const;
 
 	// Checks if the stage would be executed locally
-	virtual bool IsExecutingStage(const FFunKStage& stage) const;
+	virtual bool IsExecutingStage(const FFunKStage& Stage) const;
 
 	// Checks if there is a tick delegate bound for this stage
 	bool IsStageTickDelegateBound(int32 StageIndex);

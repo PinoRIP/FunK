@@ -6,7 +6,7 @@
 
 UFunKWorldSubsystem* UFunKBlueprintFunctionLibrary::GetFunKWorldSubsystem(const UObject* WorldContext)
 {
-	if(!WorldContext)
+	if (!WorldContext)
 		return nullptr;
 
 	return WorldContext->GetWorld()->GetSubsystem<UFunKWorldSubsystem>();
@@ -14,7 +14,7 @@ UFunKWorldSubsystem* UFunKBlueprintFunctionLibrary::GetFunKWorldSubsystem(const 
 
 int32 UFunKBlueprintFunctionLibrary::GetPeerIndex(const UObject* WorldContext)
 {
-	if(const UFunKWorldSubsystem* Subsystem = GetFunKWorldSubsystem(WorldContext))
+	if (const UFunKWorldSubsystem* Subsystem = GetFunKWorldSubsystem(WorldContext))
 	{
 		return Subsystem->GetPeerIndex();
 	}
@@ -24,13 +24,13 @@ int32 UFunKBlueprintFunctionLibrary::GetPeerIndex(const UObject* WorldContext)
 
 EFunKNetMode UFunKBlueprintFunctionLibrary::GetNetMode(const UObject* WorldContext)
 {
-	if(!WorldContext)
+	if (!WorldContext)
 		return EFunKNetMode::MAX;
 	
 	switch (WorldContext->GetWorld()->GetNetMode()) {
 	case NM_DedicatedServer: return EFunKNetMode::DedicatedServer;
 	case NM_ListenServer: return EFunKNetMode::ListenServer;
-	case NM_Standalone: return  EFunKNetMode::Standalone;
+	case NM_Standalone: return EFunKNetMode::Standalone;
 	case NM_Client: return EFunKNetMode::Client;
 	case NM_MAX: return EFunKNetMode::MAX;
 	default: return EFunKNetMode::MAX;
@@ -44,24 +44,24 @@ void UFunKBlueprintFunctionLibrary::SwitchNetMode(const UObject* WorldContext, E
 
 EFunKClient UFunKBlueprintFunctionLibrary::GetClients(const UObject* WorldContext)
 {
-	const auto netMode = GetNetMode(WorldContext);
-	if (netMode == EFunKNetMode::Standalone)
+	const EFunKNetMode NetMode = GetNetMode(WorldContext);
+	if (NetMode == EFunKNetMode::Standalone)
 	{
 		return EFunKClient::Host;
 	}
 	
-	if (netMode == EFunKNetMode::ListenServer)
+	if (NetMode == EFunKNetMode::ListenServer)
 	{
 		return EFunKClient::Host;
 	}
 
-	if (netMode == EFunKNetMode::Client)
+	if (NetMode == EFunKNetMode::Client)
 	{
-		const int32 number = GetPeerIndex(WorldContext);
-		if (number == 1)
+		const int32 PeerIndex = GetPeerIndex(WorldContext);
+		if (PeerIndex == 1)
 			return EFunKClient::First;
 
-		if (number == 2)
+		if (PeerIndex == 2)
 			return EFunKClient::Second;
 		
 		return EFunKClient::Any;
@@ -77,23 +77,23 @@ void UFunKBlueprintFunctionLibrary::SwitchClients(const UObject* WorldContext, E
 
 EFunKTestEnvironmentType UFunKBlueprintFunctionLibrary::GetTestEnvironmentType(const UObject* WorldContext)
 {
-	const auto netMode = GetNetMode(WorldContext);
-	if (netMode == EFunKNetMode::Standalone)
+	const EFunKNetMode NetMode = GetNetMode(WorldContext);
+	if (NetMode == EFunKNetMode::Standalone)
 	{
 		return EFunKTestEnvironmentType::Standalone;
 	}
 
-	if (netMode == EFunKNetMode::ListenServer)
+	if (NetMode == EFunKNetMode::ListenServer)
 	{
 		return EFunKTestEnvironmentType::ListenServer;
 	}
 
-	if (netMode == EFunKNetMode::DedicatedServer)
+	if (NetMode == EFunKNetMode::DedicatedServer)
 	{
 		return EFunKTestEnvironmentType::DedicatedServer;
 	}
 
-	if (netMode == EFunKNetMode::Client)
+	if (NetMode == EFunKNetMode::Client)
 	{
 		return IsServerDedicated(WorldContext)
 			? EFunKTestEnvironmentType::DedicatedServer
@@ -110,7 +110,7 @@ void UFunKBlueprintFunctionLibrary::SwitchTestEnvironmentType(const UObject* Wor
 
 bool UFunKBlueprintFunctionLibrary::IsServerDedicated(const UObject* WorldContext)
 {
-	if(const UFunKWorldSubsystem* Subsystem = GetFunKWorldSubsystem(WorldContext))
+	if (const UFunKWorldSubsystem* Subsystem = GetFunKWorldSubsystem(WorldContext))
 	{
 		return Subsystem->IsServerDedicated();
 	}
@@ -120,18 +120,18 @@ bool UFunKBlueprintFunctionLibrary::IsServerDedicated(const UObject* WorldContex
 
 EFunKNetLocation UFunKBlueprintFunctionLibrary::GetNetLocation(const UObject* WorldContext)
 {
-	const auto netMode = GetNetMode(WorldContext);
-	if (netMode == EFunKNetMode::Standalone)
+	const EFunKNetMode NetMode = GetNetMode(WorldContext);
+	if (NetMode == EFunKNetMode::Standalone)
 	{
 		return EFunKNetLocation::Standalone;
 	}
 
-	if (netMode == EFunKNetMode::ListenServer || netMode == EFunKNetMode::DedicatedServer)
+	if (NetMode == EFunKNetMode::ListenServer || NetMode == EFunKNetMode::DedicatedServer)
 	{
 		return EFunKNetLocation::Server;
 	}
 
-	if (netMode == EFunKNetMode::Client)
+	if (NetMode == EFunKNetMode::Client)
 	{
 		return EFunKNetLocation::Client;
 	}

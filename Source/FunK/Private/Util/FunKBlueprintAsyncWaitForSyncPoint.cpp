@@ -7,9 +7,9 @@
 #include "FunKTestBase.h"
 #include "Events/FunKTestWaitForSyncPointReachedEvent.h"
 
-UFunKBlueprintAsyncWaitForSyncPoint* UFunKBlueprintAsyncWaitForSyncPoint::WaitFor(AFunKTestBase* Test, EFunKSyncTarget WaitFor)
+UFunKBlueprintAsyncWaitForSyncPoint* UFunKBlueprintAsyncWaitForSyncPoint::WaitFor(AFunKTestBase* Test, const EFunKSyncTarget WaitFor)
 {
-	if(!Test || WaitFor == EFunKSyncTarget::MAX)
+	if (!Test || WaitFor == EFunKSyncTarget::MAX)
 		return nullptr;
 
 	UFunKBlueprintAsyncWaitForSyncPoint* SyncPointInstance = NewObject<UFunKBlueprintAsyncWaitForSyncPoint>(Test);
@@ -17,8 +17,7 @@ UFunKBlueprintAsyncWaitForSyncPoint* UFunKBlueprintAsyncWaitForSyncPoint::WaitFo
 	SyncPointInstance->SyncTarget = WaitFor;
 	SyncPointInstance->TargetStageIndex = Test->GetCurrentStageIndex();
 
-	const ENetMode NetMode = Test->GetNetMode();
-	if(NetMode != NM_Standalone)
+	if (Test->GetNetMode() != NM_Standalone)
 	{
 		SyncPointInstance->Bitmask = FFunKAnonymousBitmask(SyncPointInstance->Test->GetWorldSubsystem()->GetPeerCount());
 		SyncPointInstance->Bitmask.Set(SyncPointInstance->Test->GetStagePeerState());
@@ -51,14 +50,13 @@ void UFunKBlueprintAsyncWaitForSyncPoint::Activate()
 {
 	Super::Activate();
 
-	if(!Test)
+	if (!Test)
 	{
 		UE_LOG(FunKLog, Error, TEXT("Target Test is null in WaitFor"))
 		return;
 	}
 
-	const ENetMode NetMode = Test->GetNetMode();
-	if(NetMode == NM_Standalone)
+	if (Test->GetNetMode() == NM_Standalone)
 	{
 		Broadcast();
 		return;
@@ -74,19 +72,20 @@ void UFunKBlueprintAsyncWaitForSyncPoint::Activate()
 void UFunKBlueprintAsyncWaitForSyncPoint::SetReadyToDestroy()
 {
 	Disable();
-	if(Test)
+	
+	if (Test)
 	{
 		Test->OnTestFinish.RemoveDynamic(this, &UFunKBlueprintAsyncWaitForSyncPoint::Disable);
 		Test->OnPeerStageFinishing.RemoveDynamic(this, &UFunKBlueprintAsyncWaitForSyncPoint::StageFinish);
 	}
-	Test = nullptr;
 	
+	Test = nullptr;
 	Super::SetReadyToDestroy();
 }
 
 void UFunKBlueprintAsyncWaitForSyncPoint::Broadcast()
 {
-	if(!IsBroadcastExecuted)
+	if (!IsBroadcastExecuted)
 	{
 		IsBroadcastExecuted = true;
 		OnSyncPointReady.Broadcast();
@@ -95,16 +94,17 @@ void UFunKBlueprintAsyncWaitForSyncPoint::Broadcast()
 	Disable();
 }
 
-void UFunKBlueprintAsyncWaitForSyncPoint::StageFinish(int32 PeerIndex)
+void UFunKBlueprintAsyncWaitForSyncPoint::StageFinish(const int32 PeerIndex)
 {
 	Received(PeerIndex);
 }
 
-void UFunKBlueprintAsyncWaitForSyncPoint::Received(int32 PeerIndex)
+void UFunKBlueprintAsyncWaitForSyncPoint::Received(const int32 PeerIndex)
 {
-	if(!Test) return;
+	if (!Test)
+		return;
 	
-	if(TargetStageIndex != Test->GetCurrentStageIndex())
+	if (TargetStageIndex != Test->GetCurrentStageIndex())
 	{
 		Disable();
 		return;
@@ -112,7 +112,7 @@ void UFunKBlueprintAsyncWaitForSyncPoint::Received(int32 PeerIndex)
 	
 	Bitmask.Set(PeerIndex);
 
-	if(Bitmask.IsSet())
+	if (Bitmask.IsSet())
 		Broadcast();
 }
 

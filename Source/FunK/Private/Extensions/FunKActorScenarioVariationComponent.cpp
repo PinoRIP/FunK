@@ -38,7 +38,8 @@ UFunKActorScenarioVariationComponent::UFunKActorScenarioVariationComponent()
 int32 UFunKActorScenarioVariationComponent::GetCount()
 {
 	const EFunKTestEnvironmentType Environment = GetEnvironment();
-	if(Environment == EFunKTestEnvironmentType::Standalone || Environment == EFunKTestEnvironmentType::DedicatedServer) return 1;
+	if (Environment == EFunKTestEnvironmentType::Standalone || Environment == EFunKTestEnvironmentType::DedicatedServer)
+		return 1;
 
 	int32 Count = 1;
 	const FFunKOwnershipDistribution Distribution = GetOwnershipDistribution();
@@ -46,7 +47,7 @@ int32 UFunKActorScenarioVariationComponent::GetCount()
 	if (Distribution.AppositionPlayerCount > 0) Count++;
 	if (Distribution.OppositionPlayerCount > 0) Count++;
 
-	if(Distribution.AppositionPlayerCount <= 0 && Distribution.OppositionPlayerCount > 0)
+	if (Distribution.AppositionPlayerCount <= 0 && Distribution.OppositionPlayerCount > 0)
 	{
 		UE_LOG(FunKLog, Warning, TEXT("OppositionPlayer without AppositionPlayer are not supported!"));
 	}
@@ -70,7 +71,7 @@ bool UFunKActorScenarioVariationComponent::IsReady(UFunKTestFragment* Instance, 
 void UFunKActorScenarioVariationComponent::Begin(int32 index)
 {
 	const EFunKTestEnvironmentType Environment = GetEnvironment();
-	if(Environment == EFunKTestEnvironmentType::Standalone || Environment == EFunKTestEnvironmentType::DedicatedServer)
+	if (Environment == EFunKTestEnvironmentType::Standalone || Environment == EFunKTestEnvironmentType::DedicatedServer)
 	{
 		Mode = EFunKActorScenarioMode::ClientToClient;
 	}
@@ -79,8 +80,9 @@ void UFunKActorScenarioVariationComponent::Begin(int32 index)
 		Mode = index == 0 ? EFunKActorScenarioMode::ClientToServer : index == 1 ? EFunKActorScenarioMode::ServerToClient : EFunKActorScenarioMode::ClientToClient;
 	}
 
-	auto NetMode = GetNetMode();
-	if (NetMode == NM_Client) return;
+	const ENetMode NetMode = GetNetMode();
+	if (NetMode == NM_Client)
+		return;
 	
 	for (const FFunKActorScenarioVariationActor& Actor : Actors)
 	{
@@ -91,7 +93,7 @@ void UFunKActorScenarioVariationComponent::Begin(int32 index)
 		}
 		else
 		{
-			if(NetMode != NM_Standalone && !AcquiredActor->GetIsReplicated())
+			if (NetMode != NM_Standalone && !AcquiredActor->GetIsReplicated())
 			{
 				UE_LOG(FunKLog, Warning, TEXT("Actor %s is not replicated!"), *AcquiredActor->GetName())
 			}
@@ -105,21 +107,28 @@ void UFunKActorScenarioVariationComponent::Begin(int32 index)
 
 bool UFunKActorScenarioVariationComponent::IsReady()
 {
-	if(Actors.Num() != AcquiredActors.Num()) return false;
+	if (Actors.Num() != AcquiredActors.Num())
+		return false;
 
 	const ENetMode NetMode = GetNetMode();
 	const uint8 LocalOwnerships = static_cast<uint8>(GetLocalOwnerships());
-	if(LocalOwnerships == 0) return true;
+	if (LocalOwnerships == 0)
+		return true;
 	
 	for (int i = 0; i < Actors.Num(); ++i)
 	{
-		if (!AcquiredActors[i]) return false;
-		if (!AcquiredActors[i]->HasActorBegunPlay()) return false;
+		if (!AcquiredActors[i])
+			return false;
+		
+		if (!AcquiredActors[i]->HasActorBegunPlay())
+			return false;
+		
 		if (Actors[i].Ownership != EFunKActorScenarioVariationOwnership::None)
 		{
-			if(NetMode < NM_Client || (LocalOwnerships & static_cast<uint8>(Actors[i].Ownership)) == LocalOwnerships)
+			if (NetMode < NM_Client || (LocalOwnerships & static_cast<uint8>(Actors[i].Ownership)) == LocalOwnerships)
 			{
-				if(AcquiredActors[i]->GetOwner() == nullptr) return false;
+				if(AcquiredActors[i]->GetOwner() == nullptr)
+					return false;
 			}
 		}
 	}
@@ -129,8 +138,7 @@ bool UFunKActorScenarioVariationComponent::IsReady()
 
 void UFunKActorScenarioVariationComponent::Finish()
 {
-	const ENetMode NetMode = GetNetMode();
-	if (NetMode < NM_Client)
+	if (GetNetMode() < NM_Client)
 	{
 		for (int i = 0; i < Actors.Num(); ++i)
 		{
@@ -143,8 +151,8 @@ void UFunKActorScenarioVariationComponent::Finish()
 
 FString UFunKActorScenarioVariationComponent::GetName() const
 {
-	auto NetMode = GetNetMode();
-	if(NetMode == NM_Standalone)
+	const ENetMode NetMode = GetNetMode();
+	if (NetMode == NM_Standalone)
 	{
 		return "Standalone";
 	}
@@ -161,20 +169,25 @@ void UFunKActorScenarioVariationComponent::GetLifetimeReplicatedProps(TArray<FLi
 
 AActor* UFunKActorScenarioVariationComponent::GetActor(int32 InIndex)
 {
-	if(InIndex < 0 || InIndex >= AcquiredActors.Num()) return nullptr;
+	if (InIndex < 0 || InIndex >= AcquiredActors.Num())
+		return nullptr;
+	
 	return AcquiredActors[InIndex];
 }
 
 AActor* UFunKActorScenarioVariationComponent::GetActorByOwnership(EFunKActorScenarioVariationOwnership Ownership, int32 InIndex)
 {
-	if(InIndex < 0 || InIndex >= AcquiredActors.Num()) return nullptr;
+	if (InIndex < 0 || InIndex >= AcquiredActors.Num())
+		return nullptr;
+	
 	int32 OwnershipIndex = 0;
-
 	for (int i = 0; i < Actors.Num(); ++i)
 	{
-		if(Actors[i].Ownership == Ownership)
+		if (Actors[i].Ownership == Ownership)
 		{
-			if(OwnershipIndex == InIndex) return AcquiredActors[i];
+			if (OwnershipIndex == InIndex)
+				return AcquiredActors[i];
+			
 			OwnershipIndex++;
 		}
 	}
@@ -184,7 +197,7 @@ AActor* UFunKActorScenarioVariationComponent::GetActorByOwnership(EFunKActorScen
 
 AActor* UFunKActorScenarioVariationComponent::AcquireActor(const FFunKActorScenarioVariationActor& VariationActor)
 {
-	if(VariationActor.SceneActor.Actor)
+	if (VariationActor.SceneActor.Actor)
 	{
 		return GetSceneActor(VariationActor);
 	}
@@ -223,10 +236,11 @@ AActor* UFunKActorScenarioVariationComponent::SpawnActor(const FFunKActorScenari
 void UFunKActorScenarioVariationComponent::AssignOwner(AActor* Actor, EFunKActorScenarioVariationOwnership Ownership)
 {
 	APlayerController* Controller = GetController(Ownership);
-	if(!Controller) return;
+	if (!Controller)
+		return;
 
 	const ENetMode NetMode = GetNetMode();
-	if(APawn* Pawn = Cast<APawn>(Actor))
+	if (APawn* Pawn = Cast<APawn>(Actor))
 	{
 		// Pawn->PossessedBy(PlayerController);
 		Controller->Possess(Pawn);
@@ -239,25 +253,26 @@ void UFunKActorScenarioVariationComponent::AssignOwner(AActor* Actor, EFunKActor
 			Actor->SetAutonomousProxy(true);
 	}
 
-	if(NetMode != NM_Standalone)
+	if (NetMode != NM_Standalone)
 		Actor->ForceNetUpdate();
 }
 
 void UFunKActorScenarioVariationComponent::ReleaseActor(AActor* Actor, const FFunKActorScenarioVariationActor& VariationActor)
 {
-	if (!Actor) return;
+	if (!Actor)
+		return;
 
-	if(VariationActor.Ownership == EFunKActorScenarioVariationOwnership::AppositionPlayer || VariationActor.Ownership == EFunKActorScenarioVariationOwnership::OppositionPlayer)
+	if (VariationActor.Ownership == EFunKActorScenarioVariationOwnership::AppositionPlayer || VariationActor.Ownership == EFunKActorScenarioVariationOwnership::OppositionPlayer)
 	{
 		APlayerController* Controller = GetController(VariationActor.Ownership);
-		if(Controller && Controller->GetPawn() == Actor)
+		if (Controller && Controller->GetPawn() == Actor)
 		{
 			Controller->UnPossess();
 			Actor->ForceNetUpdate();
 		}
 	}
 	
-	if(VariationActor.SceneActor.Actor)
+	if (VariationActor.SceneActor.Actor)
 	{
 		ReleaseSceneActor(Actor, VariationActor);
 	}
@@ -313,13 +328,13 @@ void UFunKActorScenarioVariationComponent::ReleaseSpawnActor(AActor* Actor, cons
 
 APlayerController* UFunKActorScenarioVariationComponent::GetController(EFunKActorScenarioVariationOwnership Ownership)
 {
-	if (Ownership == EFunKActorScenarioVariationOwnership::None) return nullptr;
-	if (Ownership == EFunKActorScenarioVariationOwnership::AI)
-	{
+	if (Ownership == EFunKActorScenarioVariationOwnership::None)
 		return nullptr;
-	}
+	
+	if (Ownership == EFunKActorScenarioVariationOwnership::AI)
+		return nullptr;
 
-	auto NetMode = GetNetMode();
+	const ENetMode NetMode = GetNetMode();
 	auto It = GetWorld()->GetPlayerControllerIterator();
 
 	switch (Mode)
@@ -355,10 +370,10 @@ FFunKOwnershipDistribution UFunKActorScenarioVariationComponent::GetOwnershipDis
 	
 	for (const FFunKActorScenarioVariationActor& Actor : Actors)
 	{
-		if(Actor.Ownership == EFunKActorScenarioVariationOwnership::None) OwnershipDistribution.NoneCount++;
-		if(Actor.Ownership == EFunKActorScenarioVariationOwnership::AppositionPlayer) OwnershipDistribution.AppositionPlayerCount++;
-		if(Actor.Ownership == EFunKActorScenarioVariationOwnership::OppositionPlayer) OwnershipDistribution.OppositionPlayerCount++;
-		if(Actor.Ownership == EFunKActorScenarioVariationOwnership::AI) OwnershipDistribution.AICount++;
+		if (Actor.Ownership == EFunKActorScenarioVariationOwnership::None) OwnershipDistribution.NoneCount++;
+		if (Actor.Ownership == EFunKActorScenarioVariationOwnership::AppositionPlayer) OwnershipDistribution.AppositionPlayerCount++;
+		if (Actor.Ownership == EFunKActorScenarioVariationOwnership::OppositionPlayer) OwnershipDistribution.OppositionPlayerCount++;
+		if (Actor.Ownership == EFunKActorScenarioVariationOwnership::AI) OwnershipDistribution.AICount++;
 	}
 
 	return OwnershipDistribution;
@@ -367,25 +382,34 @@ FFunKOwnershipDistribution UFunKActorScenarioVariationComponent::GetOwnershipDis
 EFunKActorScenarioVariationOwnership UFunKActorScenarioVariationComponent::GetLocalOwnerships()
 {
 	const ENetMode NetMode = GetNetMode();
-	if(NetMode == NM_Standalone) return EFunKActorScenarioVariationOwnership::AppositionPlayer | EFunKActorScenarioVariationOwnership::OppositionPlayer | EFunKActorScenarioVariationOwnership::AI;
-	if(NetMode == NM_DedicatedServer) return EFunKActorScenarioVariationOwnership::AI;
-	if(NetMode == NM_ListenServer)
+	if (NetMode == NM_Standalone)
+		return EFunKActorScenarioVariationOwnership::AppositionPlayer | EFunKActorScenarioVariationOwnership::OppositionPlayer | EFunKActorScenarioVariationOwnership::AI;
+	
+	if (NetMode == NM_DedicatedServer)
+		return EFunKActorScenarioVariationOwnership::AI;
+	
+	if (NetMode == NM_ListenServer)
 	{
 		constexpr EFunKActorScenarioVariationOwnership Default = EFunKActorScenarioVariationOwnership::AI;
-		if (Mode == EFunKActorScenarioMode::ServerToClient) return Default | EFunKActorScenarioVariationOwnership::AppositionPlayer;
-		if (Mode == EFunKActorScenarioMode::ClientToServer) return Default | EFunKActorScenarioVariationOwnership::OppositionPlayer;
+		
+		if (Mode == EFunKActorScenarioMode::ServerToClient)
+			return Default | EFunKActorScenarioVariationOwnership::AppositionPlayer;
+		
+		if (Mode == EFunKActorScenarioMode::ClientToServer)
+			return Default | EFunKActorScenarioVariationOwnership::OppositionPlayer;
+		
 		return Default;
 	}
 
-	const EFunKClient client = UFunKBlueprintFunctionLibrary::GetClients(GetOwner());
+	const EFunKClient Client = UFunKBlueprintFunctionLibrary::GetClients(GetOwner());
 	switch (Mode)
 	{
 	case EFunKActorScenarioMode::ClientToClient:
-		return client == EFunKClient::First ? EFunKActorScenarioVariationOwnership::AppositionPlayer : EFunKActorScenarioVariationOwnership::OppositionPlayer;
+		return Client == EFunKClient::First ? EFunKActorScenarioVariationOwnership::AppositionPlayer : EFunKActorScenarioVariationOwnership::OppositionPlayer;
 	case EFunKActorScenarioMode::ClientToServer:
-		return client == EFunKClient::First ? EFunKActorScenarioVariationOwnership::AppositionPlayer : EFunKActorScenarioVariationOwnership::None;
+		return Client == EFunKClient::First ? EFunKActorScenarioVariationOwnership::AppositionPlayer : EFunKActorScenarioVariationOwnership::None;
 	case EFunKActorScenarioMode::ServerToClient:
-		return client == EFunKClient::First ? EFunKActorScenarioVariationOwnership::None : EFunKActorScenarioVariationOwnership::OppositionPlayer;
+		return Client == EFunKClient::First ? EFunKActorScenarioVariationOwnership::None : EFunKActorScenarioVariationOwnership::OppositionPlayer;
 	default: return EFunKActorScenarioVariationOwnership::None;
 	}
 }
@@ -393,20 +417,26 @@ EFunKActorScenarioVariationOwnership UFunKActorScenarioVariationComponent::GetLo
 bool UFunKActorScenarioVariationComponent::IsAppositionPlayer()
 {
 	const uint8 LocalOwnerships = static_cast<uint8>(GetLocalOwnerships());
-	if (LocalOwnerships == 0) return false;
+	if (LocalOwnerships == 0)
+		return false;
+	
 	return (LocalOwnerships & static_cast<uint8>(EFunKActorScenarioVariationOwnership::AppositionPlayer)) == LocalOwnerships;
 }
 
 bool UFunKActorScenarioVariationComponent::IsOppositionPlayer()
 {
 	const uint8 LocalOwnerships = static_cast<uint8>(GetLocalOwnerships());
-	if (LocalOwnerships == 0) return false;
+	if (LocalOwnerships == 0)
+		return false;
+	
 	return (LocalOwnerships & static_cast<uint8>(EFunKActorScenarioVariationOwnership::OppositionPlayer)) == LocalOwnerships;
 }
 
 bool UFunKActorScenarioVariationComponent::IsAI()
 {
 	const uint8 LocalOwnerships = static_cast<uint8>(GetLocalOwnerships());
-	if (LocalOwnerships == 0) return false;
+	if (LocalOwnerships == 0)
+		return false;
+	
 	return (LocalOwnerships & static_cast<uint8>(EFunKActorScenarioVariationOwnership::AI)) == LocalOwnerships;
 }

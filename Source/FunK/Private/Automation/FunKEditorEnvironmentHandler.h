@@ -30,14 +30,14 @@ private:
 	UPROPERTY()
 	UWorld* World;
 	
-	bool IsEnvironmentRunning(const FFunKTestInstructions& Instructions, bool& isWrongEnvironmentRunning);
+	bool IsEnvironmentRunning(const FFunKTestInstructions& Instructions, bool& IsWrongEnvironmentRunning);
 	bool IsWrongEnvironmentType(const FFunKTestInstructions& Instructions);
 	FString GetCurrentPieWorldPackageName();
 	const FWorldContext* GetCurrentPieWorldContext();
 	bool IsHoldingSubprocesses() const;
 
 	virtual bool StartEnvironment(const FFunKTestInstructions& Instructions);
-	static void SetFpsSettings(class ULevelEditorPlaySettings* playSettings, const struct FFunKSettings& funkSettings, bool isDedicated);
+	static void SetFpsSettings(class ULevelEditorPlaySettings* PlaySettings, const struct FFunKSettings& FunkSettings, bool IsDedicated);
 
 	static int32 GetTargetReplicationControllerCount(const FFunKTestInstructions& Instructions);
 };

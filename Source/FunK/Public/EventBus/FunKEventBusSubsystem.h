@@ -65,10 +65,10 @@ struct FUNK_API FFunKEventBusRegistration
 	GENERATED_BODY()
 
 	FFunKEventBusRegistration() { Key = INDEX_NONE; Subsystem = nullptr; }
-	FFunKEventBusRegistration(int32 key, class UFunKEventBusSubsystem* subsystem)
+	FFunKEventBusRegistration(const int32 InKey, const class UFunKEventBusSubsystem* InSubsystem)
 	{
-		Key = key;
-		Subsystem = subsystem;
+		Key = InKey;
+		Subsystem = InSubsystem;
 	}
 
 public:
@@ -123,11 +123,11 @@ public:
 
 	// Raises the event
 	template <typename TStruct>
-	void Raise(const TStruct& eventStruct);
+	void Raise(const TStruct& EventStruct);
 
 	// Raises the event. After all receiving lambdas have been executed the callback lambda will be called.
 	template <typename TStruct>
-	void Raise(const TStruct& eventStruct, TFunction<void()> callback);
+	void Raise(const TStruct& EventStruct, TFunction<void()> Callback);
 
 	// Gets the last version of a given event.
 	template <typename TStruct>
@@ -179,21 +179,21 @@ private:
 	void UpdateControllerStats();
 
 	void RegisterController(APlayerController* NewPlayer);
-	void DeregisterController(AController* Controller);
+	void DeregisterController(const AController* Controller);
 
-	void Unregister(int32 key);
-	bool HasHandler(int32 key);
+	void Unregister(int32 Key);
+	bool HasHandler(int32 Key);
 
 	void SendMessage(FFunKEventBusMessage& Message, TOptional<TFunction<void()>>& Callback);
 
-	void RegisterLocalReplicationController(AFunKEventBusReplicationController* localController);
-	void ReplicationControllerReady(AFunKEventBusReplicationController* controller);
+	void RegisterLocalReplicationController(AFunKEventBusReplicationController* Controller);
+	void ReplicationControllerReady(const AFunKEventBusReplicationController* Controller);
 	void ReceiveMessage(const FFunKEventBusMessage& Message);
 
-	void CheckCallback(FGuid callbackId, AFunKEventBusReplicationController* FromController);
+	void CheckCallback(FGuid CallbackId, AFunKEventBusReplicationController* FromController);
 
 	template <typename TStruct>
-	void RaiseImpl(const TStruct& eventStruct, TOptional<TFunction<void()>> Callback);
+	void RaiseImpl(const TStruct& EventStruct, TOptional<TFunction<void()>> Callback);
 
 	friend AFunKEventBusReplicationController;
 	friend FFunKEventBusRegistration;
@@ -202,21 +202,21 @@ private:
 template <typename TStruct>
 FFunKEventBusRegistration UFunKEventBusSubsystem::On(TFunction<void(const TStruct& Struct)> ReceivingLambda)
 {
-	const int32 key = AddHandler(ReceivingLambda);
-	return FFunKEventBusRegistration(key, this);
+	const int32 Key = AddHandler(ReceivingLambda);
+	return FFunKEventBusRegistration(Key, this);
 }
 
 template <typename TStruct>
 FFunKEventBusRegistration UFunKEventBusSubsystem::At(TFunction<void(const TStruct& Struct)> ReceivingLambda)
 {
-	const int32 key = AddHandler(ReceivingLambda);
+	const int32 Key = AddHandler(ReceivingLambda);
 
-	if(const FFunKEventBusMessage* lastEventMessage = GetLast<TStruct>())
+	if (const FFunKEventBusMessage* LastEventMessage = GetLast<TStruct>())
 	{
-		Handlers[key](*lastEventMessage);
+		Handlers[Key](*LastEventMessage);
 	}
 	
-	return FFunKEventBusRegistration(key, this);
+	return FFunKEventBusRegistration(Key, this);
 }
 
 template <typename TStruct>
@@ -226,23 +226,23 @@ bool UFunKEventBusSubsystem::Has()
 }
 
 template <typename TStruct>
-void UFunKEventBusSubsystem::Raise(const TStruct& eventStruct)
+void UFunKEventBusSubsystem::Raise(const TStruct& EventStruct)
 {
-	RaiseImpl<TStruct>(eventStruct, NullOpt);
+	RaiseImpl<TStruct>(EventStruct, NullOpt);
 }
 
 template <typename TStruct>
-void UFunKEventBusSubsystem::Raise(const TStruct& eventStruct, TFunction<void()> callback)
+void UFunKEventBusSubsystem::Raise(const TStruct& EventStruct, const TFunction<void()> Callback)
 {
-	RaiseImpl<TStruct>(eventStruct, callback);
+	RaiseImpl<TStruct>(EventStruct, Callback);
 }
 
 template <typename TStruct>
 const TStruct* UFunKEventBusSubsystem::Last()
 {
-	if(const FFunKEventBusMessage* lastEventMessage = GetLast<TStruct>())
+	if (const FFunKEventBusMessage* LastEventMessage = GetLast<TStruct>())
 	{
-		return static_cast<TStruct*>(lastEventMessage->Instance.Get());
+		return static_cast<TStruct*>(LastEventMessage->Instance.Get());
 	}
 
 	return nullptr;
@@ -251,32 +251,32 @@ const TStruct* UFunKEventBusSubsystem::Last()
 template <typename TStruct>
 int32 UFunKEventBusSubsystem::AddHandler(TFunction<void(const TStruct& Struct)> ReceivingLambda)
 {
-	int32 key = this->HandlerCounter++;
-	Handlers.Add(key, [ReceivingLambda, this](const FFunKEventBusMessage& message)
+	int32 Key = this->HandlerCounter++;
+	Handlers.Add(Key, [ReceivingLambda, this](const FFunKEventBusMessage& Message)
 	{
-		if(message.Type == TStruct::StaticStruct())
+		if (Message.Type == TStruct::StaticStruct())
 		{
-			TStruct* castedInstance = static_cast<TStruct*>(message.Instance.Get());
-			ReceivingLambda(*castedInstance);
+			TStruct* CastedInstance = static_cast<TStruct*>(Message.Instance.Get());
+			ReceivingLambda(*CastedInstance);
 		}
 	});
 
-	return key;
+	return Key;
 }
 
 template <typename TStruct>
 const FFunKEventBusMessage* UFunKEventBusSubsystem::GetLast()
 {
-	const FString structName = TStruct::StaticStruct()->GetName();
-	return LastEvents.Find(structName);
+	const FString StructName = TStruct::StaticStruct()->GetName();
+	return LastEvents.Find(StructName);
 }
 
 template <typename TStruct>
-void UFunKEventBusSubsystem::RaiseImpl(const TStruct& eventStruct, TOptional<TFunction<void()>> Callback)
+void UFunKEventBusSubsystem::RaiseImpl(const TStruct& EventStruct, TOptional<TFunction<void()>> Callback)
 {
-	FFunKEventBusMessage message;
-	message.Type = TStruct::StaticStruct();
-	message.Instance = TSharedPtr<void>(new TStruct(eventStruct));
+	FFunKEventBusMessage Message;
+	Message.Type = TStruct::StaticStruct();
+	Message.Instance = TSharedPtr<void>(new TStruct(EventStruct));
 
-	SendMessage(message, Callback);
+	SendMessage(Message, Callback);
 }

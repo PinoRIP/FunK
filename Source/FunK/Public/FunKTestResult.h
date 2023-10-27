@@ -1,6 +1,5 @@
 ﻿#pragma once
 
-
 /* Result of a test */
 UENUM(BlueprintType)
 enum class EFunKTestResult : uint8

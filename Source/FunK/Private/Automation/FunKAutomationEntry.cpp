@@ -7,7 +7,7 @@
 #include "CoreMinimal.h"
 #include "FunK.h"
 
-#define ENSURE(Ptr) if(!Ptr) { AddError(TEXT(#Ptr " not found!")); return false; }
+#define ENSURE(Ptr) if (!Ptr) { AddError(TEXT(#Ptr " not found!")); return false; }
 
 
 void FFunKAutomationEntry::ParseTestMapInfo(const FString& Parameters, FString& MapObjectPath, FString& MapPackageName, FString& MapTestName, FString& Params)
@@ -50,7 +50,7 @@ bool FFunKAutomationEntryRuntime::RunTest(const FString& Parameters)
 	ParseTestMapInfo(Parameters, MapObjectPath, MapPackageName, MapTestName, Params);
 	FFunKTestInstructions Instructions(MapObjectPath, MapPackageName, MapTestName, Params);
 		
-	if(!EngineSubsystem->IsRunning())
+	if (!EngineSubsystem->IsRunning())
 	{
 		StartTest(EngineSubsystem, Instructions);
 		return true;

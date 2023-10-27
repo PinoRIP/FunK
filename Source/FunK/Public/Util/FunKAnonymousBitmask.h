@@ -13,8 +13,8 @@ public:
 	FFunKAnonymousBitmask()
 		: Length(1) { }
 	
-	FFunKAnonymousBitmask(int32 length)
-		: Length(length)
+	FFunKAnonymousBitmask(const int32 InLength)
+		: Length(InLength)
 	{
 		check(Length > 0);
 		check(Length <= 32);

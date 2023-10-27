@@ -97,7 +97,7 @@ public: //Enhanced input system
 	void EndSimulateControllerInputAction(APlayerController* PlayerController, const UInputAction* InputAction);
 
 private:
-	FFunKInputActionSimulationTick& ScheduleInputActionSimulation(APlayerController* PlayerController, const UInputAction* InputAction, FInputActionValue InputActionValue);
+	FFunKInputActionSimulationTick& ScheduleInputActionSimulation(APlayerController* PlayerController, const UInputAction* InputAction, const FInputActionValue& InputActionValue);
 	static void InjectInputForAction(const APlayerController* PlayerController, const UInputAction* InputAction, const FInputActionValue& InputActionValue);
 	
 public: //Legacy input system
@@ -158,16 +158,16 @@ public: //"Lower level" input system
 	void EndSimulateControllerKeyAxisInput(APlayerController* PlayerController, const FName& AxisKey);
 	
 private:
-	void SimulateAxisInput(APlayerController* PlayerController, const FKey& key, float AxisValue);
-	FFunKAxisInputSimulationTick& ScheduleAxisInputSimulation(APlayerController* PlayerController, const FKey& key, float AxisValue);
-	static void InjectAxisInput(APlayerController* PlayerController, const FKey& key, float AxisValue, float DeltaTime);
-	static float SenseAdjustAxisValue(const APlayerController* PlayerController, const FKey& key, float AxisValue);
-	static void SimulatePlayerControllerKeyPressInput(APlayerController* PlayerController, const FKey& key, EInputEvent InputEventType);
+	void SimulateAxisInput(APlayerController* PlayerController, const FKey& Key, float AxisValue);
+	FFunKAxisInputSimulationTick& ScheduleAxisInputSimulation(APlayerController* PlayerController, const FKey& Key, float AxisValue);
+	static void InjectAxisInput(APlayerController* PlayerController, const FKey& Key, float AxisValue, float DeltaTime);
+	static float SenseAdjustAxisValue(const APlayerController* PlayerController, const FKey& Key, float AxisValue);
+	static void SimulatePlayerControllerKeyPressInput(APlayerController* PlayerController, const FKey& Key, EInputEvent InputEventType);
 
 private:
 	TMap<APlayerController*, FFunKPlayerControllerInputSimulations> ControllerInputSimulations;
 
-	FFunKPlayerControllerInputSimulations* GetControllerInputSimulations(APlayerController* PlayerController, bool create = false);
+	FFunKPlayerControllerInputSimulations* GetControllerInputSimulations(APlayerController* PlayerController, bool bCreate = false);
 
 	friend class UFunKInputSimulationBlueprintFunctionLibrary;
 };

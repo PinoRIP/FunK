@@ -28,17 +28,17 @@ public:
 	{
 	}
 	
-	FFunKEvent(EFunKEventType InType)
+	FFunKEvent(const EFunKEventType InType)
 		: FFunKEvent(InType, FString())
 	{
 	}
 	
-	FFunKEvent(EFunKEventType InType, const FString& InMessage)
+	FFunKEvent(const EFunKEventType InType, const FString& InMessage)
 		: FFunKEvent(InType, InMessage, FString())
 	{
 	}
 
-	FFunKEvent(EFunKEventType InType, const FString& InMessage, const FString& InContext)
+	FFunKEvent(const EFunKEventType InType, const FString& InMessage, const FString& InContext)
 		: Type(InType)
 		, Message(InMessage)
 	{
@@ -46,7 +46,7 @@ public:
 			Context.Add(InContext);
 	}
 
-	FFunKEvent(EFunKEventType InType, const FString& InMessage, const TArray<FString>& InContext)
+	FFunKEvent(const EFunKEventType InType, const FString& InMessage, const TArray<FString>& InContext)
 		: Type(InType)
 		, Message(InMessage)
 		, Context(InContext)
@@ -62,9 +62,9 @@ public:
 	UPROPERTY()
 	TArray<FString> Context;
 
-	void GetContext(FString& outContext) const
+	void GetContext(FString& OutContext) const
 	{
-		outContext = GetContext();
+		OutContext = GetContext();
 	}
 
 	FORCEINLINE FString GetContext() const
@@ -72,7 +72,7 @@ public:
 		return FString::Join(Context, TEXT(" | "));
 	}
 
-	FFunKEvent& AddToContext(int32 InContext)
+	FFunKEvent& AddToContext(const int32 InContext)
 	{
 		return AddToContext(FString::FromInt(InContext));
 	}

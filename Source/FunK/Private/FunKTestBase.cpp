@@ -20,10 +20,10 @@
 
 int32 FFunKTestVariations::GetCount() const
 {
-	auto variations = FMath::Max(1, GetVariationsCount());
-	auto rootVariations = FMath::Max(1, GetRootVariationsCount());
+	const int32 VariationCount = FMath::Max(1, GetVariationsCount());
+	const int32 RootVariationCount = FMath::Max(1, GetRootVariationsCount());
 	
-	return variations * rootVariations;
+	return VariationCount * RootVariationCount;
 }
 
 int32 FFunKTestVariations::GetVariationsCount() const
@@ -69,7 +69,7 @@ AFunKTestBase::AFunKTestBase()
 
 #if WITH_EDITORONLY_DATA
 	TestName = CreateEditorOnlyDefaultSubobject<UTextRenderComponent>(TEXT("TestName"));
-	if(TestName)
+	if (TestName)
 	{
 		TestName->bHiddenInGame = true;
 		TestName->SetHorizontalAlignment(EHTA_Center);
@@ -115,7 +115,7 @@ bool AFunKTestBase::IsRunOnListenServerClients() const
 	return Stages.OnListenServerClientCount > 0;
 }
 
-void AFunKTestBase::BeginTest(int32 InTestRunID, int32 InSeed, int32 Variation)
+void AFunKTestBase::BeginTest(const int32 InTestRunID, const int32 InSeed, const int32 Variation)
 {
 	if (IsRunning())
 	{
@@ -161,7 +161,7 @@ void AFunKTestBase::NextStage()
 	GetEventBusSubsystem()->Raise(StageBeginEvent);
 }
 
-bool AFunKTestBase::IsDriver(ENetMode NetMode)
+bool AFunKTestBase::IsDriver(const ENetMode NetMode)
 {
 	return NetMode < NM_Client;
 }
@@ -181,7 +181,7 @@ void AFunKTestBase::DispatchRaisedEvent(const FFunKEvent& Event) const
 
 void AFunKTestBase::OnBegin(const FFunKTestBeginEvent& BeginEvent)
 {
-	if(IsRunning())
+	if (IsRunning())
 	{
 		Error("Test is already running", FString::FromInt(BeginEvent.TestRunID));
 		return;
@@ -195,7 +195,7 @@ void AFunKTestBase::OnBegin(const FFunKTestBeginEvent& BeginEvent)
 	CurrentStageIndex = INDEX_NONE;
 	SetActorTickEnabled(true);
 
-	if(GetNetMode() != NM_DedicatedServer)
+	if (GetNetMode() != NM_DedicatedServer)
 	{
 		UFunKInputSimulationSystem* InputSimulationSystem = GetWorld()->GetSubsystem<UFunKInputSimulationSystem>();
 		InputSimulationSystem->DisableActualInputs();
@@ -203,20 +203,20 @@ void AFunKTestBase::OnBegin(const FFunKTestBeginEvent& BeginEvent)
 		ViewObservationPoint();
 	}
 	
-	if(IsDriver())
+	if (IsDriver())
 	{
 		RaiseEvent(FFunKEvent::Info("Start Test", FunKTestLifeTimeContext::BeginTest).Ref());
 		NextStage();
 	}
 }
 
-bool AFunKTestBase::IsExecutingStage(const FFunKStage& stage) const
+bool AFunKTestBase::IsExecutingStage(const FFunKStage& Stage) const
 {
-	ENetMode netMode = GetNetMode();
-	return (stage.IsOnStandalone && netMode == NM_Standalone) ||
-		(stage.IsOnDedicatedServer && netMode == NM_DedicatedServer) ||
-		(stage.IsOnListenServer && netMode == NM_ListenServer) ||
-		(netMode == NM_Client && (GetWorldSubsystem()->IsServerDedicated() ? stage.IsOnDedicatedServerClient : stage.IsOnListenServerClient));
+	const ENetMode NetMode = GetNetMode();
+	return (Stage.IsOnStandalone && NetMode == NM_Standalone) ||
+		(Stage.IsOnDedicatedServer && NetMode == NM_DedicatedServer) ||
+		(Stage.IsOnListenServer && NetMode == NM_ListenServer) ||
+		(NetMode == NM_Client && (GetWorldSubsystem()->IsServerDedicated() ? Stage.IsOnDedicatedServerClient : Stage.IsOnListenServerClient));
 }
 
 void AFunKTestBase::OnBeginStage(const FFunKTestStageBeginEvent& BeginEvent)
@@ -320,7 +320,7 @@ void AFunKTestBase::OnFinish(const FFunKTestFinishEvent& Event)
 		RaiseEvent(FFunKEvent(Event.Result == EFunKTestResult::Succeeded || Event.Result == EFunKTestResult::Skipped ? EFunKEventType::Info : EFunKEventType::Error, EventMessage, FunKTestLifeTimeContext::FinishTest).AddToContext(LexToString(Event.Result)));
 	}
 
-	if(GetNetMode() != NM_DedicatedServer)
+	if (GetNetMode() != NM_DedicatedServer)
 	{
 		UFunKInputSimulationSystem* InputSimulationSystem = GetWorld()->GetSubsystem<UFunKInputSimulationSystem>();
 		InputSimulationSystem->EnableActualInputs();
@@ -358,7 +358,7 @@ void AFunKTestBase::OnNetworkedFragmentsReceived(const FFunKTestNetworkedFragmen
 	const FFunKTestVariations& TestVariations = GetTestVariations();
 	for (int i = 0; i < Event.Fragments.Num(); ++i)
 	{
-		if(Event.Fragments[i])
+		if (Event.Fragments[i])
 		{
 			AddTestFragment(Event.Fragments[i], i);
 
@@ -548,7 +548,7 @@ int32 AFunKTestBase::GetNextStageIndex() const
 {
 	const ENetMode NetMode = GetNetMode();
 
-	bool IsStandalone = NetMode == NM_Standalone;
+	const bool IsStandalone = NetMode == NM_Standalone;
 	bool IsDedicatedServer = NetMode == NM_DedicatedServer;
 	bool IsListenServer = NetMode == NM_ListenServer;
 	if (NetMode == NM_Client)
@@ -557,13 +557,13 @@ int32 AFunKTestBase::GetNextStageIndex() const
 		IsListenServer = !IsDedicatedServer;
 	}
 
-	const TArray<FFunKStage>& stages = GetStages()->Stages;
-	for (int i = CurrentStageIndex + 1; i < stages.Num(); ++i)
+	const TArray<FFunKStage>& TestStages = GetStages()->Stages;
+	for (int i = CurrentStageIndex + 1; i < TestStages.Num(); ++i)
 	{
 		if (
-			stages[i].IsOnStandalone && IsStandalone ||
-			((stages[i].IsOnDedicatedServer || stages[i].IsOnDedicatedServerClient) && IsDedicatedServer) ||
-			((stages[i].IsOnListenServer || stages[i].IsOnListenServerClient) && IsListenServer)
+			TestStages[i].IsOnStandalone && IsStandalone ||
+			((TestStages[i].IsOnDedicatedServer || TestStages[i].IsOnDedicatedServerClient) && IsDedicatedServer) ||
+			((TestStages[i].IsOnListenServer || TestStages[i].IsOnListenServerClient) && IsListenServer)
 		)
 		{
 			return i;
@@ -575,7 +575,7 @@ int32 AFunKTestBase::GetNextStageIndex() const
 
 void AFunKTestBase::OnFinishStage(const FFunKTestStageFinishEvent& StageFinishEvent)
 {
-	if(!IsRunning()) return;
+	if (!IsRunning()) return;
 	
 	if (StageFinishEvent.TestRunID != TestRunID)
 	{
@@ -592,7 +592,7 @@ void AFunKTestBase::OnFinishStage(const FFunKTestStageFinishEvent& StageFinishEv
 	PeerBitMask.Set(StageFinishEvent.PeerIndex);
 	OnPeerStageFinishing.Broadcast(StageFinishEvent.PeerIndex);
 
-	if(!IsDriver())
+	if (!IsDriver())
 		return;
 	
 	if (StageFinishEvent.Result != EFunKStageResult::Succeeded)
@@ -638,7 +638,7 @@ void AFunKTestBase::Error(const FString& Message, const FString& Context) const
 
 UFunKTestFragment* AFunKTestBase::AddTestFragment(UFunKTestFragment* Fragment)
 {
-	if(Fragment->IsSupportedForNetworking())
+	if (Fragment->IsSupportedForNetworking())
 	{
 		UE_LOG(FunKLog, Warning, TEXT("Directly added test fragments don't support networking! (yet?)"))
 	}
@@ -649,7 +649,7 @@ UFunKTestFragment* AFunKTestBase::AddTestFragment(UFunKTestFragment* Fragment)
 
 UFunKTestFragment* AFunKTestBase::AddStageFragment(UFunKTestFragment* Fragment)
 {
-	if(Fragment->IsSupportedForNetworking())
+	if (Fragment->IsSupportedForNetworking())
 	{
 		UE_LOG(FunKLog, Warning, TEXT("Directly added test fragments don't support networking! (yet?)"))
 	}
@@ -665,8 +665,8 @@ void AFunKTestBase::SetupStages()
 		return;
 	}
 
-	FFunKStagesSetup stagesFluentSetup = FFunKStagesSetup(&Stages, this);
-	SetupStages(stagesFluentSetup);
+	FFunKStagesSetup StagesFluentSetup = FFunKStagesSetup(&Stages, this);
+	SetupStages(StagesFluentSetup);
 
 	if (Stages.Stages.Num() <= 0)
 	{
@@ -679,7 +679,8 @@ void AFunKTestBase::SetupStages()
 		if (Stage.Name == "ArrangeVariation")
 		{
 			Stage.IsLatent = true;
-			if(IsDedicatedServerModeTest())
+			
+			if (IsDedicatedServerModeTest())
 				Stage.IsOnDedicatedServer = Stage.IsOnDedicatedServerClient = true;
 
 			if (IsListenServerModeTest())
@@ -715,7 +716,7 @@ int32 AFunKTestBase::GetPeerIndex() const
 
 void AFunKTestBase::RegisterEvents(UFunKEventBusSubsystem* EventBusSubsystem)
 {
-	if(IsDriver(EventBusSubsystem->GetWorld()->GetNetMode()))
+	if (IsDriver(EventBusSubsystem->GetWorld()->GetNetMode()))
 	{
 		EventBusSubsystem->On<FFunKTestRequestBeginEvent>([](const FFunKTestRequestBeginEvent& Event)
 		{
@@ -758,7 +759,9 @@ void AFunKTestBase::RegisterEvents(UFunKEventBusSubsystem* EventBusSubsystem)
 
 const FFunKTestVariations& AFunKTestBase::GetTestVariations()
 {
-	if(Variations.IsGathered) return Variations;
+	if (Variations.IsGathered)
+		return Variations;
+	
 	Variations = BuildTestVariations();
 	return Variations;
 }
@@ -816,7 +819,8 @@ void AFunKTestBase::ArrangeVariationTick(float DeltaTime)
 
 void AFunKTestBase::ViewObservationPoint() const
 {
-	if (ObservationPoint == nullptr) return;
+	if (ObservationPoint == nullptr)
+		return;
 
 	const UWorld* World = GetWorld();
 	if (World && World->GetGameInstance())
@@ -857,10 +861,11 @@ void AFunKTestBase::OnFinishStageFragments()
 
 void AFunKTestBase::AddVariationComponentFragment(UFunKTestVariationComponent* VariationComponent)
 {
-	if(VariationComponent == nullptr) return;
+	if (VariationComponent == nullptr)
+		return;
 	
 	UFunKTestFragment* Fragment = VariationComponent->GetFragment(CurrentRootVariation);
-	if(Fragment->IsSupportedForNetworking() && GetNetMode() == NM_Client)
+	if (Fragment->IsSupportedForNetworking() && GetNetMode() == NM_Client)
 	{
 		TestFragments.Add(nullptr);
 	}
@@ -873,7 +878,9 @@ void AFunKTestBase::AddVariationComponentFragment(UFunKTestVariationComponent* V
 
 int32 AFunKTestBase::GetVariationComponentFragmentIndex(const UFunKTestVariationComponent* VariationComponent) const
 {
-	if (VariationComponent == nullptr) return INDEX_NONE;
+	if (VariationComponent == nullptr)
+		return INDEX_NONE;
+	
 	const FFunKTestVariations& TestVariations = GetTestVariationsConst();
 	return TestVariations.RootVariations == nullptr || TestVariations.RootVariations == VariationComponent ? 0 : 1;	
 }
@@ -886,11 +893,14 @@ FString AFunKTestBase::GetVariationComponentFragmentName(const UFunKTestVariatio
 
 UFunKTestFragment* AFunKTestBase::GetVariationComponentFragment(const UFunKTestVariationComponent* VariationComponent) const
 {
-	if(TestFragments.Num() <= 0) return nullptr;
+	if (TestFragments.Num() <= 0)
+		return nullptr;
 	
 	const int32 Index = GetVariationComponentFragmentIndex(VariationComponent);
 
-	if (TestFragments.Num() <= Index || Index < 0) return nullptr;
+	if (TestFragments.Num() <= Index || Index < 0)
+		return nullptr;
+	
 	return TestFragments[Index];
 }
 
@@ -917,7 +927,7 @@ void AFunKTestBase::AddStageFragment(UFunKTestFragment* Fragment, int32 Index)
 
 void AFunKTestBase::AddFragment(TArray<UFunKTestFragment*>& Fragments, UFunKTestFragment* Fragment, int32 Index)
 {
-	if(Index == INDEX_NONE)
+	if (Index == INDEX_NONE)
 		Fragments.Add(Fragment);
 	else
 		Fragments[Index] = Fragment;
@@ -941,8 +951,8 @@ FFunKTestVariations AFunKTestBase::BuildTestVariations() const
 {
 	FFunKTestVariations NewVariations = FFunKTestVariations();
 	NewVariations.IsGathered = true;
-	const FFunKWorldVariations WorldVariations = GetWorldSubsystem()->GetWorldVariations();
 	
+	const FFunKWorldVariations WorldVariations = GetWorldSubsystem()->GetWorldVariations();
 	NewVariations.Variations = WorldVariations.Variations;
 	
 	TArray<UFunKTestVariationComponent*> Array;
@@ -954,9 +964,9 @@ FFunKTestVariations AFunKTestBase::BuildTestVariations() const
 
 	for (UFunKTestVariationComponent* FunKTestVariationComponent : Array)
 	{
-		if(FunKTestVariationComponent->IsA(UFunKTestRootVariationComponent::StaticClass()))
+		if (FunKTestVariationComponent->IsA(UFunKTestRootVariationComponent::StaticClass()))
 		{
-			if(NewVariations.RootVariations)
+			if (NewVariations.RootVariations)
 			{
 				UE_LOG(FunKLog, Error, TEXT("Only one root variation component is allowed per test! %s"), *GetName())
 				continue;
@@ -984,14 +994,14 @@ void AFunKTestBase::GatherContext(FFunKEvent& Event) const
 		Event.AddToContext(GetStageName().ToString());
 	}
 
-	if(IsVariationBegun)
+	if (IsVariationBegun)
 	{
-		if(Variations.RootVariations && CurrentRootVariation != INDEX_NONE)
+		if (Variations.RootVariations && CurrentRootVariation != INDEX_NONE)
 		{
 			Event.AddToContext(Variations.RootVariations->GetName() + GetVariationComponentFragmentName(Variations.RootVariations));
 		}
 
-		if(CurrentVariationComponent && CurrentVariation != INDEX_NONE)
+		if (CurrentVariationComponent && CurrentVariation != INDEX_NONE)
 		{
 			Event.AddToContext(CurrentVariationComponent->GetName() + GetVariationComponentFragmentName(CurrentVariationComponent));
 		}
@@ -1029,13 +1039,13 @@ void AFunKTestBase::SetCurrentVariation(int32 Variation)
 
 		for (UFunKTestVariationComponent* VariationComponent : TestVariations.Variations)
 		{
-			const int32 variationCount = VariationComponent->GetCount();
-			if(variationCount > CurrentVariation)
+			const int32 VariationCount = VariationComponent->GetCount();
+			if(VariationCount > CurrentVariation)
 			{
 				CurrentVariationComponent = VariationComponent;
 				return;
 			}
-			CurrentVariation = CurrentVariation - variationCount;
+			CurrentVariation = CurrentVariation - VariationCount;
 		}
 	}
 }

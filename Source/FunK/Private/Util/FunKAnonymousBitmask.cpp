@@ -2,13 +2,17 @@
 
 inline void FFunKAnonymousBitmask::Clear(int32 Index)
 {
-	if(Index >= Length || Index <= INDEX_NONE) return;
+	if (Index >= Length || Index <= INDEX_NONE)
+		return;
+	
 	Bits &= ~(1 << Index);
 }
 
 inline void FFunKAnonymousBitmask::Set(int32 Index)
 {
-	if(Index >= Length || Index <= INDEX_NONE) return;
+	if (Index >= Length || Index <= INDEX_NONE)
+		return;
+	
 	Bits |= (1 << Index);
 }
 
@@ -31,15 +35,23 @@ void FFunKAnonymousBitmask::SetAll()
 
 inline bool FFunKAnonymousBitmask::IsClear(int32 Index) const
 {
-	if(Index >= Length || Index < INDEX_NONE) return false;
-	if(Index == INDEX_NONE) return Bits == 0;
+	if (Index >= Length || Index < INDEX_NONE)
+		return false;
+	
+	if (Index == INDEX_NONE)
+		return Bits == 0;
+	
 	return !IsBitSet(Index);
 }
 
 inline bool FFunKAnonymousBitmask::IsSet(int32 Index) const
 {
-	if(Index >= Length || Index < INDEX_NONE) return false;
-	if(Index == INDEX_NONE) return Bits == (0 | ((1 << Length) - 1));
+	if (Index >= Length || Index < INDEX_NONE)
+		return false;
+	
+	if (Index == INDEX_NONE)
+		return Bits == (0 | ((1 << Length) - 1));
+	
 	return IsBitSet(Index);
 }
 

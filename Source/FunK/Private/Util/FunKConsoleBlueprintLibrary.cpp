@@ -23,7 +23,7 @@ FString UFunKConsoleBlueprintLibrary::SetConsoleVariable(const FString& Name, co
 {
 	GetConsoleVar(Name, IsValid, "");
 
-	auto OldValue = Variable->GetString();
+	FString OldValue = Variable->GetString();
 
 	Variable->Set(*Value);
 	
@@ -50,7 +50,7 @@ float UFunKConsoleBlueprintLibrary::SetConsoleVariableFloat(const FString& Name,
 {
 	GetConsoleVar(Name, IsValid, 0.f);
 
-	auto OldValue = Variable->GetFloat();
+	const float OldValue = Variable->GetFloat();
 
 	Variable->Set(Value);
 	
@@ -77,7 +77,7 @@ bool UFunKConsoleBlueprintLibrary::SetConsoleVariableBool(const FString& Name, b
 {
 	GetConsoleVar(Name, IsValid, false);
 
-	auto OldValue = Variable->GetBool();
+	const bool OldValue = Variable->GetBool();
 
 	Variable->Set(Value);
 	
@@ -104,7 +104,7 @@ int32 UFunKConsoleBlueprintLibrary::SetConsoleVariableInt(const FString& Name, i
 {
 	GetConsoleVar(Name, IsValid, 0);
 
-	auto OldValue = Variable->GetInt();
+	const int32 OldValue = Variable->GetInt();
 
 	Variable->Set(Value);
 	

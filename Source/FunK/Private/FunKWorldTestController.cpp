@@ -27,32 +27,32 @@ void AFunKWorldTestController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if(!CurrentTest && Next())
+	if (!CurrentTest && Next())
 	{
 		CurrentTest->BeginTest(TestRunID, Seed, CurrentVariation);
 	}
 
-	if(!CurrentTest)
+	if (!CurrentTest)
 		return;
 	
-	if(!CurrentTest->IsRunning() && CurrentTest->IsFinished())
+	if (!CurrentTest->IsRunning() && CurrentTest->IsFinished())
 	{
 		LastTest = CurrentTest;
 		CurrentTest = nullptr;
 	}
-	else if(!IsWaitingForTimeout)
+	else if (!IsWaitingForTimeout)
 	{
-		const FFunKStage* stage = CurrentTest->GetCurrentStage();
-		if(stage && !stage->TimeLimit.IsLimitless() && stage->TimeLimit.IsTimeout(CurrentTest->GetCurrentStageExecutionTime()))
+		const FFunKStage* Stage = CurrentTest->GetCurrentStage();
+		if(Stage && !Stage->TimeLimit.IsLimitless() && Stage->TimeLimit.IsTimeout(CurrentTest->GetCurrentStageExecutionTime()))
 		{
-			CurrentTest->FinishTest(stage->TimeLimit.Result, stage->TimeLimit.Message.ToString());
+			CurrentTest->FinishTest(Stage->TimeLimit.Result, Stage->TimeLimit.Message.ToString());
 			IsWaitingForTimeout = true;
 		}
 	}
-	else if(Settings)
+	else if (Settings)
 	{
 		CurrentTestStageWaitingTime += DeltaTime;
-		if(Settings->Settings.SyncTimeLimit.IsTimeout(CurrentTestStageWaitingTime))
+		if (Settings->Settings.SyncTimeLimit.IsTimeout(CurrentTestStageWaitingTime))
 		{
 			GetWorld()->GetSubsystem<UFunKEventBusSubsystem>()->Raise(FFunKEvent::Error("Reached Timeout error in test!", CurrentTest->GetName()));
 			CurrentTest = nullptr;

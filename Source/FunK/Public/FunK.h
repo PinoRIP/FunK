@@ -51,7 +51,7 @@ public:
 	static FString FunkTestStartParameter;
 
 private:
-	void OnWorldGetAssetTags(const UWorld* World, TArray<UObject::FAssetRegistryTag>& OutTags);
+	void OnWorldGetAssetTags(const UWorld* World, TArray<UObject::FAssetRegistryTag>& OutTags) const;
 
 	void GetTestMapAssets(const IAssetRegistry& AssetRegistry, TArray<FAssetData>& MapList) const;
 };

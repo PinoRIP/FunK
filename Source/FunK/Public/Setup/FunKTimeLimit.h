@@ -24,7 +24,7 @@ struct FUNK_API FFunKTimeLimit
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EFunKTestResult Result = EFunKTestResult::Failed;
 
-	bool IsTimeout(float time) const;
+	bool IsTimeout(float MsPassed) const;
 
 	bool IsLimitless() const;
 };

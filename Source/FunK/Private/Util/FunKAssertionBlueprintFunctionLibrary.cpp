@@ -161,32 +161,32 @@ bool UFunKAssertionBlueprintFunctionLibrary::AssertMatrixNotEqual(FMatrix Actual
 	return Assert([Actual, NotExpected, Tolerance]() { return !Actual.Equals(NotExpected, Tolerance); }, BuildMessage(What, NotExpected.ToString(), Actual.ToString(), EFunKAssertionComparisonMethod::NotEqualTo), Context);
 }
 
-bool UFunKAssertionBlueprintFunctionLibrary::Assert(const TFunctionRef<bool()>& Assertion, const FString& Message, UObject* Context, int32 stackOffset)
+bool UFunKAssertionBlueprintFunctionLibrary::Assert(const TFunctionRef<bool()>& Assertion, const FString& Message, UObject* Context, int32 StackOffset)
 {
-	const bool result = Assertion();
-	
-	auto event = FFunKEvent(result ? EFunKEventType::Info : EFunKEventType::Error, Message);
-	if(Context)
-		event.AddToContext(Context->GetName());
+	const bool bResult = Assertion();
+
+	FFunKEvent Event = FFunKEvent(bResult ? EFunKEventType::Info : EFunKEventType::Error, Message);
+	if (Context)
+		Event.AddToContext(Context->GetName());
 	
 #if WITH_AUTOMATION_TESTS
-	SAFE_GETSTACK(Stack, stackOffset, 2);
-	event.AddToContext(Stack[0].FunctionName);
-	if(Stack.Num() > 1 && !FString(Stack[1].Filename).Contains(".gen.cpp"))
-		event.AddToContext(FString::Printf(TEXT("%s (%s)"), *FString(Stack[1].FunctionName), *FString::FromInt(Stack[1].LineNumber)));
+	SAFE_GETSTACK(Stack, StackOffset, 2);
+	Event.AddToContext(Stack[0].FunctionName);
+	if (Stack.Num() > 1 && !FString(Stack[1].Filename).Contains(".gen.cpp"))
+		Event.AddToContext(FString::Printf(TEXT("%s (%s)"), *FString(Stack[1].FunctionName), *FString::FromInt(Stack[1].LineNumber)));
 #endif
 
-	if(const AFunKTestBase* TestBase = Cast<AFunKTestBase>(Context))
+	if (const AFunKTestBase* TestBase = Cast<AFunKTestBase>(Context))
 	{
-		TestBase->RaiseEvent(event);
+		TestBase->RaiseEvent(Event);
 	}
 	else
 	{
-		UFunKEventBusSubsystem* eventBus = Context->GetWorld()->GetSubsystem<UFunKEventBusSubsystem>();
-		eventBus->Raise(event);
+		UFunKEventBusSubsystem* EventBus = Context->GetWorld()->GetSubsystem<UFunKEventBusSubsystem>();
+		EventBus->Raise(Event);
 	}
 	
-	return result;
+	return bResult;
 }
 
 FString UFunKAssertionBlueprintFunctionLibrary::GetComparisonName(EFunKAssertionComparisonMethod comparison)

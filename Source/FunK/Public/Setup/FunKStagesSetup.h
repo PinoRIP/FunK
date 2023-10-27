@@ -40,10 +40,10 @@ protected:
 	FFunKStages* Stages;
 	
 	template <typename UserClass, typename... VarTypes>
-	FORCEINLINE FFunKStageSetup EmplaceNewStage(const FName& stageName, int32 index, typename TMemFunPtrType<false, UserClass, void ( VarTypes...)>::Type InFunc, VarTypes... Vars) const;
+	FORCEINLINE FFunKStageSetup EmplaceNewStage(const FName& StageName, int32 Index, typename TMemFunPtrType<false, UserClass, void ( VarTypes...)>::Type InFunc, VarTypes... Vars) const;
 
 	template <typename UserClass, typename... VarTypes>
-	FORCEINLINE FFunKLatentStageSetup EmplaceNewLatentStage(const FName& stageName, int32 index, typename TMemFunPtrType<false, UserClass, void ( VarTypes...)>::Type InFunc, VarTypes... Vars) const;
+	FORCEINLINE FFunKLatentStageSetup EmplaceNewLatentStage(const FName& StageName, int32 Index, typename TMemFunPtrType<false, UserClass, void ( VarTypes...)>::Type InFunc, VarTypes... Vars) const;
 };
 
 USTRUCT()
@@ -62,63 +62,63 @@ public:
 	FFunKStageSetupBase(const FFunKStageSetupBase&) = delete;
 
 	template <typename UserClass, typename... VarTypes>
-	FORCEINLINE FFunKStageSetup ThenAddNamedStage(const FName& stageName, typename TMemFunPtrType<false, UserClass, void ( VarTypes...)>::Type InFunc, VarTypes... Vars);
+	FORCEINLINE FFunKStageSetup ThenAddNamedStage(const FName& StageName, typename TMemFunPtrType<false, UserClass, void ( VarTypes...)>::Type InFunc, VarTypes... Vars);
 
 	#define ThenAddStage(Type, InFunc) ThenAddNamedStage<Type>(STATIC_FUNCTION_FNAME(TEXT(#Type "::" #InFunc)), &Type::InFunc)
 
 	template <typename UserClass, typename... VarTypes>
-	FORCEINLINE FFunKLatentStageSetup ThenAddNamedLatentStage(const FName& stageName, typename TMemFunPtrType<false, UserClass, void ( VarTypes...)>::Type InFunc, VarTypes... Vars);
+	FORCEINLINE FFunKLatentStageSetup ThenAddNamedLatentStage(const FName& StageName, typename TMemFunPtrType<false, UserClass, void ( VarTypes...)>::Type InFunc, VarTypes... Vars);
 	
 	#define ThenAddLatentStage(Type, InFunc) ThenAddNamedLatentStage<Type>(STATIC_FUNCTION_FNAME(TEXT(#Type "::" #InFunc)), &Type::InFunc)
 	
-	FFunKStageSetupBase& SetRunOnStandalone(bool value)
+	FFunKStageSetupBase& SetRunOnStandalone(const bool Value)
 	{
-		if(Stages)
-			Update(Stages->OnStandaloneCount, Stage->IsOnStandalone, value);
+		if (Stages)
+			Update(Stages->OnStandaloneCount, Stage->IsOnStandalone, Value);
 		
 		return *this;
 	}
 
-	FFunKStageSetupBase& SetRunOnDedicated(bool value)
+	FFunKStageSetupBase& SetRunOnDedicated(const bool Value)
 	{
-		SetRunOnDedicatedServer(value);
-		return SetRunOnDedicatedServerClient(value);
+		SetRunOnDedicatedServer(Value);
+		return SetRunOnDedicatedServerClient(Value);
 	}
 
-	FFunKStageSetupBase& SetRunOnDedicatedServer(bool value)
+	FFunKStageSetupBase& SetRunOnDedicatedServer(const bool Value)
 	{
-		if(Stages)
-			Update(Stages->OnDedicatedServerCount, Stage->IsOnDedicatedServer, value);
+		if (Stages)
+			Update(Stages->OnDedicatedServerCount, Stage->IsOnDedicatedServer, Value);
 		
 		return *this;
 	}
 
-	FFunKStageSetupBase& SetRunOnDedicatedServerClient(bool value)
+	FFunKStageSetupBase& SetRunOnDedicatedServerClient(const bool Value)
 	{
-		if(Stages)
-			Update(Stages->OnDedicatedServerClientCount, Stage->IsOnDedicatedServerClient, value);
+		if (Stages)
+			Update(Stages->OnDedicatedServerClientCount, Stage->IsOnDedicatedServerClient, Value);
 		
 		return *this;
 	}
 
-	FFunKStageSetupBase& SetRunOnListen(bool value)
+	FFunKStageSetupBase& SetRunOnListen(const bool Value)
 	{
-		SetRunOnListenServer(value);
-		return SetRunOnListenServerClient(value);
+		SetRunOnListenServer(Value);
+		return SetRunOnListenServerClient(Value);
 	}
 
-	FFunKStageSetupBase& SetRunOnListenServer(bool value)
+	FFunKStageSetupBase& SetRunOnListenServer(const bool Value)
 	{
-		if(Stages)
-			Update(Stages->OnListenServerCount, Stage->IsOnListenServer, value);
+		if (Stages)
+			Update(Stages->OnListenServerCount, Stage->IsOnListenServer, Value);
 		
 		return *this;
 	}
 
-	FFunKStageSetupBase& SetRunOnListenServerClient(bool value)
+	FFunKStageSetupBase& SetRunOnListenServerClient(const bool Value)
 	{
-		if(Stages)
-			Update(Stages->OnListenServerClientCount, Stage->IsOnListenServerClient, value);
+		if (Stages)
+			Update(Stages->OnListenServerClientCount, Stage->IsOnListenServerClient, Value);
 		
 		return *this;
 	}
@@ -127,7 +127,7 @@ protected:
 	FFunKStage* Stage;
 
 	int32 GetStageIndex() const;
-	static void Update(int32& count, bool& oldValue, bool newValue);
+	static void Update(int32& Count, bool& OldValue, bool NewValue);
 };
 
 USTRUCT()
@@ -164,7 +164,7 @@ public:
 	template <typename UserClass, typename... VarTypes>
 	FORCEINLINE FFunKLatentStageSetup& WithTickDelegate(typename TMemFunPtrType<false, UserClass, void (float, VarTypes...)>::Type InFunc, VarTypes... Vars)
 	{
-		if(Stage)
+		if (Stage)
 			Stage->TickDelegate.BindUObject(Cast<UserClass, AFunKTestBase>(TestBase), InFunc, Vars...);
 		
 		return *this;
@@ -174,56 +174,56 @@ public:
 
 	FFunKLatentStageSetup& UpdateTimeLimitTime(const float Time)
 	{
-		if(Stage)
+		if (Stage)
 			Stage->TimeLimit.Time = Time;
 		
 		return *this;
 	}
 
-	FFunKLatentStageSetup& UpdateTimeLimitMessage(const FText Message)
+	FFunKLatentStageSetup& UpdateTimeLimitMessage(const FText& Message)
 	{
-		if(Stage)
+		if (Stage)
 			Stage->TimeLimit.Message = Message;
 		
 		return *this;
 	}
 
-	FFunKLatentStageSetup& UpdateTimeLimitMessage(const FString Message)
+	FFunKLatentStageSetup& UpdateTimeLimitMessage(const FString& Message)
 	{
-		if(Stage)
+		if (Stage)
 			Stage->TimeLimit.Message = FText::FromString(Message);
 		
 		return *this;
 	}
 
-	FFunKLatentStageSetup& UpdateTimeLimitResult(EFunKTestResult Result)
+	FFunKLatentStageSetup& UpdateTimeLimitResult(const EFunKTestResult Result)
 	{
-		if(Stage)
+		if (Stage)
 			Stage->TimeLimit.Result = Result;
 		
 		return *this;
 	}
 
-	FFunKLatentStageSetup& UpdateTimeLimit(const FFunKTimeLimit TimeLimit)
+	FFunKLatentStageSetup& UpdateTimeLimit(const FFunKTimeLimit& TimeLimit)
 	{
-		if(Stage)
+		if (Stage)
 			Stage->TimeLimit = TimeLimit;
 		
 		return *this;
 	}
 
-	FFunKLatentStageSetup& Update(void (*f)(FFunKLatentStageSetup&))
+	FFunKLatentStageSetup& Update(void (*Fnc)(FFunKLatentStageSetup&))
 	{
-		f(*this);
+		Fnc(*this);
 		
 		return *this;
 	}
 
 private:
 	template <typename UserClass, typename... VarTypes>
-	FORCEINLINE FFunKLatentStageSetup& WithOptionalBpTickDelegateImpl(const FName& name, typename TMemFunPtrType<false, UserClass, void (float, VarTypes...)>::Type InFunc, VarTypes... Vars)
+	FORCEINLINE FFunKLatentStageSetup& WithOptionalBpTickDelegateImpl(const FName& Name, typename TMemFunPtrType<false, UserClass, void (float, VarTypes...)>::Type InFunc, VarTypes... Vars)
 	{
-		if(Stage && TestBase && TestBase->IsBpEventImplemented(name))
+		if (Stage && TestBase && TestBase->IsBpEventImplemented(Name))
 			Stage->TickDelegate.BindUObject(Cast<UserClass, AFunKTestBase>(TestBase), InFunc, Vars...);
 		
 		return *this;
@@ -238,9 +238,9 @@ struct FUNK_API FFunKLatentStageSetupPrivateAccessHelper
 	 * This should never be called directly. This is a helper for the "WithOptionalBpTickDelegate"-Makro for "FFunKLatentStageSetup"
 	 */
 	template <typename UserClass, typename... VarTypes>
-	FORCEINLINE static FFunKLatentStageSetup& WithOptionalBpTickDelegateImpl(FFunKLatentStageSetup& setup, const FName& name, typename TMemFunPtrType<false, UserClass, void (float, VarTypes...)>::Type InFunc, VarTypes... Vars)
+	FORCEINLINE static FFunKLatentStageSetup& WithOptionalBpTickDelegateImpl(FFunKLatentStageSetup& Setup, const FName& Name, typename TMemFunPtrType<false, UserClass, void (float, VarTypes...)>::Type InFunc, VarTypes... Vars)
 	{
-		return setup.WithOptionalBpTickDelegateImpl<UserClass, VarTypes...>(name, InFunc, Vars...);
+		return Setup.WithOptionalBpTickDelegateImpl<UserClass, VarTypes...>(Name, InFunc, Vars...);
 	}
 };
 
@@ -259,13 +259,13 @@ struct FUNK_API TFunKStagesSetupStageIterator
 
 	bool Next()
 	{
-		if(!Stages)
+		if (!Stages)
 			return false;
 		
-		for(Index++; Index < Stages->Stages.Num(); Index++)
+		for (Index++; Index < Stages->Stages.Num(); Index++)
 		{
 			Stage = &Stages->Stages[Index];
-			if((std::is_same_v<StageType, FFunKStageSetup> && Stage->IsLatent) || (std::is_same_v<StageType, FFunKLatentStageSetup> && !Stage->IsLatent))
+			if ((std::is_same_v<StageType, FFunKStageSetup> && Stage->IsLatent) || (std::is_same_v<StageType, FFunKLatentStageSetup> && !Stage->IsLatent))
 				continue;
 
 			return true;
@@ -330,56 +330,56 @@ public:
 };
 
 template <typename UserClass, typename ... VarTypes>
-FFunKStageSetup FFunKStagesSetupBase::EmplaceNewStage(const FName& stageName, int32 index, typename TMemFunPtrType<false, UserClass, void(VarTypes...)>::Type InFunc, VarTypes... Vars) const
+FFunKStageSetup FFunKStagesSetupBase::EmplaceNewStage(const FName& StageName, int32 Index, typename TMemFunPtrType<false, UserClass, void(VarTypes...)>::Type InFunc, VarTypes... Vars) const
 {
-	if(!Stages || !TestBase)
+	if (!Stages || !TestBase)
 		return FFunKStageSetup();
 	
-	return FFunKStageSetup(&Stages->EmplaceStage(stageName, index, Cast<UserClass, AFunKTestBase>(TestBase), InFunc, Vars...), Stages, TestBase);
+	return FFunKStageSetup(&Stages->EmplaceStage(StageName, Index, Cast<UserClass, AFunKTestBase>(TestBase), InFunc, Vars...), Stages, TestBase);
 }
 
 template <typename UserClass, typename ... VarTypes>
-FFunKLatentStageSetup FFunKStagesSetupBase::EmplaceNewLatentStage(const FName& stageName, int32 index, typename TMemFunPtrType<false, UserClass, void(VarTypes...)>::Type InFunc, VarTypes... Vars) const
+FFunKLatentStageSetup FFunKStagesSetupBase::EmplaceNewLatentStage(const FName& StageName, int32 Index, typename TMemFunPtrType<false, UserClass, void(VarTypes...)>::Type InFunc, VarTypes... Vars) const
 {
-	if(!Stages || !TestBase)
+	if (!Stages || !TestBase)
 		return FFunKLatentStageSetup();
 	
-	return FFunKLatentStageSetup(&Stages->EmplaceLatentStage(stageName, index, Cast<UserClass, AFunKTestBase>(TestBase), InFunc, Vars...), Stages, TestBase);
+	return FFunKLatentStageSetup(&Stages->EmplaceLatentStage(StageName, Index, Cast<UserClass, AFunKTestBase>(TestBase), InFunc, Vars...), Stages, TestBase);
 }
 
 template <typename UserClass, typename ... VarTypes>
-FFunKStageSetup FFunKStagesSetup::AddNamedStage(const FName& stageName, typename TMemFunPtrType<false, UserClass, void(VarTypes...)>::Type InFunc, VarTypes... Vars)
+FFunKStageSetup FFunKStagesSetup::AddNamedStage(const FName& StageName, typename TMemFunPtrType<false, UserClass, void(VarTypes...)>::Type InFunc, VarTypes... Vars)
 {
-	if(!Stages || !TestBase)
+	if (!Stages || !TestBase)
 		return FFunKStageSetup();
 	
-	return EmplaceNewStage<UserClass, VarTypes...>(stageName, Stages->Stages.Num(), InFunc, Vars...);
+	return EmplaceNewStage<UserClass, VarTypes...>(StageName, Stages->Stages.Num(), InFunc, Vars...);
 }
 
 template <typename UserClass, typename ... VarTypes>
-FFunKLatentStageSetup FFunKStagesSetup::AddNamedLatentStage(const FName& stageName, typename TMemFunPtrType<false, UserClass, void(VarTypes...)>::Type InFunc, VarTypes... Vars)
+FFunKLatentStageSetup FFunKStagesSetup::AddNamedLatentStage(const FName& StageName, typename TMemFunPtrType<false, UserClass, void(VarTypes...)>::Type InFunc, VarTypes... Vars)
 {
-	if(!Stages || !TestBase)
+	if (!Stages || !TestBase)
 		return FFunKLatentStageSetup();
 	
-	return EmplaceNewLatentStage<UserClass, VarTypes...>(stageName, Stages->Stages.Num(), InFunc, Vars...);
+	return EmplaceNewLatentStage<UserClass, VarTypes...>(StageName, Stages->Stages.Num(), InFunc, Vars...);
 }
 
 template <typename UserClass, typename ... VarTypes>
-FFunKStageSetup FFunKStageSetupBase::ThenAddNamedStage(const FName& stageName, typename TMemFunPtrType<false, UserClass, void(VarTypes...)>::Type InFunc, VarTypes... Vars)
+FFunKStageSetup FFunKStageSetupBase::ThenAddNamedStage(const FName& StageName, typename TMemFunPtrType<false, UserClass, void(VarTypes...)>::Type InFunc, VarTypes... Vars)
 {
-	if(!Stages || !TestBase)
+	if (!Stages || !TestBase)
 		return FFunKStageSetup();
 	
-	return EmplaceNewStage<UserClass, VarTypes...>(stageName, GetStageIndex() + 1, InFunc, Vars...);
+	return EmplaceNewStage<UserClass, VarTypes...>(StageName, GetStageIndex() + 1, InFunc, Vars...);
 }
 
 template <typename UserClass, typename ... VarTypes>
-FFunKLatentStageSetup FFunKStageSetupBase::ThenAddNamedLatentStage(const FName& stageName, typename TMemFunPtrType<false, UserClass, void(VarTypes...)>::Type InFunc, VarTypes... Vars)
+FFunKLatentStageSetup FFunKStageSetupBase::ThenAddNamedLatentStage(const FName& StageName, typename TMemFunPtrType<false, UserClass, void(VarTypes...)>::Type InFunc, VarTypes... Vars)
 {
-	if(!Stages || !TestBase)
+	if (!Stages || !TestBase)
 		return FFunKLatentStageSetup();
 
-	return EmplaceNewLatentStage<UserClass, VarTypes...>(stageName, GetStageIndex() + 1, InFunc, Vars...);
+	return EmplaceNewLatentStage<UserClass, VarTypes...>(StageName, GetStageIndex() + 1, InFunc, Vars...);
 }
 

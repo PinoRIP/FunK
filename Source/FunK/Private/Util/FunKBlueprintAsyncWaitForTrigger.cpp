@@ -9,7 +9,8 @@
 
 UFunKBlueprintAsyncWaitForTrigger* UFunKBlueprintAsyncWaitForTrigger::WaitFor(AFunKTestBase* Test, ATriggerBase* Trigger)
 {
-	if(!Test) return nullptr;
+	if (!Test)
+		return nullptr;
 	
 	UFunKBlueprintAsyncWaitForTrigger* WaitForTriggerBoxInstance = NewObject<UFunKBlueprintAsyncWaitForTrigger>(Test);
 	WaitForTriggerBoxInstance->Trigger = Trigger;
@@ -21,7 +22,7 @@ void UFunKBlueprintAsyncWaitForTrigger::Activate()
 {
 	Super::Activate();
 
-	if(!Trigger)
+	if (!Trigger)
 	{
 		UE_LOG(FunKLog, Error, TEXT("Could not wait for trigger nullptr"))
 		return;
@@ -37,7 +38,9 @@ void UFunKBlueprintAsyncWaitForTrigger::SetReadyToDestroy()
 
 void UFunKBlueprintAsyncWaitForTrigger::OnTriggeredActorBeginOverlap(AActor* OverlappedActor, AActor* OtherActor)
 {
-	if (!OtherActor) return;
+	if (!OtherActor)
+		return;
+	
 	if (Trigger)
 	{
 		UE_LOG(FunKLog, Log, TEXT("%s triggered %s."), *OtherActor->GetName(), *Trigger->GetName());

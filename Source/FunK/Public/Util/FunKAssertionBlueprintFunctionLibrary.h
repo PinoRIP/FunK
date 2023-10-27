@@ -124,7 +124,7 @@ public:
 
 
 private:
-	static bool Assert(const TFunctionRef<bool()>& Assertion, const FString& Message, UObject* Context, int32 stackOffset = 2);
+	static bool Assert(const TFunctionRef<bool()>& Assertion, const FString& Message, UObject* Context, int32 StackOffset = 2);
 
 	FORCEINLINE static FString BuildMessage(const FString& What, const FString& Expected, const FString& Actual, EFunKAssertionComparisonMethod ComparisonMethod = EFunKAssertionComparisonMethod::None, const FString Ext = "");
 	FORCEINLINE static FString GetObjectName(UObject* object);

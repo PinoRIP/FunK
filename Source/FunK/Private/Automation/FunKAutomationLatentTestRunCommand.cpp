@@ -2,7 +2,7 @@
 
 bool FFunKAutomationLatentTestRunCommand::Update()
 {
-	if(TestRun.IsValid())
+	if (TestRun.IsValid())
 	{
 		return TestRun->Update();
 	}

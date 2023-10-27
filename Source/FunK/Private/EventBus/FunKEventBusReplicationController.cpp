@@ -32,7 +32,7 @@ bool AFunKEventBusReplicationController::IsControllerLocallyReady() const
 
 void AFunKEventBusReplicationController::CheckControllerReady()
 {
-	if(IsControllerLocallyReady() && !IsControllerReadinessSend)
+	if (IsControllerLocallyReady() && !IsControllerReadinessSend)
 	{
 		IsControllerReadinessSend = true;
 		ServerControllerReady();
@@ -44,41 +44,40 @@ void AFunKEventBusReplicationController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	const ENetMode netMode = GetNetMode();
-	if(netMode == NM_Client)
+	if (GetNetMode() == NM_Client)
 	{
 		CheckControllerReady();
 	}
 }
 
-void AFunKEventBusReplicationController::ServerEventCallback_Implementation(FGuid callbackId)
+void AFunKEventBusReplicationController::ServerEventCallback_Implementation(FGuid CallbackId)
 {
-	if(UFunKEventBusSubsystem* Subsystem = GetWorld()->GetSubsystem<UFunKEventBusSubsystem>())
+	if (UFunKEventBusSubsystem* Subsystem = GetWorld()->GetSubsystem<UFunKEventBusSubsystem>())
 	{
 		TArray<AFunKEventBusReplicationController*> ReplicationControllers;
 		Subsystem->GetReplicationControllers(ReplicationControllers);
 
 		for (AFunKEventBusReplicationController* ReplicationController : ReplicationControllers)
 		{
-			if(ReplicationController->ReportProxiedCallbackResponse(this, callbackId))
+			if (ReplicationController->ReportProxiedCallbackResponse(this, CallbackId))
 				return;
 		}
 
-		Subsystem->CheckCallback(callbackId, this);
+		Subsystem->CheckCallback(CallbackId, this);
 	}
 }
 
-void AFunKEventBusReplicationController::ClientEventCallback_Implementation(FGuid callbackId)
+void AFunKEventBusReplicationController::ClientEventCallback_Implementation(FGuid CallbackId)
 {
-	if(UFunKEventBusSubsystem* Subsystem = GetWorld()->GetSubsystem<UFunKEventBusSubsystem>())
+	if (UFunKEventBusSubsystem* Subsystem = GetWorld()->GetSubsystem<UFunKEventBusSubsystem>())
 	{
-		Subsystem->CheckCallback(callbackId, this);
+		Subsystem->CheckCallback(CallbackId, this);
 	}
 }
 
 void AFunKEventBusReplicationController::ServerControllerReady_Implementation()
 {
-	if(UFunKEventBusSubsystem* Subsystem = GetWorld()->GetSubsystem<UFunKEventBusSubsystem>())
+	if (UFunKEventBusSubsystem* Subsystem = GetWorld()->GetSubsystem<UFunKEventBusSubsystem>())
 	{
 		Subsystem->ReplicationControllerReady(this);
 	}
@@ -88,9 +87,9 @@ void AFunKEventBusReplicationController::OnRep_Owner()
 {
 	Super::OnRep_Owner();
 
-	if(GetNetMode() == NM_Client && GetOwner() == GetWorld()->GetFirstPlayerController())
+	if (GetNetMode() == NM_Client && GetOwner() == GetWorld()->GetFirstPlayerController())
 	{
-		if(UFunKEventBusSubsystem* Subsystem = GetWorld()->GetSubsystem<UFunKEventBusSubsystem>())
+		if (UFunKEventBusSubsystem* Subsystem = GetWorld()->GetSubsystem<UFunKEventBusSubsystem>())
 		{
 			Subsystem->RegisterLocalReplicationController(this);
 			CheckControllerReady();
@@ -106,56 +105,56 @@ void AFunKEventBusReplicationController::NotifyReplicationControllerRemoved(AFun
 	}
 }
 
-bool AFunKEventBusReplicationController::ReportProxiedCallbackResponse(AFunKEventBusReplicationController* ReplicationController, FGuid callbackId)
+bool AFunKEventBusReplicationController::ReportProxiedCallbackResponse(AFunKEventBusReplicationController* ReplicationController, const FGuid CallbackId)
 {
-	FFunKCallbackProxyState* state = ProxiedCallbacks.Find(callbackId);
-	if(!state) return false;
+	FFunKCallbackProxyState* State = ProxiedCallbacks.Find(CallbackId);
+	if (!State)
+		return false;
 
-	if(state->Controllers.Remove(ReplicationController) <= 0) return false;
+	if (State->Controllers.Remove(ReplicationController) <= 0)
+		return false;
 
-	if(state->Controllers.Num() <= 0)
-	{
-		ClientEventCallback(callbackId);
-	}
+	if (State->Controllers.Num() <= 0)
+		ClientEventCallback(CallbackId);
 
 	return true;
 }
 
-void AFunKEventBusReplicationController::ClientSendMessage_Implementation(const FFunKEventBusMessage& message)
+void AFunKEventBusReplicationController::ClientSendMessage_Implementation(const FFunKEventBusMessage& Message)
 {
-	if(UFunKEventBusSubsystem* Subsystem = GetWorld()->GetSubsystem<UFunKEventBusSubsystem>())
+	if (UFunKEventBusSubsystem* Subsystem = GetWorld()->GetSubsystem<UFunKEventBusSubsystem>())
 	{
-		Subsystem->ReceiveMessage(message);
+		Subsystem->ReceiveMessage(Message);
 
-		if(message.CallbackId.IsValid())
-			ServerEventCallback(message.CallbackId);
+		if (Message.CallbackId.IsValid())
+			ServerEventCallback(Message.CallbackId);
 	}
 }
 
-void AFunKEventBusReplicationController::ServerSendMessage_Implementation(const FFunKEventBusMessage& message)
+void AFunKEventBusReplicationController::ServerSendMessage_Implementation(const FFunKEventBusMessage& Message)
 {
-	if(UFunKEventBusSubsystem* Subsystem = GetWorld()->GetSubsystem<UFunKEventBusSubsystem>())
+	if (UFunKEventBusSubsystem* Subsystem = GetWorld()->GetSubsystem<UFunKEventBusSubsystem>())
 	{
 		TArray<AFunKEventBusReplicationController*> ReplicationControllers;
 		Subsystem->GetReplicationControllers(ReplicationControllers);
 
-		FFunKCallbackProxyState* proxyState = nullptr;
-		if(message.CallbackId.IsValid())
+		FFunKCallbackProxyState* ProxyState = nullptr;
+		if (Message.CallbackId.IsValid())
 		{
-			proxyState = &ProxiedCallbacks.Emplace(message.CallbackId);
+			ProxyState = &ProxiedCallbacks.Emplace(Message.CallbackId);
 		}
 		
 		for (AFunKEventBusReplicationController* ReplicationController : ReplicationControllers)
 		{
-			if(ReplicationController != this)
+			if (ReplicationController != this)
 			{
-				if(proxyState)
-					proxyState->Controllers.Add(ReplicationController);
+				if (ProxyState)
+					ProxyState->Controllers.Add(ReplicationController);
 				
-				ReplicationController->ClientSendMessage(message);
+				ReplicationController->ClientSendMessage(Message);
 			}
 		}
 		
-		Subsystem->ReceiveMessage(message);
+		Subsystem->ReceiveMessage(Message);
 	}
 }

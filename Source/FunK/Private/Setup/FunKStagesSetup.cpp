@@ -17,14 +17,14 @@ int32 FFunKStageSetupBase::GetStageIndex() const
 	return INDEX_NONE;
 }
 
-void FFunKStageSetupBase::Update(int32& count, bool& oldValue, bool newValue)
+void FFunKStageSetupBase::Update(int32& Count, bool& OldValue, bool NewValue)
 {
-	if(!newValue && oldValue)
-		count--;
-	else if(!oldValue)
-		count++;
+	if(!NewValue && OldValue)
+		Count--;
+	else if(!OldValue)
+		Count++;
 
-	oldValue = newValue;
+	OldValue = NewValue;
 }
 
 // ReSharper disable once CppMemberFunctionMayBeConst - This being const makes resharper warn the caller when the return ist not used.

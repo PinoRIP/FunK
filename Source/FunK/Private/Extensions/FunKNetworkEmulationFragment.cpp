@@ -11,11 +11,15 @@
 void UFunKNetworkEmulationFragment::OnAdded()
 {
 	const EFunKNetLocation NetLocation = UFunKBlueprintFunctionLibrary::GetNetLocation(this);
-	if(NetLocation == EFunKNetLocation::Standalone) return;
+	if (NetLocation == EFunKNetLocation::Standalone)
+		return;
 
 	const FFunKNetworkEmulation& Emulation = NetworkEmulation;
-	if(Emulation.EmulationTarget == EFunKNetworkEmulationTarget::Client && NetLocation == EFunKNetLocation::Server) return;
-	if(Emulation.EmulationTarget == EFunKNetworkEmulationTarget::Server && NetLocation == EFunKNetLocation::Client) return;
+	if (Emulation.EmulationTarget == EFunKNetworkEmulationTarget::Client && NetLocation == EFunKNetLocation::Server)
+		return;
+	
+	if (Emulation.EmulationTarget == EFunKNetworkEmulationTarget::Server && NetLocation == EFunKNetLocation::Client)
+		return;
 	
 #if DO_ENABLE_NET_TEST
 	

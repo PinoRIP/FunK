@@ -13,19 +13,23 @@ void UFunKInputSimulationSystem::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	if(ControllerInputSimulations.Num() > 0)
+	if (ControllerInputSimulations.Num() > 0)
 	{
 		for (TTuple<APlayerController*, FFunKPlayerControllerInputSimulations>& ControllerInputSimulation : ControllerInputSimulations)
 		{
 			for (TTuple<const UInputAction*, FFunKInputActionSimulationTick>& InputActionSimulation : ControllerInputSimulation.Value.InputActionSimulations)
 			{
-				if(InputActionSimulation.Value.AddedInputTime == GFrameCounter) continue;
+				if(InputActionSimulation.Value.AddedInputTime == GFrameCounter)
+					continue;
+				
 				InjectInputForAction(ControllerInputSimulation.Key, InputActionSimulation.Key, InputActionSimulation.Value.Value);
 			}
 			
 			for (TTuple<FName, FFunKAxisInputSimulationTick>& AxisInputSimulation : ControllerInputSimulation.Value.AxisInputSimulations)
 			{
-				if(AxisInputSimulation.Value.AddedInputTime == GFrameCounter) continue;
+				if(AxisInputSimulation.Value.AddedInputTime == GFrameCounter)
+					continue;
+				
 				InjectAxisInput(ControllerInputSimulation.Key, AxisInputSimulation.Value.Key, AxisInputSimulation.Value.AxisValue, DeltaTime);
 			}
 		}
@@ -45,14 +49,14 @@ void UFunKInputSimulationSystem::EndAllInputSimulations()
 void UFunKInputSimulationSystem::DisableActualInputs()
 {
 	const UGameInstance* GameInstance = GetWorld()->GetGameInstance();
-	if(!GameInstance)
+	if (!GameInstance)
 	{
 		UE_LOG(FunKLog, Warning, TEXT("Input can't be disabled: Game instance could not be aquired!"))
 		return;
 	}
 	
 	UGameViewportClient* ViewportClient = GameInstance->GetGameViewportClient();
-	if(!ViewportClient)
+	if (!ViewportClient)
 	{
 		UE_LOG(FunKLog, Warning, TEXT("Input can't be disabled: Game viewport client could not be aquired!"))
 		return;
@@ -64,14 +68,14 @@ void UFunKInputSimulationSystem::DisableActualInputs()
 void UFunKInputSimulationSystem::EnableActualInputs()
 {
 	const UGameInstance* GameInstance = GetWorld()->GetGameInstance();
-	if(!GameInstance)
+	if (!GameInstance)
 	{
 		UE_LOG(FunKLog, Warning, TEXT("Input can't be enabled: Game instance could not be aquired!"))
 		return;
 	}
 	
 	UGameViewportClient* ViewportClient = GameInstance->GetGameViewportClient();
-	if(!ViewportClient)
+	if (!ViewportClient)
 	{
 		UE_LOG(FunKLog, Warning, TEXT("Input can't be enabled: Game viewport client could not be aquired!"))
 		return;
@@ -80,14 +84,14 @@ void UFunKInputSimulationSystem::EnableActualInputs()
 	ViewportClient->SetIgnoreInput(false);
 }
 
-void UFunKInputSimulationSystem::SimulateInputAction(const UInputAction* InputAction, FInputActionValue InputActionValue)
+void UFunKInputSimulationSystem::SimulateInputAction(const UInputAction* InputAction, const FInputActionValue InputActionValue)
 {
 	SimulateControllerInputAction(GetWorld()->GetFirstPlayerController(), InputAction, InputActionValue);
 }
 
-void UFunKInputSimulationSystem::SimulateControllerInputAction(APlayerController* PlayerController, const UInputAction* InputAction, FInputActionValue InputActionValue)
+void UFunKInputSimulationSystem::SimulateControllerInputAction(APlayerController* PlayerController, const UInputAction* InputAction, const FInputActionValue InputActionValue)
 {
-	if(!PlayerController)
+	if (!PlayerController)
 	{
 		UE_LOG(FunKLog, Error, TEXT("PlayerController not found!"))
 		return;
@@ -105,7 +109,8 @@ void UFunKInputSimulationSystem::EndSimulateInputAction(const UInputAction* Inpu
 void UFunKInputSimulationSystem::EndSimulateControllerInputAction(APlayerController* PlayerController, const UInputAction* InputAction)
 {
 	FFunKPlayerControllerInputSimulations* InputSimulations = GetControllerInputSimulations(PlayerController);
-	if (!InputSimulations) return;
+	if (!InputSimulations)
+		return;
 
 	InputSimulations->InputActionSimulations.Remove(InputAction);
 
@@ -113,11 +118,11 @@ void UFunKInputSimulationSystem::EndSimulateControllerInputAction(APlayerControl
 		ControllerInputSimulations.Remove(PlayerController);
 }
 
-FFunKInputActionSimulationTick& UFunKInputSimulationSystem::ScheduleInputActionSimulation(APlayerController* PlayerController, const UInputAction* InputAction, FInputActionValue InputActionValue)
+FFunKInputActionSimulationTick& UFunKInputSimulationSystem::ScheduleInputActionSimulation(APlayerController* PlayerController, const UInputAction* InputAction, const FInputActionValue& InputActionValue)
 {
 	FFunKPlayerControllerInputSimulations* InputSimulations = GetControllerInputSimulations(PlayerController, true);
 	FFunKInputActionSimulationTick* InputActionEntry = InputSimulations->InputActionSimulations.Find(InputAction);
-	if(!InputActionEntry)
+	if (!InputActionEntry)
 	{
 		InputActionEntry = &InputSimulations->InputActionSimulations.Add(InputAction, FFunKInputActionSimulationTick());
 	}
@@ -135,28 +140,30 @@ void UFunKInputSimulationSystem::InjectInputForAction(const APlayerController* P
 	PlayerInput->InjectInputForAction(InputAction, InputActionValue);
 }
 
-void UFunKInputSimulationSystem::SimulateLegacyActionInput(const FName& ActionName, EInputEvent InputEventType)
+void UFunKInputSimulationSystem::SimulateLegacyActionInput(const FName& ActionName, const EInputEvent InputEventType)
 {
 	SimulateLegacyControllerActionInput(GetWorld()->GetFirstPlayerController(), ActionName, InputEventType);
 }
 
-void UFunKInputSimulationSystem::SimulateLegacyControllerActionInput(APlayerController* PlayerController, const FName& ActionName, EInputEvent InputEventType)
+void UFunKInputSimulationSystem::SimulateLegacyControllerActionInput(APlayerController* PlayerController, const FName& ActionName, const EInputEvent InputEventType)
 {
 	const FKey* InputAxisKey = GetInputActionKey(ActionName);
-	if(!InputAxisKey) return;
+	if(!InputAxisKey)
+		return;
 
 	SimulatePlayerControllerKeyPressInput(PlayerController, *InputAxisKey, InputEventType);
 }
 
-void UFunKInputSimulationSystem::SimulateLegacyAxisInput(const FName& AxisName, float AxisValue)
+void UFunKInputSimulationSystem::SimulateLegacyAxisInput(const FName& AxisName, const float AxisValue)
 {
 	SimulateLegacyControllerAxisInput(GetWorld()->GetFirstPlayerController(), AxisName, AxisValue);
 }
 
-void UFunKInputSimulationSystem::SimulateLegacyControllerAxisInput(APlayerController* PlayerController, const FName& AxisName, float AxisValue)
+void UFunKInputSimulationSystem::SimulateLegacyControllerAxisInput(APlayerController* PlayerController, const FName& AxisName, const float AxisValue)
 {
 	const FKey* InputAxisKey = GetInputAxisKey(AxisName);
-	if(!InputAxisKey) return;
+	if(!InputAxisKey)
+		return;
 	
 	SimulateAxisInput(PlayerController, *InputAxisKey, AxisValue);
 }
@@ -169,7 +176,8 @@ void UFunKInputSimulationSystem::EndSimulateLegacyAxisInput(const FName& AxisNam
 void UFunKInputSimulationSystem::EndSimulateLegacyControllerAxisInput(APlayerController* PlayerController, const FName& AxisName)
 {
 	const FKey* InputAxisKey = GetInputAxisKey(AxisName);
-	if(!InputAxisKey) return;
+	if(!InputAxisKey)
+		return;
 
 	EndSimulateControllerKeyAxisInput(PlayerController, InputAxisKey->GetFName());
 }
@@ -177,7 +185,8 @@ void UFunKInputSimulationSystem::EndSimulateLegacyControllerAxisInput(APlayerCon
 const FKey* UFunKInputSimulationSystem::GetInputActionKey(const FName& ActionName) const
 {
 	const UInputSettings* InputSettings = GetInputSettings();
-	if (!InputSettings) return nullptr;
+	if (!InputSettings)
+		return nullptr;
 
 	for (const FInputActionKeyMapping& Mapping : InputSettings->GetActionMappings())
 	{
@@ -194,7 +203,8 @@ const FKey* UFunKInputSimulationSystem::GetInputActionKey(const FName& ActionNam
 const FKey* UFunKInputSimulationSystem::GetInputAxisKey(const FName& AxisName) const
 {
 	const UInputSettings* InputSettings = GetInputSettings();
-	if (!InputSettings) return nullptr;
+	if (!InputSettings)
+		return nullptr;
 
 	for (const FInputAxisKeyMapping& Mapping : InputSettings->GetAxisMappings())
 	{
@@ -211,7 +221,7 @@ const FKey* UFunKInputSimulationSystem::GetInputAxisKey(const FName& AxisName) c
 const UInputSettings* UFunKInputSimulationSystem::GetInputSettings()
 {
 	const UInputSettings* InputSettings = GetDefault<UInputSettings>();
-	if(!InputSettings)
+	if (!InputSettings)
 	{
 		UE_LOG(FunKLog, Error, TEXT("Input settings not found!"))
 	}
@@ -219,22 +229,22 @@ const UInputSettings* UFunKInputSimulationSystem::GetInputSettings()
 	return InputSettings;
 }
 
-void UFunKInputSimulationSystem::SimulateKeyPressInput(const FName& PressedKey, EInputEvent InputEventType)
+void UFunKInputSimulationSystem::SimulateKeyPressInput(const FName& PressedKey, const EInputEvent InputEventType)
 {
 	SimulateControllerKeyPressInput(GetWorld()->GetFirstPlayerController(), PressedKey, InputEventType);
 }
 
-void UFunKInputSimulationSystem::SimulateControllerKeyPressInput(APlayerController* PlayerController, const FName& PressedKey, EInputEvent InputEventType)
+void UFunKInputSimulationSystem::SimulateControllerKeyPressInput(APlayerController* PlayerController, const FName& PressedKey, const EInputEvent InputEventType)
 {
 	SimulatePlayerControllerKeyPressInput(PlayerController, FKey(PressedKey), InputEventType);
 }
 
-void UFunKInputSimulationSystem::SimulateKeyAxisInput(const FName& AxisKey, float AxisValue)
+void UFunKInputSimulationSystem::SimulateKeyAxisInput(const FName& AxisKey, const float AxisValue)
 {
 	SimulateControllerKeyAxisInput(GetWorld()->GetFirstPlayerController(), AxisKey, AxisValue);
 }
 
-void UFunKInputSimulationSystem::SimulateControllerKeyAxisInput(APlayerController* PlayerController, const FName& AxisKey, float AxisValue)
+void UFunKInputSimulationSystem::SimulateControllerKeyAxisInput(APlayerController* PlayerController, const FName& AxisKey, const float AxisValue)
 {
 	SimulateAxisInput(PlayerController, FKey(AxisKey), AxisValue);
 }
@@ -247,7 +257,8 @@ void UFunKInputSimulationSystem::EndSimulateKeyAxisInput(const FName& AxisKey)
 void UFunKInputSimulationSystem::EndSimulateControllerKeyAxisInput(APlayerController* PlayerController, const FName& AxisKey)
 {
 	FFunKPlayerControllerInputSimulations* InputSimulations = GetControllerInputSimulations(PlayerController);
-	if (!InputSimulations) return;
+	if (!InputSimulations)
+		return;
 
 	InputSimulations->AxisInputSimulations.Remove(AxisKey);
 
@@ -255,60 +266,60 @@ void UFunKInputSimulationSystem::EndSimulateControllerKeyAxisInput(APlayerContro
 		ControllerInputSimulations.Remove(PlayerController);
 }
 
-void UFunKInputSimulationSystem::SimulatePlayerControllerKeyPressInput(APlayerController* PlayerController, const FKey& key, EInputEvent InputEventType)
+void UFunKInputSimulationSystem::SimulatePlayerControllerKeyPressInput(APlayerController* PlayerController, const FKey& Key, const EInputEvent InputEventType)
 {
-	if(!PlayerController)
+	if (!PlayerController)
 	{
 		UE_LOG(FunKLog, Error, TEXT("PlayerController not found!"))
 		return;
 	}
 	
-	PlayerController->InputKey(FInputKeyParams(key, InputEventType, 1));
+	PlayerController->InputKey(FInputKeyParams(Key, InputEventType, 1));
 }
 
-void UFunKInputSimulationSystem::SimulateAxisInput(APlayerController* PlayerController, const FKey& key, float AxisValue)
+void UFunKInputSimulationSystem::SimulateAxisInput(APlayerController* PlayerController, const FKey& Key, const float AxisValue)
 {
-	if(!PlayerController)
+	if (!PlayerController)
 	{
 		UE_LOG(FunKLog, Error, TEXT("PlayerController not found!"))
 		return;
 	}
 
-	if(AxisValue == 0.f)
+	if (AxisValue == 0.f)
 	{
-		EndSimulateControllerKeyAxisInput(PlayerController, key.GetFName());
+		EndSimulateControllerKeyAxisInput(PlayerController, Key.GetFName());
 		return;
 	}
 
-	const FFunKAxisInputSimulationTick& entry = ScheduleAxisInputSimulation(PlayerController, key, AxisValue);
-	InjectAxisInput(PlayerController, entry.Key, entry.AxisValue, 0.f);
+	const FFunKAxisInputSimulationTick& Entry = ScheduleAxisInputSimulation(PlayerController, Key, AxisValue);
+	InjectAxisInput(PlayerController, Entry.Key, Entry.AxisValue, 0.f);
 }
 
-FFunKAxisInputSimulationTick& UFunKInputSimulationSystem::ScheduleAxisInputSimulation(APlayerController* PlayerController, const FKey& key, float AxisValue)
+FFunKAxisInputSimulationTick& UFunKInputSimulationSystem::ScheduleAxisInputSimulation(APlayerController* PlayerController, const FKey& Key, const float AxisValue)
 {
 	FFunKPlayerControllerInputSimulations* InputSimulations = GetControllerInputSimulations(PlayerController, true);
-	FFunKAxisInputSimulationTick* AxisInputEntry = InputSimulations->AxisInputSimulations.Find(key.GetFName());
-	if(!AxisInputEntry)
+	FFunKAxisInputSimulationTick* AxisInputEntry = InputSimulations->AxisInputSimulations.Find(Key.GetFName());
+	if (!AxisInputEntry)
 	{
-		AxisInputEntry = &InputSimulations->AxisInputSimulations.Add(key.GetFName(), FFunKAxisInputSimulationTick());
+		AxisInputEntry = &InputSimulations->AxisInputSimulations.Add(Key.GetFName(), FFunKAxisInputSimulationTick());
 	}
 
-	AxisInputEntry->Key = key;
-	AxisInputEntry->AxisValue = SenseAdjustAxisValue(PlayerController, key, AxisValue);
+	AxisInputEntry->Key = Key;
+	AxisInputEntry->AxisValue = SenseAdjustAxisValue(PlayerController, Key, AxisValue);
 	AxisInputEntry->AddedInputTime = GFrameCounter;
 
 	return *AxisInputEntry;
 }
 
-void UFunKInputSimulationSystem::InjectAxisInput(APlayerController* PlayerController, const FKey& key, float AxisValue, float DeltaTime)
+void UFunKInputSimulationSystem::InjectAxisInput(APlayerController* PlayerController, const FKey& Key, const float AxisValue, const float DeltaTime)
 {
-	PlayerController->InputKey(FInputKeyParams(key, FVector(AxisValue, 0.0, 0.0), DeltaTime, 1));
+	PlayerController->InputKey(FInputKeyParams(Key, FVector(AxisValue, 0.0, 0.0), DeltaTime, 1));
 }
 
-float UFunKInputSimulationSystem::SenseAdjustAxisValue(const APlayerController* PlayerController, const FKey& key, float AxisValue)
+float UFunKInputSimulationSystem::SenseAdjustAxisValue(const APlayerController* PlayerController, const FKey& Key, const float AxisValue)
 {
 	FInputAxisProperties AxisProps;
-	if (PlayerController->PlayerInput->GetAxisProperties(key, AxisProps) && AxisProps.Sensitivity != 1.f)
+	if (PlayerController->PlayerInput->GetAxisProperties(Key, AxisProps) && AxisProps.Sensitivity != 1.f)
 	{
 		return AxisValue / AxisProps.Sensitivity;
 	}
@@ -316,9 +327,11 @@ float UFunKInputSimulationSystem::SenseAdjustAxisValue(const APlayerController* 
 	return AxisValue;
 }
 
-FFunKPlayerControllerInputSimulations* UFunKInputSimulationSystem::GetControllerInputSimulations(APlayerController* PlayerController, bool create)
+FFunKPlayerControllerInputSimulations* UFunKInputSimulationSystem::GetControllerInputSimulations(APlayerController* PlayerController, const bool bCreate)
 {
 	FFunKPlayerControllerInputSimulations* Entry = ControllerInputSimulations.Find(PlayerController);
-	if (Entry || !create) return Entry;
+	if (Entry || !bCreate)
+		return Entry;
+	
 	return &ControllerInputSimulations.Add(PlayerController, FFunKPlayerControllerInputSimulations());
 }

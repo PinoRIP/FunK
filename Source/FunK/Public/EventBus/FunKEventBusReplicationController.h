@@ -51,23 +51,23 @@ private:
 	bool IsControllerLocallyReady() const;
 
 	UFUNCTION(Server, Reliable)
-	void ServerSendMessage(const FFunKEventBusMessage& message);
+	void ServerSendMessage(const FFunKEventBusMessage& Message);
 
 	UFUNCTION(Client, Reliable)
-	void ClientSendMessage(const FFunKEventBusMessage& message);
+	void ClientSendMessage(const FFunKEventBusMessage& Message);
 
 	UFUNCTION(Server, Reliable)
-	void ServerEventCallback(FGuid callbackId);
+	void ServerEventCallback(FGuid CallbackId);
 
 	UFUNCTION(Client, Reliable)
-	void ClientEventCallback(FGuid callbackId);
+	void ClientEventCallback(FGuid CallbackId);
 
 	UFUNCTION(Server, Reliable)
 	void ServerControllerReady();
 	
 	void NotifyReplicationControllerRemoved(AFunKEventBusReplicationController* ReplicationController);
 
-	bool ReportProxiedCallbackResponse(AFunKEventBusReplicationController* ReplicationController, FGuid callbackId);
+	bool ReportProxiedCallbackResponse(AFunKEventBusReplicationController* ReplicationController, FGuid CallbackId);
 	
 private:
 	UPROPERTY( replicated )

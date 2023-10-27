@@ -3,9 +3,9 @@
 
 #include "Setup/FunKTimeLimit.h"
 
-bool FFunKTimeLimit::IsTimeout(float time) const
+bool FFunKTimeLimit::IsTimeout(float MsPassed) const
 {
-	return IsLimitless() ? false : Time <= time;
+	return IsLimitless() ? false : Time <= MsPassed;
 }
 
 bool FFunKTimeLimit::IsLimitless() const

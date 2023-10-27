@@ -22,26 +22,26 @@ public:
 	int32 OnListenServerClientCount = 0;
 
 	template <typename UserClass, typename... VarTypes>
-	inline FFunKStage& EmplaceStage(const FName& stageName, int32 index, UserClass* InUserObject, typename TMemFunPtrType<false, UserClass, void ( VarTypes...)>::Type InFunc, VarTypes... Vars)
+	inline FFunKStage& EmplaceStage(const FName& StageName, const int32 Index, UserClass* InUserObject, typename TMemFunPtrType<false, UserClass, void ( VarTypes...)>::Type InFunc, VarTypes... Vars)
 	{
-		FFunKStage& stage = EmplaceStage(stageName, index);
+		FFunKStage& stage = EmplaceStage(StageName, Index);
 		stage.StartDelegate.BindUObject(InUserObject, InFunc, Vars...);
 		return stage;
 	}
 	
 	template <typename UserClass, typename... VarTypes>
-	inline FFunKStage& EmplaceLatentStage(const FName& stageName, int32 index, UserClass* InUserObject, typename TMemFunPtrType<false, UserClass, void ( VarTypes...)>::Type InFunc, VarTypes... Vars)
+	inline FFunKStage& EmplaceLatentStage(const FName& StageName, int32 Index, UserClass* InUserObject, typename TMemFunPtrType<false, UserClass, void ( VarTypes...)>::Type InFunc, VarTypes... Vars)
 	{
-		FFunKStage& stage = EmplaceStage(stageName, index, InUserObject, InFunc, Vars...);
+		FFunKStage& stage = EmplaceStage(StageName, Index, InUserObject, InFunc, Vars...);
 		stage.IsLatent = true;
 		return stage;
 	}
 
 private:
-	FFunKStage& EmplaceStage(const FName& stageName, int32 index)
+	FFunKStage& EmplaceStage(const FName& StageName, const int32 Index)
 	{
-		FFunKStage& stage = Stages.EmplaceAt_GetRef(index, FFunKStage());
-		stage.Name = stageName;
+		FFunKStage& stage = Stages.EmplaceAt_GetRef(Index, FFunKStage());
+		stage.Name = StageName;
 
 		OnStandaloneCount = OnStandaloneCount + (stage.IsOnStandalone ? 1 : 0);
 		OnDedicatedServerCount = OnDedicatedServerCount + (stage.IsOnDedicatedServer ? 1 : 0);

@@ -14,7 +14,7 @@ AFunKTestBase* UFunKTestFragment::GetTest()
 
 void UFunKTestFragment::Error(const FString& Message) const
 {
-	if(Test)
+	if (Test)
 	{
 		Test->RaiseEvent(FFunKEvent::Error(Message).Ref());
 	}

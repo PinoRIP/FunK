@@ -15,6 +15,9 @@ class FUNK_API UFunKSceneActorResetHandler : public UObject
 	GENERATED_BODY()
 
 public:
+	// Gets called to initially capture the actor state
 	virtual void Capture(AActor* Actor);
+
+	// Get called to reset the actor to the initial state
 	virtual void Reset(AActor* Actor);
 };
