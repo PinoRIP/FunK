@@ -105,7 +105,7 @@ public:
 // Just a cheap wrapper for the old concept for now...
 
 UCLASS(NotBlueprintType, HideDropdown)
-class UFunKActorScenarioVariationFragment : public UFunKTestFragment
+class FUNK_API UFunKActorScenarioVariationFragment final : public UFunKTestFragment
 {
 	GENERATED_BODY()
 
