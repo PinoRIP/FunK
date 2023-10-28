@@ -1,19 +1,19 @@
 ﻿#pragma once
 
 #include "CoreMinimal.h"
-#include "FunKAnonymousBitmask.generated.h"
+#include "FunKBitset.generated.h"
 
 // Bitmask with variable length
 USTRUCT()
-struct FUNK_API FFunKAnonymousBitmask
+struct FUNK_API FFunKBitset
 {
 	GENERATED_BODY()
 	
 public:
-	FFunKAnonymousBitmask()
+	FFunKBitset()
 		: Length(1) { }
 	
-	FFunKAnonymousBitmask(const int32 InLength)
+	FFunKBitset(const int32 InLength)
 		: Length(InLength)
 	{
 		check(Length > 0);
@@ -22,7 +22,7 @@ public:
 	
 	void Clear(int32 Index);
 	void Set(int32 Index);
-	void Set(const FFunKAnonymousBitmask& Bitmask);
+	void Set(const FFunKBitset& Bitmask);
 	
 	void ClearAll();
 	void SetAll();

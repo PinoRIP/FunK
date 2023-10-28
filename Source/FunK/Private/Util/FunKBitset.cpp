@@ -1,6 +1,6 @@
-﻿#include "Util/FunKAnonymousBitmask.h"
+﻿#include "Util/FunKBitset.h"
 
-inline void FFunKAnonymousBitmask::Clear(int32 Index)
+inline void FFunKBitset::Clear(int32 Index)
 {
 	if (Index >= Length || Index <= INDEX_NONE)
 		return;
@@ -8,7 +8,7 @@ inline void FFunKAnonymousBitmask::Clear(int32 Index)
 	Bits &= ~(1 << Index);
 }
 
-inline void FFunKAnonymousBitmask::Set(int32 Index)
+inline void FFunKBitset::Set(int32 Index)
 {
 	if (Index >= Length || Index <= INDEX_NONE)
 		return;
@@ -16,24 +16,24 @@ inline void FFunKAnonymousBitmask::Set(int32 Index)
 	Bits |= (1 << Index);
 }
 
-void FFunKAnonymousBitmask::Set(const FFunKAnonymousBitmask& Bitmask)
+void FFunKBitset::Set(const FFunKBitset& Bitmask)
 {
 	Bits |= Bitmask.Bits;
 }
 
-void FFunKAnonymousBitmask::ClearAll()
+void FFunKBitset::ClearAll()
 {
 	const int32 Bitmask = (1 << Length) - 1;
 	Bits &= ~Bitmask;
 }
 
-void FFunKAnonymousBitmask::SetAll()
+void FFunKBitset::SetAll()
 {
 	const int32 Bitmask = (1 << Length) - 1;
 	Bits |= Bitmask;
 }
 
-inline bool FFunKAnonymousBitmask::IsClear(int32 Index) const
+inline bool FFunKBitset::IsClear(int32 Index) const
 {
 	if (Index >= Length || Index < INDEX_NONE)
 		return false;
@@ -44,7 +44,7 @@ inline bool FFunKAnonymousBitmask::IsClear(int32 Index) const
 	return !IsBitSet(Index);
 }
 
-inline bool FFunKAnonymousBitmask::IsSet(int32 Index) const
+inline bool FFunKBitset::IsSet(int32 Index) const
 {
 	if (Index >= Length || Index < INDEX_NONE)
 		return false;
@@ -55,7 +55,7 @@ inline bool FFunKAnonymousBitmask::IsSet(int32 Index) const
 	return IsBitSet(Index);
 }
 
-bool FFunKAnonymousBitmask::IsBitSet(int32 Index) const
+bool FFunKBitset::IsBitSet(int32 Index) const
 {
 	const int32 Bitmask = 1 << Index;
 	return (Bits & Bitmask) != 0;

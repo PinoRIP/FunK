@@ -191,7 +191,7 @@ void AFunKTestBase::OnBegin(const FFunKTestBeginEvent& BeginEvent)
 	Seed = BeginEvent.Seed;
 	SetCurrentVariation(BeginEvent.Variation);
 	Result = EFunKTestResult::None;
-	PeerBitMask = FFunKAnonymousBitmask(GetWorldSubsystem()->GetPeerCount());
+	PeerBitMask = FFunKBitset(GetWorldSubsystem()->GetPeerCount());
 	CurrentStageIndex = INDEX_NONE;
 	SetActorTickEnabled(true);
 
@@ -703,7 +703,7 @@ UFunKEventBusSubsystem* AFunKTestBase::GetEventBusSubsystem() const
 	return GetWorld()->GetSubsystem<UFunKEventBusSubsystem>();
 }
 
-const FFunKAnonymousBitmask& AFunKTestBase::GetStagePeerState() const
+const FFunKBitset& AFunKTestBase::GetStagePeerState() const
 {
 	return PeerBitMask;
 }

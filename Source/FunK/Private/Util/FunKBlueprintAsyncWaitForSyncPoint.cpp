@@ -19,7 +19,7 @@ UFunKBlueprintAsyncWaitForSyncPoint* UFunKBlueprintAsyncWaitForSyncPoint::WaitFo
 
 	if (Test->GetNetMode() != NM_Standalone)
 	{
-		SyncPointInstance->Bitmask = FFunKAnonymousBitmask(SyncPointInstance->Test->GetWorldSubsystem()->GetPeerCount());
+		SyncPointInstance->Bitmask = FFunKBitset(SyncPointInstance->Test->GetWorldSubsystem()->GetPeerCount());
 		SyncPointInstance->Bitmask.Set(SyncPointInstance->Test->GetStagePeerState());
 		if (WaitFor == EFunKSyncTarget::Client)
 		{

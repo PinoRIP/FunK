@@ -8,7 +8,7 @@
 #include "EventBus/FunKEventBusSubsystem.h"
 #include "Setup/FunKStages.h"
 #include "Events/FunKEvent.h"
-#include "Util/FunKAnonymousBitmask.h"
+#include "Util/FunKBitset.h"
 #include "FunKTestBase.generated.h"
 
 struct FFunKStagesSetup;
@@ -179,7 +179,7 @@ public:
 	FFunKPeerStageFinishing OnPeerStageFinishing;
 
 	// Gets a bitmask that indicates which peers have & have not finished the current stage
-	const FFunKAnonymousBitmask& GetStagePeerState() const;
+	const FFunKBitset& GetStagePeerState() const;
 
 	// Gets the local peer index
 	UFUNCTION(BlueprintCallable, Category="FunK")
@@ -282,7 +282,7 @@ private:
 	int32 CurrentStageIndex = INDEX_NONE;
 	FFunKStages Stages;
 	EFunKTestResult Result = EFunKTestResult::None;
-	FFunKAnonymousBitmask PeerBitMask;
+	FFunKBitset PeerBitMask;
 	int32 CurrentVariation = INDEX_NONE;
 	int32 CurrentRootVariation = INDEX_NONE;
 

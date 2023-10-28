@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Util/FunKAnonymousBitmask.h"
+#include "Util/FunKBitset.h"
 #include "EventBus/FunKEventBusSubsystem.h"
 #include "Kismet/BlueprintAsyncActionBase.h"
 #include "FunKBlueprintAsyncWaitForSyncPoint.generated.h"
@@ -48,7 +48,7 @@ private:
 
 	EFunKSyncTarget SyncTarget = EFunKSyncTarget::MAX;
 
-	FFunKAnonymousBitmask Bitmask;
+	FFunKBitset Bitmask;
 
 	FFunKEventBusRegistration Registration;
 
