@@ -4,6 +4,7 @@
 #include "FunKWorldTestController.h"
 #include "EngineUtils.h"
 #include "FunKFunctionalTest.h"
+#include "FunKLogging.h"
 #include "FunKSettingsObject.h"
 
 //TODO: I kinda hate this
@@ -67,7 +68,7 @@ void AFunKWorldTestController::Tick(float DeltaTime)
 void AFunKWorldTestController::ExecuteTestByName(FString TestName)
 {
 	Tests.Empty(1);
-	
+
 	for (TActorIterator<AFunKTestBase> ActorItr(GetWorld(), AFunKTestBase::StaticClass(), EActorIteratorFlags::AllActors); ActorItr; ++ActorItr)
 	{
 		AFunKTestBase* FunctionalTest = *ActorItr;
@@ -77,6 +78,13 @@ void AFunKWorldTestController::ExecuteTestByName(FString TestName)
 			ExecuteTests();
 			break;
 		}
+	}
+
+	if (IsFinished())
+	{
+		TArray<FString> MissingTests;
+		MissingTests.Add(TestName);
+		LogMissingTests(MissingTests);
 	}
 }
 
@@ -147,4 +155,15 @@ void AFunKWorldTestController::End()
 {
 	TestRunID = 0;
 	SetActorTickEnabled(false);
+}
+
+void AFunKWorldTestController::LogMissingTests(const TArray<FString>& MissingTests) const
+{
+	if (MissingTests.Num() > 0)
+	{
+		static FString Singular = "Test";
+		static FString Plural = "Tests";
+		
+		UE_LOG(FunKLog, Error, TEXT("Test controller could not find %s on map %s: %s"), *(MissingTests.Num() == 1 ? Singular : Plural), *GetWorld()->GetMapName(), *FString::Join(MissingTests, TEXT(", ")))
+	}
 }
