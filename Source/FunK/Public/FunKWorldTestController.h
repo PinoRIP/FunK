@@ -70,4 +70,6 @@ private:
 	void ExecuteTests();
 	bool Next();
 	void End();
+	
+	void LogMissingTests(const TArray<FString>& MissingTests) const;
 };
