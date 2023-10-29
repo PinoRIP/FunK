@@ -178,23 +178,23 @@ private:
 	TMap<AActor*, UFunKSceneActorResetHandler*> ResetHandlers;
 	
 public:
-	UFUNCTION(BlueprintCallable)
-	virtual AActor* GetActor(int32 InIndex = 0);
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	virtual AActor* GetActor(int32 InIndex = 0) const;
 
-	UFUNCTION(BlueprintCallable)
-	virtual AActor* GetActorByOwnership(EFunKActorScenarioVariationOwnership Ownership, int32 InIndex = 0);
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	virtual AActor* GetActorByOwnership(EFunKActorScenarioVariationOwnership Ownership, int32 InIndex = 0) const;
 
-	UFUNCTION(BlueprintCallable)
-	EFunKActorScenarioVariationOwnership GetLocalOwnerships();
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	EFunKActorScenarioVariationOwnership GetLocalOwnerships() const;
 
-	UFUNCTION(BlueprintCallable)
-	bool IsAppositionPlayer();
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	bool IsAppositionPlayer() const;
 
-	UFUNCTION(BlueprintCallable)
-	bool IsOppositionPlayer();
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	bool IsOppositionPlayer() const;
 
-	UFUNCTION(BlueprintCallable)
-	bool IsAI();
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	bool IsAI() const;
 
 private:
 	friend UFunKActorScenarioVariationFragment;

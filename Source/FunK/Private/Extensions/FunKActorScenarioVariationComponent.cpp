@@ -167,7 +167,7 @@ void UFunKActorScenarioVariationComponent::GetLifetimeReplicatedProps(TArray<FLi
 	DOREPLIFETIME( UFunKActorScenarioVariationComponent, AcquiredActors );
 }
 
-AActor* UFunKActorScenarioVariationComponent::GetActor(int32 InIndex)
+AActor* UFunKActorScenarioVariationComponent::GetActor(int32 InIndex) const
 {
 	if (InIndex < 0 || InIndex >= AcquiredActors.Num())
 		return nullptr;
@@ -175,7 +175,7 @@ AActor* UFunKActorScenarioVariationComponent::GetActor(int32 InIndex)
 	return AcquiredActors[InIndex];
 }
 
-AActor* UFunKActorScenarioVariationComponent::GetActorByOwnership(EFunKActorScenarioVariationOwnership Ownership, int32 InIndex)
+AActor* UFunKActorScenarioVariationComponent::GetActorByOwnership(EFunKActorScenarioVariationOwnership Ownership, int32 InIndex) const
 {
 	if (InIndex < 0 || InIndex >= AcquiredActors.Num())
 		return nullptr;
@@ -379,7 +379,7 @@ FFunKOwnershipDistribution UFunKActorScenarioVariationComponent::GetOwnershipDis
 	return OwnershipDistribution;
 }
 
-EFunKActorScenarioVariationOwnership UFunKActorScenarioVariationComponent::GetLocalOwnerships()
+EFunKActorScenarioVariationOwnership UFunKActorScenarioVariationComponent::GetLocalOwnerships() const
 {
 	const ENetMode NetMode = GetNetMode();
 	if (NetMode == NM_Standalone)
@@ -414,29 +414,29 @@ EFunKActorScenarioVariationOwnership UFunKActorScenarioVariationComponent::GetLo
 	}
 }
 
-bool UFunKActorScenarioVariationComponent::IsAppositionPlayer()
+bool UFunKActorScenarioVariationComponent::IsAppositionPlayer() const
 {
 	const uint8 LocalOwnerships = static_cast<uint8>(GetLocalOwnerships());
 	if (LocalOwnerships == 0)
 		return false;
 	
-	return (LocalOwnerships & static_cast<uint8>(EFunKActorScenarioVariationOwnership::AppositionPlayer)) == LocalOwnerships;
+	return (LocalOwnerships & static_cast<uint8>(EFunKActorScenarioVariationOwnership::AppositionPlayer)) == static_cast<uint8>(EFunKActorScenarioVariationOwnership::AppositionPlayer);
 }
 
-bool UFunKActorScenarioVariationComponent::IsOppositionPlayer()
+bool UFunKActorScenarioVariationComponent::IsOppositionPlayer() const
 {
 	const uint8 LocalOwnerships = static_cast<uint8>(GetLocalOwnerships());
 	if (LocalOwnerships == 0)
 		return false;
 	
-	return (LocalOwnerships & static_cast<uint8>(EFunKActorScenarioVariationOwnership::OppositionPlayer)) == LocalOwnerships;
+	return (LocalOwnerships & static_cast<uint8>(EFunKActorScenarioVariationOwnership::OppositionPlayer)) == static_cast<uint8>(EFunKActorScenarioVariationOwnership::OppositionPlayer);
 }
 
-bool UFunKActorScenarioVariationComponent::IsAI()
+bool UFunKActorScenarioVariationComponent::IsAI() const
 {
 	const uint8 LocalOwnerships = static_cast<uint8>(GetLocalOwnerships());
 	if (LocalOwnerships == 0)
 		return false;
 	
-	return (LocalOwnerships & static_cast<uint8>(EFunKActorScenarioVariationOwnership::AI)) == LocalOwnerships;
+	return (LocalOwnerships & static_cast<uint8>(EFunKActorScenarioVariationOwnership::AI)) == static_cast<uint8>(EFunKActorScenarioVariationOwnership::AI);
 }
