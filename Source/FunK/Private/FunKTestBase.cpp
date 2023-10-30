@@ -56,7 +56,7 @@ AFunKTestBase::AFunKTestBase()
 
 		if (!IsRunningCommandlet())
 		{
-			ConstructorHelpers::FObjectFinderOptional<UTexture2D> Texture(TEXT("/Engine/EditorResources/S_FTest"));
+			ConstructorHelpers::FObjectFinderOptional<UTexture2D> Texture(TEXT("/FunK/S_FunKTest"));
 			SpriteComponent->Sprite = Texture.Get();
 			SpriteComponent->SpriteInfo.Category = TEXT("FunKTests");
 			SpriteComponent->SpriteInfo.DisplayName = FText::FromName(TEXT("FunKTests"));
