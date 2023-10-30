@@ -148,6 +148,7 @@ private:
 	virtual bool IsReady();
 	virtual void Finish();
 	virtual FString GetLogName() const override;
+	static bool IsOldActor(AActor* Actor);
 
 	virtual void GetLifetimeReplicatedProps( TArray< FLifetimeProperty > & OutLifetimeProps ) const override;
 

@@ -7,6 +7,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Util/FunKUtilBlueprintFunctionLibrary.h"
 #include "Extensions/FunKSceneActorResetHandler.h"
+#include "Kismet/GameplayStatics.h"
 
 
 void UFunKActorScenarioVariationFragment::OnAdded()
@@ -21,7 +22,7 @@ void UFunKActorScenarioVariationFragment::OnRemoved()
 
 FString UFunKActorScenarioVariationFragment::GetLogName() const
 {
-	return Spawner->GetName();
+	return Spawner->GetLogName();
 }
 
 // Sets default values for this component's properties
@@ -112,8 +113,6 @@ bool UFunKActorScenarioVariationComponent::IsReady()
 
 	const ENetMode NetMode = GetNetMode();
 	const uint8 LocalOwnerships = static_cast<uint8>(GetLocalOwnerships());
-	if (LocalOwnerships == 0)
-		return true;
 	
 	for (int i = 0; i < Actors.Num(); ++i)
 	{
@@ -122,9 +121,15 @@ bool UFunKActorScenarioVariationComponent::IsReady()
 		
 		if (!AcquiredActors[i]->HasActorBegunPlay())
 			return false;
+
+		if (IsOldActor(AcquiredActors[i]))
+			return false;
 		
 		if (Actors[i].Ownership != EFunKActorScenarioVariationOwnership::None)
 		{
+			if (LocalOwnerships == static_cast<uint8>(0))
+				continue;
+			
 			if (NetMode < NM_Client || (LocalOwnerships & static_cast<uint8>(Actors[i].Ownership)) == LocalOwnerships)
 			{
 				if (AcquiredActors[i]->GetOwner() == nullptr)
@@ -133,7 +138,23 @@ bool UFunKActorScenarioVariationComponent::IsReady()
 		}
 	}
 
+	for (AActor* AcquiredActor : AcquiredActors)
+	{
+		AcquiredActor->Tags.Add("WasReady");
+	}
+	
 	return true;
+}
+
+bool UFunKActorScenarioVariationComponent::IsOldActor(AActor* Actor)
+{
+	for (const FName& Tag : Actor->Tags)
+	{
+		if (Tag == "WasReady")
+			return true;
+	}
+
+	return false;
 }
 
 void UFunKActorScenarioVariationComponent::Finish()
@@ -230,7 +251,14 @@ AActor* UFunKActorScenarioVariationComponent::GetSceneActor(const FFunKActorScen
 
 AActor* UFunKActorScenarioVariationComponent::SpawnActor(const FFunKActorScenarioVariationActor& VariationActor)
 {
-	return GetWorld()->SpawnActor(VariationActor.SpawnActor.Class, &VariationActor.SpawnActor.Transform);
+	FActorSpawnParameters Parameters = FActorSpawnParameters();
+	Parameters.bDeferConstruction = true;
+	
+	auto Actor = GetWorld()->SpawnActor(VariationActor.SpawnActor.Class, &VariationActor.SpawnActor.Transform, Parameters);
+	Actor->bAlwaysRelevant = true;
+	Actor->FinishSpawning(VariationActor.SpawnActor.Transform);
+
+	return Actor;
 }
 
 void UFunKActorScenarioVariationComponent::AssignOwner(AActor* Actor, EFunKActorScenarioVariationOwnership Ownership)

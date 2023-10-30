@@ -298,7 +298,7 @@ private:
 	UPROPERTY(Transient)
 	FFunKTestVariations Variations;
 
-	UPROPERTY(EditAnywhere, Category="FunK|Setup")
+	UPROPERTY(EditAnywhere, Category="FunK")
 	TObjectPtr<AActor> ObservationPoint;
 
 	bool IsVariationBegun = false;
