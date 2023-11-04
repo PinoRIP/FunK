@@ -1,5 +1,5 @@
 # FunK
-FunK is a functional testing framework with multiplayer support for Unreal Engine 5. This is the plugin. The UE project used for development is available here: [FunKProject](https://github.com).
+FunK is a functional testing framework with multiplayer support for Unreal Engine 5. This is the plugin. The UE project used for development is available here: [FunKProject](https://github.com/PinoRIP/FunKProject).
 
 ## Contents
 
@@ -44,7 +44,7 @@ There are several methods that can be used for test discovery.
 1. **Search:** Every map in the project will be considered when discovering tests. This should generally be avoided.
 2. **Prefix:** Every map with the configured prefix will be considered when discovering tests. This is the way Unreal Engine's built-in functional testing framework discovers tests, and the plugin defaults to it.
 3. **Worlds:** Every map that should be considered when discovering tests has to be configured explicitly.
-4. **Paths:** Every map that is placed under the configured paths is considered when discovering tests. This is the approach used by the [FunKProject](https://github.com).
+4. **Paths:** Every map that is placed under the configured paths is considered when discovering tests. This is the approach used by the [FunKProject](https://github.com/PinoRIP/FunKProject).
 
 ## Tests
 The FunK tests are primarily built to be used in blueprints.
@@ -124,7 +124,7 @@ The FunK functional testing framework provides a way for [latent](#latent) [stag
 Every test that has been discovered by the FunK functional testing framework will be available in the 'Session Frontend' (Tools > Session Frontend > Automation > FunK). Here, the tests will be grouped by 'dedicated' / 'listen' / 'standalone' and then by map.
 
 ## Technical Overview
-For a more technical overview of the whole framework, see [Technical Overview](https://github.com).
+For a more technical overview of the whole framework, see [Technical Overview](https://github.com/PinoRIP/FunKProject).
 
 ## Naming
 
