@@ -122,7 +122,7 @@ bool UFunKActorScenarioVariationComponent::IsReady()
 		if (!AcquiredActors[i]->HasActorBegunPlay())
 			return false;
 
-		if (IsOldActor(AcquiredActors[i]))
+		if (!Actors[i].SceneActor && IsOldActor(AcquiredActors[i]))
 			return false;
 		
 		if (Actors[i].Ownership != EFunKActorScenarioVariationOwnership::None)
